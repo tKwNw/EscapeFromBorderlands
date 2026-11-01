@@ -40,7 +40,7 @@ def main():
     check('UIA-compatible last-priority grenade quick-select filter preserved',block(grenades,'ReusableGrenadeQuickSelectPatch')==block(old,'ReusableGrenadeQuickSelectPatch') and '[HarmonyPriority(Priority.Last)]\ninternal static class ReusableGrenadeQuickSelectPatch' in grenades)
     check('New backpack status uses the repaired native night-vision helper','case "BP15-1": active = BackpackPresentation.NightVisionOn(p);' in (client/'BackpackEffectStatus.cs').read_text())
     check('New medical status reads the native interruption flag','Native.Get(p.Key, "_interrupted") is not true' in (client/'BackpackNative.cs').read_text())
-    report=dict(version='0.29.1',nativeBase='0.28.2',upstream='0.29.0',passed=sum(c['status']=='PASS' for c in checks),failed=sum(c['status']=='FAIL' for c in checks),scope='Byte preservation and targeted source contracts; behavioral/native API tests are separate.',checks=checks)
+    report=dict(version='0.30.0',nativeBase='0.28.2',upstream='0.29.0',passed=sum(c['status']=='PASS' for c in checks),failed=sum(c['status']=='FAIL' for c in checks),scope='Byte preservation and targeted source contracts; behavioral/native API tests are separate.',checks=checks)
     args.output.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:report[k] for k in ['passed','failed']}))
     return int(bool(report['failed']))
 

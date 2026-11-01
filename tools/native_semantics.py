@@ -298,7 +298,7 @@ def main():
     fit = il(airdrop, 'GetLootThatFitsContainer', assembly=core)
     check('Native crate fitting reads generated item size before slot selection and map fill',
           0 <= fit.find('ItemHelper::GetItemSize') < fit.find('ContainerExtensions::FindSlotForItem') < fit.find('ContainerExtensions::TryFillContainerMapWithItem'))
-    report = {'version': '0.29.1', 'targetSptVersion': '4.1.6',
+    report = {'version': '0.30.0', 'targetSptVersion': '4.1.6',
               'scope': 'Native method-body role checks; no game execution',
               'passed': sum(c['status'] == 'PASS' for c in checks),
               'failed': sum(c['status'] == 'FAIL' for c in checks), 'checks': checks}

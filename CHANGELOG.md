@@ -1,3 +1,10 @@
+# 0.30.0 — SP-Mod compliance candidate / SPT 4.1.6
+
+- Harmonize client and server identifiers; use Forge-compliant BepInEx display name and server metadata name.
+- Migrate BepInEx legacy client configuration on first run without overwriting existing new settings.
+- Preserve prior SPT 4.1.6 gameplay, integrations, item identities, config, and SPT constraint.
+- Include licensing notices in the installable packaging and require new builds and live validation.
+
 # 0.29.1 — SPT 4.1.6
 
 - Port upstream 0.29.0 into corrected native 0.28.2, retaining all separately added fixes and compatibility layers.

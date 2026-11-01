@@ -6,11 +6,11 @@ namespace EscapeFromBorderlands.Server;
 
 public record ModMetadata : IModMetadata
 {
-    public string ModGuid { get; init; } = "com.tkw.escapefromborderlands";
-    public string Name { get; init; } = "Escape From Borderlands";
+    public string ModGuid { get; init; } = "com.tKwNw.escapefromborderlands";
+    public string Name { get; init; } = "EscapeFromBorderlands";
     public string Author { get; init; } = "tKwNw";
     public List<string>? Contributors { get; init; } = ["OpenAI Codex"];
-    public SemVersion Version { get; init; } = new("0.29.1", false);
+    public SemVersion Version { get; init; } = new("0.30.0", false);
     public SemRange SptVersion { get; init; } = new("~4.1.6", false);
     public bool HasPrepatcher { get; init; } = false;
     public List<string>? Incompatibilities { get; init; } = [];

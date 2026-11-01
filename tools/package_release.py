@@ -1,4 +1,4 @@
-"""Package the validated EFB 0.29.1 native SPT 4.1.6 port."""
+"""Package the validated EFB 0.30.0 native SPT 4.1.6 port."""
 import argparse
 from datetime import datetime, timezone
 import difflib
@@ -9,7 +9,7 @@ import re
 import zipfile
 from ecma import Assembly
 
-VERSION = '0.29.1'
+VERSION = '0.30.0'
 SUITES = {'fixes': 80, 'combat': 43, 'fireball': 37, 'storage': 54,
           'layout': 7, 'navigation': 29, 'visitor': 18, 'rigs': 140,
           'grenades': 199, 'spawns': 52, 'quests': 23, 'earpieces': 85,
@@ -132,7 +132,7 @@ def main():
         if before.exists() and before.read_bytes() == path.read_bytes():
             continue
         assert path.suffix.lower() != '.wav', 'Embedded audio must be byte-preserved'
-        patch.extend(difflib.unified_diff(before.read_text().splitlines(keepends=True) if before.exists() else [], path.read_text().splitlines(keepends=True), fromfile='legacy-0.29.0/' + relative.as_posix(), tofile='native-0.29.1/' + relative.as_posix()))
+        patch.extend(difflib.unified_diff(before.read_text().splitlines(keepends=True) if before.exists() else [], path.read_text().splitlines(keepends=True), fromfile='legacy-0.29.0/' + relative.as_posix(), tofile='native-0.30.0/' + relative.as_posix()))
     (validation / 'migration.patch').write_text(''.join(patch))
     manifest = {
         'version': VERSION, 'assemblyVersion': VERSION + '.0', 'targetSptVersion': '4.1.6',
@@ -164,7 +164,9 @@ def main():
     (validation / 'release-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     runtime = {'BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll': assemblies['client'],
                'SPT_Runtime/user/mods/EscapeFromBorderlands/EscapeFromBorderlands.Server.dll': assemblies['server'],
-               'SPT_Runtime/user/mods/EscapeFromBorderlands/config/config.json': config}
+               'SPT_Runtime/user/mods/EscapeFromBorderlands/config/config.json': config,
+                'SPT_Runtime/user/mods/EscapeFromBorderlands/LICENSE.txt': source / 'LICENSE.txt',
+                'SPT_Runtime/user/mods/EscapeFromBorderlands/THIRD_PARTY_NOTICES.md': source / 'THIRD_PARTY_NOTICES.md'}
     full = {'EscapeFromBorderlands/' + path.relative_to(source).as_posix(): path for path in files}
     assert not any(path.suffix.lower() in ['.dll', '.pdb', '.exe'] for path in full.values())
     # Only the requested Source and fresh-install Runtime archives are emitted.
