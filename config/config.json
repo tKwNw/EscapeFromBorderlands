@@ -1,0 +1,81 @@
+{
+  "enabled": true,
+  "addToPmcWeapons": true,
+  "createDefaultPresets": true,
+  "allowFleaMarketTrading": false,
+  "airdropLegendaryChancePercent": 1,
+  "priceMultipliers": {
+    "Legendary": 10.0
+  },
+  "addToBossWeapons": true,
+  "autoDetectApbs": true,
+  "spawnChances": {
+    "pmcs": {
+      "guns": 1,
+      "melee": 1,
+      "backpacks": 1,
+      "chestRigs": 1,
+      "grenades": 1,
+      "earpieces": 1
+    },
+    "bosses": {
+      "guns": 10,
+      "melee": 10,
+      "backpacks": 10,
+      "chestRigs": 10,
+      "grenades": 10,
+      "earpieces": 10
+    }
+  },
+  "addToNonScavFactions": true,
+  "factionSpawnChances": {
+    "raiders": {
+      "guns": 1,
+      "melee": 1,
+      "backpacks": 1,
+      "chestRigs": 1,
+      "grenades": 1,
+      "earpieces": 1
+    },
+    "rogues": {
+      "guns": 1,
+      "melee": 1,
+      "backpacks": 1,
+      "chestRigs": 1,
+      "grenades": 1,
+      "earpieces": 1
+    },
+    "followers": {
+      "guns": 1,
+      "melee": 1,
+      "backpacks": 1,
+      "chestRigs": 1,
+      "grenades": 1,
+      "earpieces": 1
+    },
+    "cultists": {
+      "guns": 1,
+      "melee": 1,
+      "backpacks": 1,
+      "chestRigs": 1,
+      "grenades": 1,
+      "earpieces": 1
+    },
+    "arenaFighters": {
+      "guns": 1,
+      "melee": 1,
+      "backpacks": 1,
+      "chestRigs": 1,
+      "grenades": 1,
+      "earpieces": 1
+    },
+    "otherNonScavs": {
+      "guns": 1,
+      "melee": 1,
+      "backpacks": 1,
+      "chestRigs": 1,
+      "grenades": 1,
+      "earpieces": 1
+    }
+  }
+}

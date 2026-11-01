@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <Version>0.29.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <AssemblyName>EscapeFromBorderlands.Client</AssemblyName>
+    <SptGameRoot Condition="'$(SptGameRoot)' == ''">C:\SPT MODDED</SptGameRoot>
+    <EftManagedRoot Condition="'$(EftManagedRoot)' == ''">$(SptGameRoot)/EscapeFromTarkov_Data/Managed</EftManagedRoot>
+    <BepInExCoreRoot Condition="'$(BepInExCoreRoot)' == ''">$(SptGameRoot)/BepInEx/core</BepInExCoreRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(EftManagedRoot)/Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExCoreRoot)/BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExCoreRoot)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(EftManagedRoot)/UnityEngine.CoreModule.dll</HintPath>
+      <Aliases>global,CoreUnity</Aliases>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(EftManagedRoot)/UnityEngine.dll</HintPath>
+      <Aliases>LegacyUnity</Aliases>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Comfort">
+      <HintPath>$(EftManagedRoot)/Comfort.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(EftManagedRoot)/Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="LegendaryDefinitions.json" />
+    <EmbeddedResource Include="Audio/HolyHandGrenade.wav" LogicalName="EscapeFromBorderlands.Client.Audio.HolyHandGrenade.wav" />
+  </ItemGroup>
+<ItemGroup><Compile Include="../EscapeFromBorderlands.Shared/QuestItemEquivalence.cs" Link="QuestItemEquivalence.cs" /></ItemGroup>
+</Project>
