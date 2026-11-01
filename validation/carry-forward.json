@@ -1,0 +1,78 @@
+{
+  "version": "0.29.1",
+  "nativeBase": "0.28.2",
+  "upstream": "0.29.0",
+  "passed": 17,
+  "failed": 0,
+  "scope": "Byte preservation and targeted source contracts; behavioral/native API tests are separate.",
+  "checks": [
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Client/UseItemsAnywhereCompatibility.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Client/BackpackInventoryAccess.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Client/LegendaryHollywoodFx.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Client/LegendaryExplosionFx.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Client/BackpackPresentation.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Client/ItemDescriptionPatch.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Client/LegendaryQuestItems.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Server/LegendaryQuestItems.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Shared/QuestItemEquivalence.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Server/ApbsCompatibility.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Server/EarpieceCompatibility.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Separate native layer byte-preserved: src/EscapeFromBorderlands.Client/GrenadePackingSpeed.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Native core dependency and optional UIA/HollywoodFX load dependencies retained",
+      "status": "PASS"
+    },
+    {
+      "name": "Typed medical rules retain previous non-presentation tokens while adding status receipts",
+      "status": "PASS"
+    },
+    {
+      "name": "UIA-compatible last-priority grenade quick-select filter preserved",
+      "status": "PASS"
+    },
+    {
+      "name": "New backpack status uses the repaired native night-vision helper",
+      "status": "PASS"
+    },
+    {
+      "name": "New medical status reads the native interruption flag",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/src/EscapeFromBorderlands.Client/LegendaryRuntime.cs(264,39): warning CS8601: Possible null reference assignment. [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/combat/CombatTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/src/EscapeFromBorderlands.Client/LegendaryRuntime.cs(270,49): warning CS8604: Possible null reference argument for parameter 'bodyPart' in 'bool LegendaryRuntime.IsLimb(string bodyPart)'. [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/combat/CombatTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/combat/Stubs.cs(50,241): warning CS0649: Field 'MeleeRuntime.HeldState.Buildup' is never assigned to, and will always have its default value 0 [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/combat/CombatTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/combat/Stubs.cs(50,260): warning CS0649: Field 'MeleeRuntime.HeldState.AttackNumber' is never assigned to, and will always have its default value 0 [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/combat/CombatTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/combat/Stubs.cs(48,187): warning CS0649: Field 'AdvancedMeleeState.ChainPenetration' is never assigned to, and will always have its default value 0 [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/combat/CombatTests.csproj]
+PASS Last four bullets indicator follows live ammo boundaries, including empty
+PASS HUD reads never advance shot counters or consume buffs
+PASS ADS-only status appears and disappears with the actual aiming gate
+PASS Magazine-wide chamber check status activates immediately and clears on reload
+PASS Draw charge is spent once without keeping its permanent recoil penalty active in the HUD
+PASS Every-N shot uses the upcoming shot and resets its indicator after firing
+PASS After-pause cooldown counts down then becomes active
+PASS ADS charge timer stops displaying when aiming ends
+PASS Uninterrupted held-trigger effect ends on release
+PASS Binary status only exists in its real selected firing mode
+PASS Changing fire mode resets upcoming within-mode shot ordinal
+PASS Holstering, death and another weapon cannot inherit held-gun statuses
+PASS All gun catalog entries can be evaluated without creating inactive rows or shots
+PASS Melee charge hides after it is spent and stays separate from persistent relief
+PASS Emergency Access is hidden after the raid use is spent
+PASS Air Fare only shows when an extra jump is actually available
+PASS Status filtering removes all inactive rows and merges active/cooldown components
+PASS Variable-height rows stack without overlaps at every F12 scale
+PASS Actual melee health and AK-family eligibility gates hide unavailable bonuses
+PASS Actual night, sniper, empty-primary and bleeding gates drive melee statuses
+PASS Melee stationary recovery and stacked slash speed reflect committed state
+PASS All melee signatures evaluate without inactive rows
+PASS Expired native pain relief disappears after weapon switch
+PASS An empty held weapon retains its real time cooldown without an active-shot icon
+PASS Elephant Gun is a separate MP-43-1C slug-only design with 4 random bonuses
+PASS Elephant Gun applies its full signature to every actual slug cartridge
+PASS Buckshot and missing ammunition have no Elephant Gun signature
+PASS Mixed double barrels use the fired shell rather than the other chamber
+PASS Reloading an empty Elephant Gun uses incoming slugs or buckshot
+PASS Incoming buckshot overrides a loaded slug and incoming slugs override loaded buckshot
+PASS Native and other legendary shotguns do not enter Elephant Gun reload overrides
+PASS Elephant Gun reload state cannot survive a session reset or cross weapon copies
+PASS Actual reload Harmony hook chooses incoming ammunition before the native method
+PASS Actual reload Harmony finalizer removes failed slug reload state
+PASS Rejected reload requests never leave a slug override installed
+PASS Truly permanent firearm signatures do not add status rows
+PASS All ordinary prone and ADS families show only under their exact condition
+PASS Requiem shows its final-round package without showing its permanent base bonus
+PASS Kaban's Kebab only shows its periodic explosive cartridge
+PASS Unconditional melee stats do not display, while prone damage protection does
+PASS Instant target-hit and kill effects no longer pretend to be always-active buffs
+PASS Instant trigger receipts are per wearer, expire without polling refresh and preserve category filters
+PASS Charge and conditional cooldown labels never invent an Active 0s duration
+Combat status: 43/43 cases passed; 31815 assertions; 0 failures.

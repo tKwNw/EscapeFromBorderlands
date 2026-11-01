@@ -1,0 +1,25 @@
+# Native SPT 4.1.6 validation
+
+The .NET 10 runner combines EFB 0.29.0 upstream scenarios with native regression suites. A full run with --uia-dll has 26 jobs: 19 behavior/service suites (942 cases), native binding and selector/transpiler audits, a full database backpack-layout audit and an idle-layout performance audit, plus repeat native binding/selector audits with UIA present.
+
+```bash
+python3 tools/run_checks.py --references /path/to/native-export --server-directory /path/to/built/server --client-dll /path/to/built/client/EscapeFromBorderlands.Client.dll --dotnet /path/to/dotnet --output /path/to/checks --uia-dll /path/to/UseItemsAnywhere.dll
+```
+
+Use --suite NAME for a targeted rerun. Complete runs hash src/tests inputs and reject mid-run changes. Packaging verifies those hashes again. Clear test bin/obj folders before release verification. HollywoodFX-present and UIA-present metadata reruns execute serially after the base jobs to avoid concurrent builds of the same test project. Without --uia-dll, the runner executes the 24 jobs that do not require the optional binary.
+
+Latest/combat includes 43 cases covering Elephant Gun shell selection, recoil and reload callback cleanup. Latest/storage has 54 cases preserving old capacity, IDs, rolls and contents while enforcing new widths. Latest/navigation has 29 wrap/scroll/pocket cases; navigation/performance checks idle call counts. Latest/backpack-width enumerates all 1,340 production layouts using native exported item properties and native server models.
+
+Latest/earpieces runs 85 cases, including final permanent inspect stats, 30-metre Low-Profile triggers, Matamata Turtle, final local audio input and source restoration. Latest/grenades runs 199 cases, including Curtain Call, 9-Banger, recharge/charges, flash protections and embedded draw audio. Latest/explosionfx runs 19 absent-renderer cases and 5 optional-renderer-present cases with production adapters/Harmony hooks and explicit engine doubles.
+
+Rigs retains the extra native First Responder regression (140 cases). BackpackFireball is the executed 37-case native fireball/tripwire suite; Latest/fireball supplies shared boundary doubles. Native server integration runs 52 service/registration cases. Quest tests execute native kill/use/server hooks and atomic mixed-request handover rejection. Other native inspection, presentation and melee regression suites remain included.
+
+NativeBindings uses a separate target map to inspect actual native Harmony targets and arguments. NativePortAudit extracts actual selector/transpiler bodies and evaluates them against metadata-only native types and decoded IL. It adapts typeof/nameof/async attributes and loaded-assembly access for MetadataLoadContext. The optional HollywoodFX target group is explicitly skipped when its assembly is absent. Controlled present/absent adapter tests are separate from native metadata verification.
+
+Additional scripts: tools/audit_reflection.py, tools/native_semantics.py, tools/validate_port.py, tools/audit_assets.py, tools/audit_uia.py, tools/audit_carry_forward.py, tools/audit_statuses.py and tools/text/check_description_numbers.mjs. Run each with --help where applicable. audit_assets.py requires the upstream and previous native source baselines to reproduce byte-preservation checks. package_release.py validates the completed evidence and emits exactly Source and Runtime.
+
+Completed reports/logs, tested input hashes, source delta, package manifest and archive integrity are under validation/. Native method checks and controlled engine tests do not execute live game rendering, physics, animations, audible output or complete server startup. AUDIT.md records these limits.
+
+The grenade suite adds 27 UIA cases using production EFB compatibility and charge code with explicit optional-mod boundaries. UiaOrder installs real Harmony patches in both load orders against controlled EFT/UIA-shaped classes and runs 11 cases. Its UIA query rewriter is modeled from the supplied 2.1.6 binary. audit_uia.py independently checks that binary's GUID, signatures, target table, patch owner/priority and wheel callers. NativePortAudit with --uia-dll loads real optional metadata and models its collector substitution on all 4 overlapping native IL paths before running the production EFB transpiler. UIA's native transpiler and game code do not execute in these audits. The reference export lacks ItemTemplate.Types for direct native CLR execution; no fabricated game binary is included.
+
+Latest/versioning checks both compiled assemblies against 0.29.1, including plugin/server declarations and exact file/product metadata. The spawns suite now has 52 cases including 18 airdrop cases. Rigs retains the extra native First Responder regression alongside all upstream status cases (140 total). audit_statuses.py regenerates the static inventory for all 1,508 named designs with current native source hashes. audit_carry_forward.py verifies the separate native compatibility/repair layers against the corrected native 0.28.2 source. PORTING.md records mandatory future merge requirements.

@@ -1,0 +1,63 @@
+PASS All 48 approved melee variants are active; discarded entries stay absent
+PASS All four retired Labrys/hammer variants resolve without Legendary bonuses or active melee state
+PASS Every melee instance gets four distinct stable melee modifiers and different items can differ
+PASS Point Taken affects stabs only and composes once with random damage/penetration
+PASS Standard Issue accepts either primary and EFB AK-74 clones, excludes backpack and AK-105
+PASS Spy Main rear hits receive 7.66x damage; front/side hits receive ordinary damage
+PASS Shark Bite requires an existing bleed before its hit
+PASS Roberto applies heavy bleed only on flesh-damaging stabs
+PASS Red Tide increments once per successful attack, caps at +300%, and resets on holster
+PASS Third Time's the Chop counts missed attacks, empowers every third, and resets on switching
+PASS Crash Test adds fifty absolute penetration after randomized multiplication
+PASS Survival Clause uses total health at or below forty percent and ends immediately above it
+PASS Full Stride samples movement controls on impact, including movement without displacement
+PASS Blood Bank heals ten total HP only once per flesh attack and never restores blacked parts
+PASS Trench Foot boosts leg damage and fractures only flesh-damaging leg hits
+PASS Bodycam Off and Gladius restore maximum Leg Stamina on confirmed kills once
+PASS Movement bonuses scale horizontal motion and motor limits once; vertical motion and holstered movement stay native
+PASS Summit and Trailblazer affect only jump/sprint Leg Stamina; restoration and other consumption remain native
+PASS The Source adds 25% ballistic jump height and grants fall immunity only when held at landing
+PASS Spy Main reduces native movement audio and AI step power without reducing gunshots
+PASS Swing speed, reach, and inspect attributes include signature and random modifiers
+PASS Draw/holster bonuses do not leak into later attack animation speed
+PASS Every Legendary Red Rebel satisfies the Red Rebel requirement while equipped, whether drawn or holstered
+PASS Red Rebel compatibility preserves native successes and cannot bypass unrelated extraction requirements
+PASS Every Red Rebel inspect description contains only weapon and effect information with no extraction wording
+PASS Ordinary and third-party melee never resolve or modify combat
+PASS Wombo Combo requires a flesh slash and spends its empowered stab even on a miss
+PASS Forwarded Notice requires two seconds of actual sprinting and spends its damage/reach charge
+PASS Damascus Delivery grants movement and sprint stamina benefits while preserving carried weight
+PASS Catch Your Breath restores maximum Leg Stamina after three stationary seconds and movement ends recovery
+PASS Borrowed Pulse restores Leg Stamina only when bleeding existed before a flesh hit
+PASS Outta Options checks all equipped primary cartridges, excludes holster/backpack, and requires a primary
+PASS Rifleman's Ration restores Arms, clears Tremor, and refreshes its own 600-second painkiller after holstering
+PASS True Believer uses the live raid clock with inclusive 20:00 and exclusive 06:00 boundaries
+PASS Low Tide affects crouched movement but leaves standing/prone movement alone
+PASS Rib Reaper applies exactly thirty additional stomach HP damage after a flesh chest slash
+PASS Jarate accepts every sniper-category rifle in either primary, excludes marksman rifles and backpack
+PASS Hatchet Job modifies head slashes only, including penetration
+PASS Stitch Witch removes the wielder's bleeding only on a confirmed melee kill
+PASS Hoodoo removes only its own pain suppression on holster and preserves medicine effects
+PASS Paul Bunyan empowers only the first attempted attack per draw; a miss consumes it
+PASS Blood Pressure activates only during an existing bleed
+PASS Cutting Season ramps following slashes from zero to one hundred percent, and stabs reset it
+PASS Campfire Break restores five total HP per second across living injured parts only
+PASS Sleeping Bag Protocol applies fifty percent protection only while prone
+PASS Scramble Insurance changes vault/climb speed and Leg costs without changing jump or Arm costs
+PASS Air Fare gives one half-height jump, consumes native stamina, and cannot re-arm by switching in midair
+PASS Air Fare re-arms on a new ground jump and preserves ceilings and native jump restrictions
+PASS Foxhole Foreman reduces crouched explosion and fragment damage only
+PASS Countermeasure arms on direct external damage and consumes the next attempted attack without stacking
+PASS Restraining Order protects against marked attackers only, and clears immediately on switching
+PASS Tip of the Argument always adds fifty percent reach and boosts horizontal long-range stabs only
+PASS Roman Numerals tracks actual flesh stabs separately by victim and body part
+PASS Public Forum counts nearby living enemies, excludes friends, and caps attack speed
+PASS Session cleanup removes owned painkillers without touching medicine or unchanged carried weight
+PASS Emergency Access opens one locked door without breach eligibility and leaves its four-modifier item identity intact
+PASS Walls, unlocked doors, non-interactive barriers and refused unlocks do not spend the master-key charge
+PASS Emergency Access shares its raid charge across copies, holsters and recreated actors with the same profile
+PASS Master-key use is per player and re-arms only in a new raid world
+PASS Door probe requires an active melee strike, native unobstructed targeting and actual melee range
+PASS Linked door colliders resolve, while ordinary and holstered axes cannot use master-key logic
+PASS Native interaction failures are contained and reentrant callbacks cannot unlock a second door
+RESULT 62/62

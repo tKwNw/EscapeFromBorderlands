@@ -1,0 +1,40 @@
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/BackpackFireball/Stubs.cs(11,76): warning CS9113: Parameter 'owner' is unread. [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/BackpackFireball/FireballTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/BackpackFireball/Stubs.cs(10,100): warning CS9113: Parameter 'value' is unread. [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/BackpackFireball/FireballTests.csproj]
+PASS Missing native draw event is completed at release
+PASS Missing finish event recovers during cooldown
+PASS Missing draw AND finish recover after backpack is dropped
+PASS Ordinary native completion keeps grenade controls usable
+PASS Free throw does not consume inventory grenades
+PASS Carried grenade release never enters free-grenade handler
+PASS Late duplicate draw event does not steal restored input
+PASS Late duplicate draw after normal draw is ignored
+PASS Unrelated inventory activities are preserved
+PASS Cancelled pre-spawn quick use leaves normal grenade input
+PASS Native failure after spawning quick hands is recovered
+PASS Exception after spawning quick hands is recovered
+PASS No animation release recovers at bounded timeout without charging cooldown
+PASS A failed return-to-weapon operation can retry
+PASS Temporary activity is cleaned after a successful hand return
+PASS A removed previous weapon falls back to empty hands
+PASS Dead player is not re-equipped by recovery
+PASS Asset failure falls back to ordinary carried grenades
+PASS Dropping bag while assets load cancels only the free throw
+PASS Cooldown remains shared when Fireball is re-equipped
+PASS Regular backpacks and predicates retain native selection
+PASS Real grenade in hands is never replaced by Fireball
+PASS New raid does not inherit temporary grenade or cooldown
+PASS Fireball preserves the chosen real grenade AND slot icon
+PASS Fireball with no carried grenades leaves an empty grenade slot
+PASS Real grenade selection still changes normally after Fireball
+PASS Grenades from other systems are not filtered by address or template
+PASS Jigsaw places a real tripwire with no carried installation kit
+PASS Jigsaw preserves a real installation kit when one is carried
+PASS Jigsaw cannot bypass invalid placement geometry
+PASS Jigsaw cannot bypass native inventory validation
+PASS Jigsaw cannot create a trap without a real grenade
+PASS Removing Jigsaw after planning removes the kitless permission
+PASS Normal tripwire placement still consumes the carried kit and grenade
+PASS Other backpacks do not grant kitless placement
+PASS Native AI kitless placement remains unchanged
+PASS Placement hook only targets the parameterless native execution method
+Grenade and tripwire repairs: 37/37 cases passed; 155 assertions; 0 failures.

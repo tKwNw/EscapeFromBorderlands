@@ -1,0 +1,86 @@
+{
+  "passed": 20,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Client/LegendaryDefinitions.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Server/LegendaryDefinitions.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: config/config.json",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Client/RarityResolver.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Client/EarpieceEffects.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Client/EarpieceEffectRules.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Client/WavePcm.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Client/Audio/HolyHandGrenade.wav",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Client/Audio/README.md",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Client/ElephantGunRules.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Client/BackpackStorageVariants.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Current upstream bytes preserved: src/EscapeFromBorderlands.Server/BackpackStorageVariants.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Previous native repair code preserved: src/EscapeFromBorderlands.Client/BackpackPresentation.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Previous native repair code preserved: src/EscapeFromBorderlands.Client/LegendaryQuestItems.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Previous native repair code preserved: src/EscapeFromBorderlands.Server/LegendaryQuestItems.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "Previous native repair code preserved: src/EscapeFromBorderlands.Shared/QuestItemEquivalence.cs",
+      "status": "PASS"
+    },
+    {
+      "name": "All previous raw variants identities retained",
+      "status": "PASS"
+    },
+    {
+      "name": "All previous raw legacyAliases identities retained",
+      "status": "PASS"
+    },
+    {
+      "name": "Native inspection retains typed fields, Examined gate and guarded logging",
+      "status": "PASS"
+    },
+    {
+      "name": "No unresolved source or test merge markers",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+PASS Ordinary extraction durations are halved exactly while the pass is worn
+PASS Only the actual extraction entry's wearer receives the time change
+PASS Run-throughs become Survived and other outcomes retain their semantics
+PASS Shared exits queue only the wearer at the halfway deadline
+PASS Shared shortcuts require presence, life, a worn pass and every native requirement
+PASS The normal shared completion path remains in charge after its full deadline
+PASS Ordinary UI countdown matches actual elapsed extraction time
+PASS Shared UI applies the half duration before native elapsed subtraction
+PASS Removing the pass refreshes the ordinary timer with the remaining normal duration
+PASS Equipping the pass during an existing extraction refreshes the shortened timer
+PASS Removing the pass restores shared timing without changing the world clock
+PASS Leaving an extraction and session reset clear timer presentation state
+PASS Unrelated exfil UI events preserve the current extraction context
+PASS The individual transpiler changes one player duration and preserves the shared field read
+PASS Transpilers preserve native labels and local operands
+PASS Both extraction UI duration reads receive the scoped adapter
+PASS Unexpected native countdown shapes reject the patch instead of changing the wrong timer
+PASS The Stop prefix upgrades only the matching local player's successful run-through
+Visitor's Pass client: 18/18 cases passed; 70 assertions; 0 failures.

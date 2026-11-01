@@ -1,0 +1,55 @@
+PASS Every Legendary backpack has nine current layouts plus legacy compatibility
+PASS Both sides derive identical template IDs, dimensions, effects and weights
+PASS Repeated catalog expansion and loading never duplicate or grow layouts
+PASS Four random bonuses include each requested row/column amount
+PASS Identical-layout copies can retain different remaining random boons
+PASS Existing bags retain selected boons, unrelated values and permanent storage while weight boons update
+PASS Gun and melee random modifiers remain unchanged
+PASS Rolls survive item save/load, cache reset and unrelated resolution order
+PASS Template IDs are stable across cultures
+PASS Native server grids add rows/columns once, retain external size and other pockets
+PASS Existing fixed storage signatures compose with both random dimensions
+PASS Edge-cell loot survives a native template and inventory JSON round trip
+PASS Storage boons have the same 40% marginal as each of ten random bonuses
+PASS Standalone/APBS combined fraction remains 0
+PASS Standalone/APBS combined fraction remains 0.0025
+PASS Standalone/APBS combined fraction remains 0.01
+PASS Standalone/APBS combined fraction remains 0.1
+PASS APBS-filtered layouts are not reintroduced and still meet the combined target
+PASS Boss pools use their natural backpack sources and the same layout weights
+PASS Backpack rollout does not alter gun/melee weighting
+PASS Exactly one mystery identity per signature, excluded from all spawn pools
+PASS Flea previews show the signature, four question marks and neutral boons
+PASS Only mystery stock is generated; vanilla, third-party guns and EFB guns keep normal flea behavior
+PASS Purchase layout draws retain the four-of-ten boon probabilities
+PASS Bulk purchase reveals each cloned bag independently without touching offer stock
+PASS Owned, legacy, gun and vanilla inventory entries never reroll through the reveal path
+PASS Paratus-style pockets remain below the main compartment for every storage size
+PASS Side and lower pockets move only along the grown dimension
+PASS All original Mechanism pockets keep their positions with six extra compartments
+PASS Long-gun sleeve remains beside the entire native layout
+PASS Native 4.0.13 targets and argument bindings match production hooks
+PASS Every old storage identity and instance roll survives corrected target descriptions
+PASS Rush Hour-style storage expands the largest grid even when listed last
+PASS Largest-grid selection works independently of native grid order
+PASS Equal-area compartments choose the first stably before any expansion
+PASS Added restricted gun sleeves never take the normal compartment's storage boon
+PASS Legacy templates retain cells that may already contain saved loot
+PASS Client placement follows the resized largest grid at any index
+PASS All new purchases and bot candidates use corrected layouts with unchanged family weights
+PASS Existing and new Visitor's Pass bags become Survived at the server boundary
+PASS Server outcome normalization preserves every non-run-through result
+PASS Carried Visitor's Pass bags and other backpacks keep normal run-through rules
+PASS Visitor's Pass description lists all three effects and every clone inherits them
+PASS Feather Light removes only its cloned frame weight and equipment penalties for all saved layouts
+PASS Flat Pack's four IDEA pockets expand without overlapping in every owned layout
+PASS Growing all pockets propagates both horizontal and vertical spacing
+PASS Owned Spare Hands legacy row roll expands the largest compartment without removing saved cells
+PASS New Spare Hands storage rolls apply only to the largest native compartment
+PASS All legacy rolled backpacks correct largest storage additively and preserve old occupied coordinates
+PASS Legacy correction does not double-expand bags whose first compartment is already largest
+PASS New 6-wide backpack rolls cap columns at 1 without changing row or effect chances
+PASS Owned 8-wide layouts retain their IDs, columns and cells but no longer generate
+PASS New flea reveals never select a capped +2-column layout
+PASS Narrower backpack bases retain their original +2-column layouts
+Storage expansion: 54/54 cases passed; 347958 assertions; 0 failures.

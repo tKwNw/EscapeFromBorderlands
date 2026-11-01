@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <Version>0.29.1</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <AssemblyName>EscapeFromBorderlands.Server</AssemblyName>
+    <SptGameRoot Condition="'$(SptGameRoot)' == ''">C:\SPT MODDED</SptGameRoot>
+    <SptServerRoot Condition="'$(SptServerRoot)' == ''">$(SptGameRoot)/SPT_Runtime</SptServerRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="0Harmony"><HintPath>$(SptServerRoot)/0Harmony.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.Common">
+      <HintPath>$(SptServerRoot)/SPTarkov.Common.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SPTarkov.DI">
+      <HintPath>$(SptServerRoot)/SPTarkov.DI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="SPTarkov.Server.Core">
+      <HintPath>$(SptServerRoot)/SPTarkov.Server.Core.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="SemanticVersioning">
+      <HintPath>$(SptServerRoot)/SemanticVersioning.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="LegendaryDefinitions.json" />
+  </ItemGroup>
+<ItemGroup><Compile Include="../EscapeFromBorderlands.Shared/QuestItemEquivalence.cs" Link="QuestItemEquivalence.cs" /></ItemGroup>
+</Project>

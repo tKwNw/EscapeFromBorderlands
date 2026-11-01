@@ -1,0 +1,86 @@
+PASS 39 approved signatures cover exactly 11 standalone native bases
+PASS 3900 physical copies roll 4 distinct compatible bounded bonuses with stable seeds
+PASS Checks require the correct completed action and share cooldowns between copies
+PASS Cold Open charges exactly 3 cartridges and 1 damage snapshot covers all pellets
+PASS Dead Channel starts at 1 second; all WASD motion cancels it
+PASS Hearing bonuses multiply, keep own sounds unchanged and select maps/footsteps
+PASS Low-Profile accepts melee and grenade kills at 30 metres; kills refresh without stacking
+PASS Shaggy Special counts grounded horizontal walking and sprint resets progress
+PASS Grounded and Quiet Hours preserve stamina and sway thresholds
+PASS Budget Cuts restores once when Arm Stamina crosses to 0
+PASS Hostile firearm flesh damage triggers Loose Wire and post-hit Photo Finish only
+PASS Sprint stop, sideways recoil, crouched recoil and ADS walking are distinct conditions
+PASS Garrote Wire and I Knocked apply the approved movement/damage values
+PASS Tempo Shift counts 5 cartridges; 2nd Verse only follows a repair event
+PASS Crossfade waits for completed melee-to-firearm draw and Band Hopper speeds both halves
+PASS Feedback Loop selects 1 reachable physical copy and discards excess time reduction
+PASS Food completion, medical protection and medical speed distinguish canceled food and actual meds
+PASS High Fidelity applies only after continuous ADS and Double Take cannot accumulate charges
+PASS Fast Clock and Tin Foil Crown scale only the grenade contusion adapter
+PASS Clear Reception changes recoil return parameters and restores them after processing
+PASS Matamata Turtle preserves both gun queue channels locally without changing native caches
+PASS Inside Voice, Deep Listening and Mute Point keep local and emitted noise separate
+PASS Expanded source ranges do not compound during repeated occlusion updates
+PASS Ambient profile filtering clones the native template and reset suppresses reconstruction
+PASS Distant stereo sources preserve their independent channel cache
+PASS Equipment audio expands its early cutoff while the final range scales exactly once
+PASS Pain and tremor filtering scales only the injury vector
+PASS Medical animation speed refreshes on movement and earpiece removal
+PASS Ordinary firearm caches restore after the last equipped legendary is removed
+PASS Earpiece HUD visibility has its own setting and does not follow gun visibility
+PASS Ambient changes refresh the actual MonoBehaviour audio singleton and restore on unequip
+PASS Ambient refresh is retried when the audio controller becomes available
+PASS Matamata Turtle reaches deferred stereo playback with no manual registration or patch calls
+PASS Native channel interpolation applies a fresh factor without changing cached volumes
+PASS First actor-owned source update extends hearing before the next maintenance tick
+PASS Primary and secondary steps share 1 hearing expansion, including the early sampling gate
+PASS Native clip distance selection follows hearing while own audio stays unchanged
+PASS Deep Listening updates actively playing enemy footsteps and gunfire when going prone
+PASS Pooled gun sources stay at native volume for Matamata Turtle and restore after the listener unequips
+PASS Only the 9 unconditional earpiece signatures stay off the HUD
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP01-1
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP02-1
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP02-5
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP04-2
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP04-3
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP04-4
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP05-4
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP08-1
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP08-2
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP08-3
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP09-5
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP10-1
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP11-2
+PASS Conditional headset HUD follows its actual gate and ends immediately: EP11-3
+PASS Cold Open shows the 1st ready cartridge before firing without spending a charge
+PASS Instant walk recovery reports its trigger briefly without inventing a timed buff
+PASS All 39 headset descriptions retain exactly 1 signature through panel refresh
+PASS Native scheduled gun output refresh survives a bypassed/inlined lower-level updater
+PASS Matamata Turtle preserves own and other-character body, automatic and tail playback
+PASS I Knocked HUD follows successful breach, active duration, cooldown and unequip
+PASS All triggered headset signatures expose activations, shot charges or cooldowns
+PASS Every random bonus reaches its worn audio, stamina or aiming/draw adapter and restores
+PASS High Fidelity composes native velocity and center-of-impact deltas after the ADS threshold
+PASS Rain Check reaches the production weather factor and composes with the backpack filter
+PASS Matamata Turtle hearing doubles other-character step, gear and voice range and stacks with Far Signal
+PASS Matamata Turtle leaves shared reload and explosion mixer controls at native levels
+PASS Native headphone refresh changes shared levels normally while gunshots stay at native volume
+PASS Removing Matamata Turtle restores source output without replacing current native settings
+PASS Matamata Turtle does not require or modify mixer initialization during equip or reset
+PASS Switching from Matamata Turtle preserves another headset's conditional gun volume
+PASS Both physical gun channels start at native volume even when the earlier native updater is bypassed
+PASS Reload and equipment audio remain audible before and after actual gun queue playback
+PASS A source released by a gun queue can play an explosion at native volume and range
+PASS Unrelated audio inside a firing callback is not classified as a gunshot
+PASS Matamata Turtle slows walking and sprinting by 20% and restores on removal
+PASS Self Muffle reaches both native step-bank inputs and stereo caches exactly once
+PASS First-person step controller is recognized without an outer Player scope
+PASS SimpleSource one-shot gain stays outside the native volume cache
+PASS SimpleSource looping input and pooled stereo release remove only the local baked factor
+PASS Local step input never changes other actors or unrelated sound banks
+PASS Own equipment input includes Inside Voice and Self Muffle and leaves other actors native
+PASS Every legendary headset gets per-copy stats with stable identity and unmodified native template
+PASS Headset inspection and comparison bind exact copies before native panel reads
+PASS Displayed permanent hearing excludes map triggers and includes Matamata and Inside Voice composition
+PASS Inventory sound scope installs on both native overloads and composes local volume
+Earpieces: 85/85 cases passed; 87815 assertions; 0 failures.

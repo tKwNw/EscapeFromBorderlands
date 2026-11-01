@@ -1,0 +1,20 @@
+PASS queued grenade descriptors retain different radii without touching the shared effect
+PASS all six native particle branches scale per-emission size and travel without changing buffers
+PASS secondary explosions use their own effective radius rather than their parent's scale
+PASS smoke children, smoke signatures and ordinary grenades retain their native visual descriptors
+PASS flash grenades with zero blast radius scale from their final blindness radius
+PASS impact FX use their absolute radius and authored particle envelope
+PASS missing particle samples and invalid radii have finite safe fallbacks
+PASS non-grenade effects are not captured even inside a legendary scope
+PASS native and adapter failures restore nested scopes and do not block damage
+PASS scaled basic visuals clone their pool slot and leave simultaneously playing native particles unchanged
+PASS owned particle instances recycle only after completion and reset destroys only owned objects
+PASS FX maintenance errors fail safely and idle visuals expire
+PASS decorative spark travel scales per event without changing shared emitter state
+PASS raid changes remove all private visual leases
+PASS queued scaling survives bypassed capture and effect-prefix callbacks
+PASS basic particle clones preserve authored world scale including scaled parents
+PASS queue and playback diagnostics identify legendary scale without repeated spam
+PASS native visual dispatch preserves renderer replacement hooks with empty native particles
+PASS optional HollywoodFX adapter skips cleanly when no renderer assembly is loaded
+Explosion FX: 19/19 cases passed; 102 assertions; 0 failures.

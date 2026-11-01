@@ -1,0 +1,205 @@
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/grenades/ProductionSmokeLifecycle.cs(83,41): warning CS8602: Dereference of a possibly null reference. [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/grenades/GrenadeTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/grenades/ProductionSmokeLifecycle.cs(101,39): warning CS8605: Unboxing a possibly null value. [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/grenades/GrenadeTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/src/EscapeFromBorderlands.Client/BackpackUseAnimationPatch.cs(16,110): warning CS8604: Possible null reference argument for parameter 'item' in 'float BackpackNative.UseFactor(Player p, Item item)'. [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/grenades/GrenadeTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/src/EscapeFromBorderlands.Client/BackpackGrenadeAction.cs(192,17): warning CS0184: The given expression is never of the provided ('SetInHandsEventArgs') type [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/grenades/GrenadeTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/src/EscapeFromBorderlands.Client/BackpackGrenadeAction.cs(192,71): warning CS0184: The given expression is never of the provided ('RemoveFromHandsEventArgs') type [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/grenades/GrenadeTests.csproj]
+PASS Two copies use A,A,A,B,B,B rather than sharing a pool
+PASS Both spent copies fall through to an ordinary grenade
+PASS A preferred copy remains selected when inventory enumeration order changes
+PASS Manual selection of another copy changes the pin without merging counts
+PASS Selecting a normal grenade explicitly is respected
+PASS Unexamined copies do not bypass the native examined predicate
+PASS Merely selecting and cancelling a grenade spends no charge
+PASS A failed projectile factory spends nothing and another draw can retry
+PASS Duplicate release events create exactly one projectile and spend one charge
+PASS A spent copy cannot create additional projectiles
+PASS Drop and pickup preserve spent charges, including a new object with the same ID
+PASS Dropping a fully empty copy cannot refill it
+PASS Moving a copy between carried containers retains its count and bonuses
+PASS A transfer between players in the same raid keeps remaining charges
+PASS A controller cannot throw a copy after it has left that player's inventory
+PASS A dead player cannot spend a charge or spawn a grenade
+PASS An unavailable projectile hook cannot consume the real legendary item
+PASS A new raid refills charges while retaining the same four random bonuses
+PASS Four grenade bonuses have deterministic five-percent rolls with per-copy variation
+PASS Every projectile has a unique ID and carries the exact source copy's blast bonuses
+PASS Projectile bonuses are a snapshot even if the source roll object changes
+PASS Removing the inventory copy after release does not remove its projectile bonuses
+PASS Native position, force, rotation and fuse prewarm reach the projectile unchanged
+PASS Explosion modifiers do not mutate shared vanilla data or other grenades
+PASS Native underhand release spends one charge and keeps the underhand notification
+PASS Throw distance applies this copy's boon at the actual native force adapter
+PASS Throw distance composes with the existing rig and backpack effects
+PASS Nested explosion modifiers compose multiplicatively without changing attribution
+PASS Held charges share a row with per-copy stowed recharge countdowns
+PASS Every grenade design shows stowed counts only between empty and full
+PASS Stowed count follows empty-to-full recharge without changing deadlines
+PASS Hiding grenade statuses does not refill or stop charges
+PASS Inspect descriptions refresh the exact copy's counter without duplicate blocks
+PASS Only the single native factory item read receives a proxy adapter
+PASS Missing or duplicate native factory item reads reject the transpiler
+PASS Reservations prevent two controllers spending the same charge concurrently
+PASS Cancelled, duplicate, stale and foreign completions cannot spend charges
+PASS Ledger capacity cannot be raised by resolving the same ID with another capacity
+PASS Thousands of successful and failed reservations never overspend or share charges
+PASS Client and server agree on the grenade identity, charges and prototype spawn policy
+PASS The retired Prapor offer is removed while unrelated stock is preserved
+PASS Held-key quick selection omits empty copies while retaining normal grenades
+PASS Quick-selection filtering leaves cached source lists intact
+PASS An exhausted last copy disappears from the wheel and returns next raid
+PASS A stale selector result cannot return an exhausted grenade
+PASS Empty quick-slot draws return a completed failure without a pretend throw
+PASS Holstering retains the cooldown and hides only the charge counter
+PASS Bot grenade-only inventory searches skip spent copies and retain all other items
+PASS Grenade loot odds have independent standalone, APBS and boss percentages
+PASS Zero grenade chance removes imported legendaries without changing other pools
+PASS Filtered vanilla sources cannot produce legendary grenades
+PASS Scavs stay excluded while expanded non-PMC factions receive grenade registrations
+PASS Spawn master switches and retired definitions disable grenade injections
+PASS Adding more grenade signatures does not multiply the configured category share
+PASS Config migration adds independent grenade rates and preserves user settings
+PASS Existing explicit grenade zeros are preserved by migration
+PASS Server registers one native grenade-pool postfix and leaves other loot untouched
+PASS Actual server postfix converts native pools using standalone, APBS and boss settings
+PASS Approved catalog contains exactly 37 designs, charge exceptions and unchanged Encore identity
+PASS Each design rolls exactly 4 compatible, distinct, stable random bonuses
+PASS Recharge starts on successful spending and does not reset on another throw
+PASS Independent deadlines survive stowing, drop/pickup, hidden HUD and long catch-up
+PASS Failed throws and reservations never start recharge; refill starts a fresh clock
+PASS Holy Hand Grenade uses 300 seconds while Small Claims and Shagbag retain 180
+PASS HUD full, held, stowed, empty and 2:45 examples reflect the live ledger
+PASS Semtax adheres to its first surface and follows moving and rotating scenery
+PASS Semtax can attach to enemies; ordinary grenades keep native collision handling
+PASS Encore repeats 1 full explosion after exactly 1 second without another charge
+PASS M.I.R.V. creates exactly 3 normal F-1 grenades with separate IDs and no legendary inheritance
+PASS Raid cleanup cancels pending secondary explosions
+PASS Side Business adds an immediate 15-second smoke cloud exactly once
+PASS Holy Hand Grenade has a fixed 3-second projectile fuse
+PASS Street Sweeper, Little Lemon, Baseball, Big Bang and Shagbag apply their approved static modifiers
+PASS Danger Zone, Ankle Biter and Point Blank boost only their intended blast targets
+PASS Small Claims snapshots pistol-only equipment at release
+PASS Juggernaut blocks only the thrower's own grenade blast and fragments
+PASS Iron Curtain protects against native Bullet-tagged grenade fragments and blasts
+PASS Red Notice requires a real fragment flesh hit and excludes blasts and stopped rounds
+PASS Fragment damage bonus scales actual shots and leaves unrelated projectiles unchanged
+PASS Blast Em replaces only the native blast falloff curve
+PASS Throw-triggered buffs start after release, refresh without stacking and expire exactly
+PASS Rapid Response is consumed by 1 firearm draw rather than queries
+PASS Fast Forward headset speeds ordinary and reusable grenade draw/throw without spending charges
+PASS Sun Staring Champion removes self flash and concussion while retaining enemy effects
+PASS Neuralyzer expands visual flash without expanding audio radius or bypassing cover
+PASS Daylight Robbery marks only successfully flashed targets for the thrower's bullets
+PASS Flash Push grants 40% less recoil for 8 seconds after a successful flash
+PASS Big Bang flashes on each detonation, not just the last charge
+PASS Smoke grenades retain native emission bindings and per-projectile duration bonuses
+PASS Fog of War doubles every cloud dimension and composes its random size roll
+PASS Pop Smoke reaches its peak immediately and restores pooled emission settings
+PASS Smoke growth modifiers bind before the native in-hand fill coroutine starts
+PASS Smoke-area movement, recoil, packing, medicine and recovery are owner-only within 8 m
+PASS Still Waters requires crouching and overlapping matching smokes do not stack
+PASS Trailblazer keeps its native fuse minimum and waits for first landing before its cloud
+PASS All 37 grenades share the configured spawn budget and retain source filters
+PASS Green Room accelerates medical animation during the native controller transition
+PASS Recharge settings are configurable, sanitized and frozen for each raid
+PASS Immediate smoke preserves its full-size curve sample for its entire 15-second lifetime
+PASS Side Business still deploys after its thrower leaves the active-player list
+PASS Reset magazine packing loses its bonus when its 10-second timer expires mid-operation
+PASS FOB magazine packing rechecks smoke range for each round in both directions
+PASS Live packing changes preserve native elite progress and restore stored fields
+PASS Door Breaching opens only nearby closed, unlocked, operatable swing doors
+PASS Every Trailblazer drop ignores all parent colliders while keeping scenery collisions
+PASS Trailblazer collision isolation never applies to unrelated or ordinary grenades
+PASS Fog of War scales visible Local and Shape particles in all dimensions
+PASS Smoke reattachment and pool reuse restore particle modes without accumulating scale
+PASS Trailblazer child smoke retains vanilla particles while other legendary smoke uses its size roll
+PASS Trailblazer samples every 5 horizontal metres across frames and changing height
+PASS Trailblazer immediately drops an ordinary M18 and creates a wall until landing
+PASS Trailblazer short throws retain the immediate drop and final cloud
+PASS Dropped M18 grenades wait for landing, keep vanilla clouds and never recurse
+PASS Smoke ownership binds at release even without the separate native factory postfix
+PASS All 5 smoke bonuses follow actual emission instead of component enabled state
+PASS Still Waters refreshes weapon recoil caches when crouching and leaving smoke
+PASS Matching smoke statuses are grouped and react to crouching and pool disposal
+PASS Pop Smoke defers held particles and keeps its full area through growth without blocking cleanup
+PASS Pop Smoke replaces only its obsolete growth roll and retains saved 0.21.1 bonuses
+PASS Reviewed balance changes use 4x Big One radius, 25-metre flash and 15 Shagbag charges
+PASS Previously breached closed doors reopen repeatedly while locked and non-operatable doors stay closed
+PASS APBS 1-percent defaults preserve explicit rates and legacy settings during migration
+PASS All 37 grenade designs show the same adjusted stats as their actual projectile
+PASS Encore copies keep separate stat values through session resets and inspection order
+PASS Repeated inspection preserves shared templates, other attributes, native delegates and charges
+PASS Fragment damage reads ballistic ammunition and count uses native away-from-zero rounding
+PASS Holy Hand Grenade and signature fragment counts appear without modifying inventory fuse
+PASS Flash rows match Big Bang fixed limits and Neuralyzer signature plus random rolls
+PASS Fog of War stats match actual visible cloud and rounded lifetime
+PASS Pop Smoke reports instant deployment and compatible copies show their actual growth bonus
+PASS Draw, throw and range rows reflect the copy's own multipliers
+PASS Inspection and comparison bind existing copies and add late fragment data once
+PASS Extra rows use supported native icons while other mods' enum ids stay untouched
+PASS Conditional target bonuses stay conditional rather than inflating base damage stats
+PASS Flash prototypes match approved bases, charges, recharge and burst parameters
+PASS Curtain Call uses a private native impact template and a 3-second backup fuse
+PASS 9-Banger produces exactly 9 native flashes over 2 seconds with 1 charge
+PASS Repeated flashes retain full per-copy radius and duration without damage or fragments
+PASS Flash pulses reevaluate cover and facing through the existing flash adapter
+PASS New flashbangs do not grant thrower immunity
+PASS Empty 9-Banger copies keep independent charge timers and regenerate after 300 seconds
+PASS 9-Banger recharge is isolated from ordinary grenade settings and freezes for the raid
+PASS Flash burst stops on session reset and cannot leak into another world
+PASS Duplicate detonation callbacks schedule only 1 flash sequence
+PASS Flash pulse inspection rows match actual signatures without mutating shared templates
+PASS Both new flash designs use existing grenade spawn and flea settings
+PASS Daylight Robbery displays the real owned marked-target duration without spending charges
+PASS Marked-target statuses stay owner-scoped and clear at raid reset
+PASS Quest item identity adapter supports every EFB item category and preserves native decisions
+PASS Quest category matching honors the native FindItem category gate
+PASS Quest identity adapter preserves specific legendary and unrelated third-party requirements
+PASS Equipment identity augmentation supports both native input paths without changing inventory
+PASS Gunsmith rejects legendary weapons and protected contents while preserving native stat failures
+PASS Use, sale and quest-marker adapters retain their non-consuming base identity matching
+PASS Every EFB category is hidden from hand-in and weapon-assembly selection even after a native match
+PASS Ordinary hand-in eligibility remains native and protected nested contents are excluded
+PASS Final client hand-in guard rejects a whole mixed request before native discard
+PASS Placement selector rejects protected copies, including contents and explicit matches
+PASS Placement completion cancels safely if protected contents are added after selection
+PASS Missing quest comparison boundaries fail rather than changing unrelated calls
+PASS Bundled choir contains the opening 2.5 seconds as stereo PCM16 with a faded ending
+PASS Actual Holy Hand Grenade draw postfix plays 1 local nonspatial cue without spending a charge
+PASS Ordinary grenades, other legendaries, bots and remote players cannot trigger the draw cue
+PASS A spent Holy Hand Grenade cannot play a draw cue
+PASS Rapid draws restart the choir without overlapping or reloading the clip
+PASS Cue finishes using unscaled time and returns its native source exactly once
+PASS Switching hands, dying, ending the raid and unloading stop the draw cue
+PASS Volume 0 mutes draws and stops a currently playing choir
+PASS Draw cue volume clamps invalid and out-of-range configuration
+PASS Unavailable audio initialization and empty pools leave grenade drawing unchanged
+PASS Native source release and rejected sample upload cannot leak or replay the cue
+PASS PCM decoder rejects malformed, truncated and unsupported audio
+PASS UIA: standalone grenade lookup uses native inventory and predicate
+PASS UIA: standalone player magazine lookup retains native slots
+PASS UIA: standalone bot magazine lookup retains native slots
+PASS UIA: an available UIA type without the installed plugin is ignored
+PASS UIA: installed grenade collector honors extra-slot candidates and predicate
+PASS UIA: player reload delegates to UIA reload slots
+PASS UIA: bot reload never borrows player-configured reload slots
+PASS UIA: missing optional collector falls back without losing native grenades
+PASS UIA: throwing collector cannot leak a partial result into native fallback
+PASS UIA: repeated optional failures log once and keep using native lookup
+PASS UIA: successful collector preserves preexisting destination semantics
+PASS UIA: BP35 extra throwables compose with UIA and avoid duplicates
+PASS UIA: BP02 player magazine access composes with UIA
+PASS UIA: BP02 bot magazine access preserves the bot collector
+PASS UIA: ordinary bags do not unlock extra throwable access
+PASS UIA: same-template copies keep charges independent during key selection
+PASS UIA: regeneration restores exhausted UIA grenade candidates
+PASS UIA: wheel rejects spent copies and accepts charged copies
+PASS UIA: wheel never revives a native resource rejection
+PASS UIA: wheel preserves ordinary grenades and non-grenade resource results
+PASS UIA: grouped same-template fallback chooses the charged copy
+PASS UIA: tap-last predicate falls through and re-enables after recharge
+PASS UIA: collector recognition checks owner and full generic signature
+PASS UIA: native and UIA calls map to correct player and bot adapters
+PASS UIA: transpiler leaves delegate references untouched
+PASS UIA: patch ordering follows UIA inventory queries explicitly
+PASS UIA: wheel patch prepares only when UIA is installed
+Reusable grenade results: 199 cases, 44838 assertions, 0 failures.

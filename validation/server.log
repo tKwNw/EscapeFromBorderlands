@@ -1,0 +1,149 @@
+Real SPT 4.1.6 models/services and exported tables; minimal native bot/config fixtures.
+Info: [Escape From Borderlands] Legacy spawn settings will be consolidated after final APBS detection.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] Quest compatibility enabled: EFB variants count as their base items for non-consuming objectives and are protected from quest hand-ins and placement.
+Info: [Escape From Borderlands] Shared airdrop legendary chance: 1% per supported loot item, across all airdrop types.
+Success: [Escape From Borderlands] Catalog revision 52: created 3133/3133 additive Legendary templates from 168 recoverable vanilla weapon roots, 1404 assembled presets, and 777/777 effect-free retired-item compatibility aliases. All active Legendary receivers are blocked from flea purchase/listing. PMC, boss and eligible non-Scav faction spawning is waiting for the final APBS/standalone selection stage. Retired-weapon compatibility aliases remain flea-blocked and never enter bot pools. Supported vanilla melee weapons and Legendary melee clones are corpse-lootable; Chained Labrys and Superfors DB 2020 remain unlootable; original firearm statistics, third-party weapons, ammunition, attachments, and the zombie attack item were left untouched.
+PASS N01: Native registration includes all active/retired definitions and private rig armor panels
+PASS N02: Every generated item has a positive native flea-price entry, including blocked aliases
+PASS N03: Active handbook/flea prices retain the configured 10x base multiplier
+PASS N04: Active and retired clones remain blocked from flea listing and requirements
+PASS N05: Native mod cache records exactly the generated clone IDs
+PASS N06: Generated names and descriptions materialize through native LazyLoad locales
+PASS N40: Every backpack retains its source template and handbook category instead of a pistol category
+PASS N41: Backpack locale entries contain actual item text rather than inspection prefab placeholders
+PASS N07: Original items preserve every property except intended melee loot flags and clone whitelists
+PASS N08: Original handbook, prices and presets are preserved
+PASS N09: Clones inherit source attachment slots without sharing mutable properties
+PASS N10: Generated equipment whitelists match source firearm slots and melee Scabbard slots
+PASS N11: All available firearm and rig source presets generate at their frozen catalog preset IDs
+PASS N12: Native preset reparenting leaves one clone root and valid attachment parents
+PASS N42: Rig armor panels preserve source properties/locales and apply the specified armor class
+PASS N43: Every rig retains its source parent, handbook category and actual generated panel templates
+PASS N13: No spawn-pool mutation occurs during early receiver registration
+Info: [Escape From Borderlands] Consolidated spawn settings using the active standalone rates. The original config was backed up next to config.json.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] APBS was not found at the final spawn stage; selecting standalone SPT bot pools.
+Info: [Escape From Borderlands] standalone raiders: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone rogues: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone followers: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone cultists: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone arenaFighters: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone otherNonScavs: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Success: [Escape From Borderlands] Final spawn method: standalone. PMC (guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%); bosses (guns=10%, melee=10%, backpacks=10%, chestRigs=10%, grenades=10%, earpieces=10%). Registered 324 source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.
+PASS N14: Native no-APBS final startup selects standalone
+PASS N15: Both PMC factions have exactly 1% combined EFB weight in populated weapon slots
+PASS N16: Boss pools have 10% EFB weight restricted to positive source/mod pools
+PASS N17: Existing vanilla and third-party bot weights/mod filters remain unchanged
+PASS N18: Scavs remain untouched and followers receive only eligible current variants
+PASS N19: Spawned clone mod pools exist and boss pools are independent copies
+PASS N25: All 21 supported vanilla melee and 48 active clones are lootable; zombie attacks are unchanged
+PASS N26: Both native PMC factions receive 1% melee weight restricted to natural positive sources
+PASS N27: Boss Scabbard receives 10% only of natural melee; zero-weight sources and the scythe add none
+PASS N28: Melee clones stay in Scabbard and never enter firearm equipment or attachment pools
+PASS N29: Both unsupported boss models and four saved aliases have native Scabbard protection on all sides
+PASS N32: All 1340 backpack identities register and have native Backpack equipment whitelists
+PASS N33: Registered native backpack grids match their persistent layout definitions
+PASS N34: Default backpack weights are 1% for both PMCs and 10% for eligible natural boss sources
+PASS N20: Repeated final-stage calls cannot double-register or switch methods
+Info: [Escape From Borderlands] Consolidated spawn settings using the active standalone rates. The original config was backed up next to config.json.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] APBS was not found at the final spawn stage; selecting standalone SPT bot pools.
+Info: [Escape From Borderlands] standalone raiders: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone rogues: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone followers: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone cultists: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone arenaFighters: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone otherNonScavs: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Success: [Escape From Borderlands] Final spawn method: standalone. PMC (guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=1%, earpieces=1%); bosses (guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=10%, earpieces=10%). Registered 0 source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.
+PASS N21: Native 0% configuration leaves all bot pools unchanged
+Info: [Escape From Borderlands] Consolidated spawn settings using the active standalone rates. The original config was backed up next to config.json.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] APBS was not found at the final spawn stage; selecting standalone SPT bot pools.
+Info: [Escape From Borderlands] standalone raiders: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone rogues: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone followers: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone cultists: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone arenaFighters: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone otherNonScavs: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Success: [Escape From Borderlands] Final spawn method: standalone. PMC (guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%); bosses (guns=10%, melee=10%, backpacks=10%, chestRigs=10%, grenades=10%, earpieces=10%). Registered 156 source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.
+PASS N22: PMC disable preserves PMC inventories independently of bosses
+Info: [Escape From Borderlands] Consolidated spawn settings using the active standalone rates. The original config was backed up next to config.json.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] APBS was not found at the final spawn stage; selecting standalone SPT bot pools.
+Info: [Escape From Borderlands] standalone raiders: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone rogues: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone followers: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone cultists: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone arenaFighters: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone otherNonScavs: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Success: [Escape From Borderlands] Final spawn method: standalone. PMC (guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%); bosses (guns=10%, melee=10%, backpacks=10%, chestRigs=10%, grenades=10%, earpieces=10%). Registered 252 source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.
+PASS N23: Boss disable preserves boss inventories independently of PMCs
+Info: [Escape From Borderlands] Consolidated spawn settings using the active standalone rates. The original config was backed up next to config.json.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] APBS was not found at the final spawn stage; selecting standalone SPT bot pools.
+Info: [Escape From Borderlands] standalone raiders: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone rogues: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone followers: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone cultists: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone arenaFighters: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone otherNonScavs: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Success: [Escape From Borderlands] Final spawn method: standalone. PMC (guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=1%, earpieces=1%); bosses (guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=10%, earpieces=10%). Registered 0 source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.
+Info: [Escape From Borderlands] Consolidated spawn settings using the active standalone rates. The original config was backed up next to config.json.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] APBS was not found at the final spawn stage; selecting standalone SPT bot pools.
+Info: [Escape From Borderlands] standalone raiders: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone rogues: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone followers: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone cultists: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone arenaFighters: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone otherNonScavs: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Success: [Escape From Borderlands] Final spawn method: standalone. PMC (guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%); bosses (guns=10%, melee=10%, backpacks=10%, chestRigs=10%, grenades=10%, earpieces=10%). Registered 324 source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.
+PASS N30: Final stage removes stale retired melee from every native equipment and mod pool at any chance
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+PASS N31: Final stage repairs loot flags overwritten by a later mod without changing unsupported models or aliases
+Info: [Escape From Borderlands] Consolidated spawn settings using the active standalone rates. The original config was backed up next to config.json.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] APBS was not found at the final spawn stage; selecting standalone SPT bot pools.
+Info: [Escape From Borderlands] standalone raiders: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone rogues: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone followers: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone cultists: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone arenaFighters: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone otherNonScavs: guns=1%, melee=1%, backpacks=1%, chestRigs=1%, grenades=1%, earpieces=1%. Ordinary/sniper Scavs are excluded.
+Success: [Escape From Borderlands] Final spawn method: standalone. PMC (guns=0%, melee=2%, backpacks=7%, chestRigs=1%, grenades=1%, earpieces=1%); bosses (guns=0%, melee=3%, backpacks=9%, chestRigs=10%, grenades=10%, earpieces=10%). Registered 180 source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.
+PASS N35: Gun, melee and backpack spawn settings operate independently
+PASS N36-success: Async raid scope survives until success and then clears only its own profile
+PASS N36-fault: Async raid scope survives until fault and then clears only its own profile
+PASS N36-cancel: Async raid scope survives until cancel and then clears only its own profile
+PASS N37-pmc: Save healing restores only the selected PMC character
+PASS N37-scav: Save healing restores only the selected scav character
+PASS N38: Config migration preserves old percentages and unrelated settings while adding backpack defaults
+PASS N39: Explicit category zero survives migration and repeated loads do not rewrite config
+Info: [Escape From Borderlands] Consolidated spawn settings using the active standalone rates. The original config was backed up next to config.json.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] APBS was not found at the final spawn stage; selecting standalone SPT bot pools.
+Info: [Escape From Borderlands] standalone raiders: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone rogues: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone followers: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone cultists: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone arenaFighters: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone otherNonScavs: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Success: [Escape From Borderlands] Final spawn method: standalone. PMC (guns=0%, melee=0%, backpacks=0%, chestRigs=7%, grenades=1%, earpieces=1%); bosses (guns=10%, melee=10%, backpacks=10%, chestRigs=10%, grenades=10%, earpieces=10%). Registered 8 source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.
+PASS N44: Chest-rig spawn chance independently produces exactly 7% PMC weight
+Info: [Escape From Borderlands] Consolidated spawn settings using the active standalone rates. The original config was backed up next to config.json.
+Info: [Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.
+Info: [Escape From Borderlands] APBS was not found at the final spawn stage; selecting standalone SPT bot pools.
+Info: [Escape From Borderlands] standalone raiders: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone rogues: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone followers: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone cultists: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone arenaFighters: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Info: [Escape From Borderlands] standalone otherNonScavs: guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=0%, earpieces=0%. Ordinary/sniper Scavs are excluded.
+Success: [Escape From Borderlands] Final spawn method: standalone. PMC (guns=0%, melee=0%, backpacks=0%, chestRigs=0%, grenades=1%, earpieces=1%); bosses (guns=10%, melee=10%, backpacks=10%, chestRigs=10%, grenades=10%, earpieces=10%). Registered 0 source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.
+PASS N45: Explicit zero chest-rig chance leaves every equipment pool without EFB entries
+PASS N49: All reusable grenade clones register with their native throwable parent and properties
+PASS N50: The grenade loot postfix installs on the real native 4.1.6 cache API
+PASS N51: All 39 earpieces retain native parents and are equippable in the real Earpiece slot
+PASS N52: Native helmet and mask conflicts extend to every applicable headset clone
+PASS N24: Native registration and final spawning produce no error logs

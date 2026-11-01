@@ -1,0 +1,84 @@
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/src/EscapeFromBorderlands.Client/BackpackMedicalRestoration.cs(55,68): warning CS8604: Possible null reference argument for parameter 't' in 'MethodInfo AccessTools.Method(Type t, string n)'. [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/fixes/FixTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/src/EscapeFromBorderlands.Client/BackpackBoons.cs(4,27): warning CS0649: Field 'BackpackBoons.ExtraColumns' is never assigned to, and will always have its default value 0 [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/fixes/FixTests.csproj]
+/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/src/EscapeFromBorderlands.Client/BackpackBoons.cs(4,16): warning CS0649: Field 'BackpackBoons.ExtraRows' is never assigned to, and will always have its default value 0 [/workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/tests/Latest/fixes/FixTests.csproj]
+PASS Exactly one EFB owner scopes native Consume
+PASS Repeated Harness jumps never compound and never alter recovery
+PASS Removing the bag does not leave a discount
+PASS Melee and Harness combine exactly once
+PASS VaultLegs composes with melee without leaking
+PASS ClimbLegs composes with melee without leaking
+PASS Original non-unit native multiplier is restored
+PASS Native exceptions restore the shared multiplier
+PASS Reentrant native consumption restores its outer scope
+PASS Free and unrelated actions receive no phantom refund
+PASS BP18-2 completion: same bag
+PASS BP18-2 completion: other Legendary bag
+PASS BP18-2 completion: different copy
+PASS BP18-2 completion: item outside bag
+PASS BP23-3 completion: same bag
+PASS BP23-3 completion: other Legendary bag
+PASS BP23-3 completion: different copy
+PASS BP23-3 completion: item outside bag
+PASS BP29-2 completion: same bag
+PASS BP29-2 completion: other Legendary bag
+PASS BP29-2 completion: different copy
+PASS BP29-2 completion: item outside bag
+PASS BP34-2 completion: same bag
+PASS BP34-2 completion: other Legendary bag
+PASS BP34-2 completion: different copy
+PASS BP34-2 completion: item outside bag
+PASS BP36-1 completion: same bag
+PASS BP36-1 completion: other Legendary bag
+PASS BP36-1 completion: different copy
+PASS BP36-1 completion: item outside bag
+PASS Fully consumed item still qualifies by captured source ID
+PASS Interrupted treatment grants no completion bonus
+PASS Removing the backpack before completion grants no bonus
+PASS Starting without EFB cannot adopt a later bag's source bonus
+PASS BackpackSurgeryPatch: same bag
+PASS BackpackSurgeryPatch: other Legendary bag
+PASS BackpackSurgeryPatch: different copy
+PASS BackpackSurgeryPatch: item outside bag
+PASS BackpackEnergyPatch: same bag
+PASS BackpackEnergyPatch: other Legendary bag
+PASS BackpackEnergyPatch: different copy
+PASS BackpackEnergyPatch: item outside bag
+PASS BackpackHydrationPatch: same bag
+PASS BackpackHydrationPatch: other Legendary bag
+PASS BackpackHydrationPatch: different copy
+PASS BackpackHydrationPatch: item outside bag
+PASS Medical source snapshots cannot cross players
+PASS Native foliage IL has one final volume insertion and retains all original instructions
+PASS Unexpected native foliage shapes fail explicitly
+PASS Local foliage scales once at 0.3
+PASS Local foliage scales once at 0.8
+PASS Local foliage scales once at 1
+PASS Local foliage scales once at 1.75
+PASS Local foliage scales once at 2
+PASS Bot foliage scales once at 0.3
+PASS Bot foliage scales once at 0.8
+PASS Bot foliage scales once at 1
+PASS Bot foliage scales once at 1.75
+PASS Bot foliage scales once at 2
+PASS Occluded silent foliage remains silent
+PASS Unknown foliage actor retains native volume
+PASS Feather Light retains normal carried-weight penalties and the zero boundary
+PASS Native weight-limit adapter preserves its one field store and labels
+PASS Breach Parcel rewards only the actor's completed successful kick
+PASS Opening a door and another player's breach cannot grant Breach Parcel
+PASS BackpackEnergyPatch reverses exactly the additional early-cancel restoration
+PASS BackpackEnergyPatch rollback survives bag removal and another active bag
+PASS BackpackEnergyPatch respects native resource caps when recording the bonus
+PASS BackpackEnergyPatch unrelated restoration during item use is not boosted
+PASS BackpackHydrationPatch reverses exactly the additional early-cancel restoration
+PASS BackpackHydrationPatch rollback survives bag removal and another active bag
+PASS BackpackHydrationPatch respects native resource caps when recording the bonus
+PASS BackpackHydrationPatch unrelated restoration during item use is not boosted
+PASS Free first traversal actions cannot qualify a paid second action
+PASS Paid first traversal qualifies a different second action once
+PASS Infinite stamina traversal does not count as an expenditure
+PASS Traversal eligibility expires after five seconds
+PASS Sprint records only its first positive native leg-cost tick
+PASS Cold Hands status follows the actual accelerated item use after its charge is consumed
+PASS Completed conditional medical rewards report a proc only for the qualifying source
+Backpack audit repairs: 80/80 cases passed; 174 assertions; 0 failures.

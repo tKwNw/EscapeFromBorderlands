@@ -1,0 +1,98 @@
+[
+  {
+    "offset": 198,
+    "opcode": "call",
+    "name": "InverseLerp",
+    "owner": "UnityEngine.Mathf"
+  },
+  {
+    "offset": 203,
+    "opcode": "stloc.s",
+    "name": null,
+    "owner": null
+  },
+  {
+    "offset": 205,
+    "opcode": "ldloc.s",
+    "name": null,
+    "owner": null
+  },
+  {
+    "offset": 207,
+    "opcode": "callvirt",
+    "name": "get_iPlayer",
+    "owner": ".IPlayerOwner"
+  },
+  {
+    "offset": 791,
+    "opcode": "call",
+    "name": "InverseLerp",
+    "owner": "UnityEngine.Mathf"
+  },
+  {
+    "offset": 796,
+    "opcode": "call",
+    "name": "smethod_1",
+    "owner": ".GClass2085"
+  },
+  {
+    "offset": 801,
+    "opcode": "stloc.s",
+    "name": null,
+    "owner": null
+  },
+  {
+    "offset": 803,
+    "opcode": "ldloc.s",
+    "name": null,
+    "owner": null
+  },
+  {
+    "offset": 1103,
+    "opcode": "call",
+    "name": "InverseLerp",
+    "owner": "UnityEngine.Mathf"
+  },
+  {
+    "offset": 1108,
+    "opcode": "ldarg.1",
+    "name": null,
+    "owner": null
+  },
+  {
+    "offset": 1109,
+    "opcode": "callvirt",
+    "name": "get_GetStrength",
+    "owner": "EFT.IExplosiveItem"
+  },
+  {
+    "offset": 1114,
+    "opcode": "mul",
+    "name": null,
+    "owner": null
+  },
+  {
+    "offset": 1537,
+    "opcode": "call",
+    "name": "InverseLerp",
+    "owner": "UnityEngine.Mathf"
+  },
+  {
+    "offset": 1542,
+    "opcode": "ldarg.1",
+    "name": null,
+    "owner": null
+  },
+  {
+    "offset": 1543,
+    "opcode": "callvirt",
+    "name": "get_Contusion",
+    "owner": "EFT.IExplosiveItem"
+  },
+  {
+    "offset": 1548,
+    "opcode": "ldfld",
+    "name": "z",
+    "owner": "UnityEngine.Vector3"
+  }
+]

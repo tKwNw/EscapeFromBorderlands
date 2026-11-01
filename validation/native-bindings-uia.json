@@ -1,0 +1,4181 @@
+{
+  "patchClasses": 281,
+  "nativeTargets": 355,
+  "parametersChecked": 650,
+  "bindings": [
+    {
+      "patch": "LegendaryMeleeExtraJumpPatch",
+      "target": "EFT.Player.Jump",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryMeleeVaultSpeedPatch",
+      "target": "EFT.MovementContext.SetVaultingSpeed",
+      "parameters": [
+        {
+          "Name": "speedRange",
+          "type": "UnityEngine.Vector2"
+        },
+        {
+          "Name": "strategy",
+          "type": "EFT.Vaulting.EVaultingStrategy"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeWeightPatch",
+      "target": "Physical.OnWeightUpdated",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryMeleeWeightValuePatch",
+      "target": "Deferred\u00601[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]].get_Value",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryMeleeDoorUnlockPatch",
+      "target": "EFT.Player\u002BBaseKnifeController.ProcessOverlap",
+      "parameters": [
+        {
+          "Name": "other",
+          "type": "EFT.Player\u002BKnifeRaycastHit"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeDoorProbePatch",
+      "target": "EFT.KnifeCollider.ManualUpdate",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackFoliageSoundPatch",
+      "target": "EFT.Interactive.TreeInteractive.PlaySoundBank",
+      "parameters": [
+        {
+          "Name": "soundPosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "source",
+          "type": "BetterSource"
+        },
+        {
+          "Name": "player",
+          "type": "EFT.IObserverToPlayerBridge"
+        },
+        {
+          "Name": "forceStereo",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackItemUseSoundPatch",
+      "target": "BaseSoundPlayer.PlayClipInternal",
+      "parameters": [
+        {
+          "Name": "clip",
+          "type": "UnityEngine.AudioClip"
+        },
+        {
+          "Name": "rolloff",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        },
+        {
+          "Name": "priority",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "stereo",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackSearchSourcePatch",
+      "target": "EFT.Player.GetSearchSource",
+      "parameters": [
+        {
+          "Name": "clip",
+          "type": "UnityEngine.AudioClip"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackSearchVolumePatch",
+      "target": "BetterSource.SetBaseVolume",
+      "parameters": [
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackReleasedSourcePatch",
+      "target": "BetterSource.Release",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackInventorySoundScopePatch",
+      "target": "EFT.UI.GUISounds.PlayItemSound",
+      "parameters": [
+        {
+          "Name": "soundGroup",
+          "type": "System.String"
+        },
+        {
+          "Name": "soundType",
+          "type": "EFT.UI.EInventorySoundType"
+        },
+        {
+          "Name": "single",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackInventorySoundScopePatch",
+      "target": "EFT.UI.GUISounds.PlayItemSound",
+      "parameters": [
+        {
+          "Name": "itemClass",
+          "type": "EModClass"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackInventoryVolumePatch",
+      "target": "EFT.UI.GUISounds.GetCommonSoundsVolume",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackWeatherTargetVolumePatch",
+      "target": "Audio.AmbientSubsystem.PrecipitationAmbientBlender.get_CurrentTargetVolume",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackWeatherTargetVolumePatch",
+      "target": "Audio.AmbientSubsystem.WindAmbientBlender.GetWindVolume",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackWeatherRefreshPatch",
+      "target": "Audio.AmbientSubsystem.PrecipitationAmbientBlender.ManualUpdate",
+      "parameters": [
+        {
+          "Name": "dt",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackWeatherRefreshPatch",
+      "target": "Audio.AmbientSubsystem.WindAmbientBlender.ManualUpdate",
+      "parameters": [
+        {
+          "Name": "dt",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackWeatherOneShotPatch",
+      "target": "Audio.AmbientSubsystem.BaseAmbientSoundPlayer\u002BCG_PlayCoroutine.MoveNext",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackFreePaidExtractPatch",
+      "target": "EFT.Interactive.TransferItemRequirement.Met",
+      "parameters": [
+        {
+          "Name": "player",
+          "type": "EFT.Player"
+        },
+        {
+          "Name": "point",
+          "type": "EFT.Interactive.ExfiltrationPoint"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackDryMarchPatch",
+      "target": "Physical.GetStaminaRestorationFunc",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackFreeGrenadeReleasePatch",
+      "target": "EFT.Player\u002BBaseGrenadeHandsController.ThrowGrenade",
+      "parameters": [
+        {
+          "Name": "timeSinceSafetyLevelRemoved",
+          "type": "System.Single"
+        },
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "rotation",
+          "type": "UnityEngine.Quaternion"
+        },
+        {
+          "Name": "force",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "lowThrow",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackFreeGrenadeSelectionPatch",
+      "target": "EFT.UI.DragAndDrop.FastAccessGrenadeItemView.EFT.ISetInHandsHandler.OnSetInHands",
+      "parameters": [
+        {
+          "Name": "args",
+          "type": "EFT.InventoryLogic.SetInHandsEventArgs"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackConcreteInventorySearchPatch",
+      "target": "EFT.PlayerInputTranslator.vmethod_1",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackConcreteInventorySearchPatch",
+      "target": "EFT.FirearmHandsInputTranslator.ReloadExternalMagazine",
+      "parameters": [
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Weapon"
+        },
+        {
+          "Name": "quickReload",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackConcreteInventorySearchPatch",
+      "target": "BotReload.GetMagazineForReload",
+      "parameters": [
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Weapon"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackConcreteInventorySearchPatch",
+      "target": "BotReload.AddAmmoToMagazines",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackHotbarPatch",
+      "target": "EFT.InventoryLogic.InventoryController.IsAtBindablePlace",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackReachabilityPatch",
+      "target": "EFT.InventoryLogic.InventoryController.IsAtReachablePlace",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackDropPatch",
+      "target": "EFT.Player\u002BPlayerInventoryController.ThrowItem",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "downDirection",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "callback",
+          "type": "Comfort.Common.Callback"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackBlackLegSprintPatch",
+      "target": "EFT.MovementContext.get_CanSprint",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackTurningPenaltyPatch",
+      "target": "EFT.Player.GetRotationMultiplier",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackJigsawKitAvailabilityPatch",
+      "target": "EFT.Player\u002BBaseGrenadeHandsController.GetPlantingKit",
+      "parameters": [
+        {
+          "Name": "plantingKit",
+          "type": "EFT.InventoryLogic.PlantingKit\u0026"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackJigsawKitConsumptionPatch",
+      "target": "EFT.Player\u002BPlayerInventoryController.PlantTripwire",
+      "parameters": [
+        {
+          "Name": "grenade",
+          "type": "EFT.InventoryLogic.ThrowWeap"
+        },
+        {
+          "Name": "plantingKit",
+          "type": "EFT.InventoryLogic.PlantingKit"
+        },
+        {
+          "Name": "fromPosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "toPosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "callback",
+          "type": "Comfort.Common.Callback"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackJigsawPlacementPatch",
+      "target": "EFT.InventoryLogic.Operations.PlantTripwireOperation.ExecuteInternal",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackLegMovementDamagePatch",
+      "target": "EFT.Player.MovementContextOnStateChanged",
+      "parameters": [
+        {
+          "Name": "previousState",
+          "type": "EPlayerState"
+        },
+        {
+          "Name": "nextState",
+          "type": "EPlayerState"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackLegMovementDamagePatch",
+      "target": "EFT.Player\u002BCG_InflictSelfDamage.MoveNext",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackLootMovePatch",
+      "target": "EFT.InventoryLogic.MoveResult.RaiseEvents",
+      "parameters": [
+        {
+          "Name": "itemController",
+          "type": "EFT.InventoryLogic.IItemOwner"
+        },
+        {
+          "Name": "status",
+          "type": "EFT.InventoryLogic.CommandStatus"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackLootSplitPatch",
+      "target": "EFT.InventoryLogic.SplitResult.RaiseEvents",
+      "parameters": [
+        {
+          "Name": "controller",
+          "type": "EFT.InventoryLogic.IItemOwner"
+        },
+        {
+          "Name": "status",
+          "type": "EFT.InventoryLogic.CommandStatus"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackLootMergePatch",
+      "target": "EFT.InventoryLogic.TransferResult.RaiseEvents",
+      "parameters": [
+        {
+          "Name": "controller",
+          "type": "EFT.InventoryLogic.IItemOwner"
+        },
+        {
+          "Name": "status",
+          "type": "EFT.InventoryLogic.CommandStatus"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackMagazineSpeedPatch",
+      "target": "EFT.Player\u002BPlayerInventoryController\u002BCG_LoadMagazine.MoveNext",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackMagazineSpeedPatch",
+      "target": "EFT.Player\u002BPlayerInventoryController\u002BCG_UnloadMagazine.MoveNext",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackMedRestorationScopePatch",
+      "target": "EFT.HealthSystem.ActiveHealthController\u002BMedEffect.RegularUpdate",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackCachedValuePatch",
+      "target": "Compute\u00601[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]].get_Value",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackCachedValuePatch",
+      "target": "Deferred\u00601[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]].get_Value",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackPhysicalWeightPatch",
+      "target": "Physical.OnWeightUpdated",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackWeightValuePatch",
+      "target": "Deferred\u00601[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]].get_Value",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackJumpInputPatch",
+      "target": "EFT.MovementContext.OnJump",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackJumpHeightPatch",
+      "target": "EFT.JumpPlayerState.Enter",
+      "parameters": [
+        {
+          "Name": "isFromSameState",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackJumpMomentumPatch",
+      "target": "EFT.JumpPlayerState.ProcessJumpMovement",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackFallPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.HandleFall",
+      "parameters": [
+        {
+          "Name": "height",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackGroundStatePatch",
+      "target": "EFT.MovementContext.CheckFlying",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackMovementSoundPatch",
+      "target": "EFT.Player.CalculateMovementVolumeDefaultMultiplier",
+      "parameters": [
+        {
+          "Name": "movementState",
+          "type": "CommonAssets.Scripts.Audio.EAudioMovementState"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackAiSoundPatch",
+      "target": "GlobalEventDispatcher.PlaySound",
+      "parameters": [
+        {
+          "Name": "person",
+          "type": "EFT.IPlayer"
+        },
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "power",
+          "type": "System.Single"
+        },
+        {
+          "Name": "type",
+          "type": "AISoundType"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackMedBeginPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController\u002BMedEffect.Started",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackMedCompletePatch",
+      "target": "EFT.HealthSystem.ActiveHealthController\u002BMedEffect.Residue",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackPainkillerDoseCapPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController\u002BPainKiller.StoreValues",
+      "parameters": [
+        {
+          "Name": "templateId",
+          "type": "System.String"
+        },
+        {
+          "Name": "duration",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackUseTimePatch",
+      "target": "EFT.InventoryLogic.HealthEffectsComponent.get_UseTime",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackSurgeryPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.RestoreBodyPart",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "healthPenalty",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackEnergyPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.ChangeEnergy",
+      "parameters": [
+        {
+          "Name": "value",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackHydrationPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.ChangeHydration",
+      "parameters": [
+        {
+          "Name": "value",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackHealthDamagePatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.ChangeHealth",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "value",
+          "type": "System.Single"
+        },
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackDoBleedPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.DoBleed",
+      "parameters": [
+        {
+          "Name": "isHeavy",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackFracturePatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.DoFracture",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackIncomingDamagePatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.ApplyDamage",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "damage",
+          "type": "System.Single"
+        },
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackErgonomicsPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_ErgonomicsDelta",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackSwayPatch",
+      "target": "EFT.Animations.BreathEffector.Process",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackRecoilSettlingPatch",
+      "target": "EFT.Animations.NewRecoil.NewRecoilShotEffect.FixedUpdate",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackRecoilSettlingPatch",
+      "target": "EFT.Animations.OldRecoilShotEffect.FixedUpdate",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackAimPunchPatch",
+      "target": "RootMotion.FinalIK.HitReaction.Hit",
+      "parameters": [
+        {
+          "Name": "colliderType",
+          "type": "EBodyPartColliderType"
+        },
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "force",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "point",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "any",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackNightVisionPatch",
+      "target": "BSG.CameraEffects.NightVision.ApplySettings",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackBloomPatch",
+      "target": "UltimateBloom.OnRenderImage",
+      "parameters": [
+        {
+          "Name": "source",
+          "type": "UnityEngine.RenderTexture"
+        },
+        {
+          "Name": "destination",
+          "type": "UnityEngine.RenderTexture"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackMovementExperiencePatch",
+      "target": "EFT.BaseSkill.OnTrigger",
+      "parameters": [
+        {
+          "Name": "skillAction",
+          "type": "EFT.SkillManager\u002BSkillAction"
+        },
+        {
+          "Name": "val",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackBreachRewardPatch",
+      "target": "EFT.BreachDoorState.ExecuteDoorInteraction",
+      "parameters": [
+        {
+          "Name": "interactive",
+          "type": "EFT.Interactive.WorldInteractiveObject"
+        },
+        {
+          "Name": "interactionResult",
+          "type": "EFT.Interactive.InteractionResult"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        },
+        {
+          "Name": "user",
+          "type": "EFT.Player"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackSearchCompletionPatch",
+      "target": "EFT.SearchController.InvokeItemSearched",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.SearchableItem"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackGrenadeDistancePatch",
+      "target": "EFT.Player\u002BBaseGrenadeHandsController.ThrowGrenadeInner",
+      "parameters": [
+        {
+          "Name": "throwPosition",
+          "type": "System.Nullable\u00601[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "timeSinceSafetyLevelRemoved",
+          "type": "System.Single"
+        },
+        {
+          "Name": "lowHighThrow",
+          "type": "System.Single"
+        },
+        {
+          "Name": "direction",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "forcePower",
+          "type": "System.Single"
+        },
+        {
+          "Name": "lowThrow",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "withVelocity",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackRaidRequestPatch",
+      "target": "SPT.Common.Http.RequestHandler.PostJsonAsync",
+      "parameters": [
+        {
+          "Name": "path",
+          "type": "System.String"
+        },
+        {
+          "Name": "json",
+          "type": "System.String"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackRaidRequestPatch",
+      "target": "SPT.Common.Http.RequestHandler.PostJson",
+      "parameters": [
+        {
+          "Name": "path",
+          "type": "System.String"
+        },
+        {
+          "Name": "json",
+          "type": "System.String"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackRaidRequestPatch",
+      "target": "SPT.Common.Http.RequestHandler.PutJsonAsync",
+      "parameters": [
+        {
+          "Name": "path",
+          "type": "System.String"
+        },
+        {
+          "Name": "json",
+          "type": "System.String"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackRaidRequestPatch",
+      "target": "SPT.Common.Http.RequestHandler.PutJson",
+      "parameters": [
+        {
+          "Name": "path",
+          "type": "System.String"
+        },
+        {
+          "Name": "json",
+          "type": "System.String"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackSearchTimingPatch",
+      "target": "EFT.InventoryLogic.Operations.ActiveSearchContentOperation.SearchContent",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackFirstSearchItemPatch",
+      "target": "EFT.InventoryLogic.Operations.ActiveSearchContentOperation.Open",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackGeneratedGridPatch",
+      "target": "EFT.UI.DragAndDrop.ContainedGridsView.CreateGrids",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "containedGridsTemplate",
+          "type": "EFT.UI.DragAndDrop.ContainedGridsView"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackCompartmentLayoutPatch",
+      "target": "EFT.UI.DragAndDrop.GeneratedGridsView.Show",
+      "parameters": [
+        {
+          "Name": "compoundItem",
+          "type": "EFT.InventoryLogic.CompoundItem"
+        },
+        {
+          "Name": "itemContext",
+          "type": "EFT.InventoryLogic.ItemContext"
+        },
+        {
+          "Name": "itemController",
+          "type": "EFT.InventoryLogic.ItemController"
+        },
+        {
+          "Name": "filterPanel",
+          "type": "EFT.UI.FilterPanel"
+        },
+        {
+          "Name": "itemUiContext",
+          "type": "EFT.UI.ItemUiContext"
+        },
+        {
+          "Name": "magnify",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackPaidTraversalPatch",
+      "target": "Stamina.Consume",
+      "parameters": [
+        {
+          "Name": "consumption",
+          "type": "Physical\u002BConsumption"
+        },
+        {
+          "Name": "fromDamage",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackPaidSprintPatch",
+      "target": "Stamina.Process",
+      "parameters": [
+        {
+          "Name": "dt",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackDisarmSpeedPatch",
+      "target": "EFT.InteractionContextHelper\u002BCG_GetAvailableActions7.method_0",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackDisarmRecoveryPatch",
+      "target": "EFT.LocalPlayer.TripwireInteraction",
+      "parameters": [
+        {
+          "Name": "tripwire",
+          "type": "EFT.SynchronizableObjects.TripwireSynchronizableObject"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackDisarmedGrenadePatch",
+      "target": "EFT.GameWorld.ThrowItem",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "player",
+          "type": "EFT.IPlayer"
+        },
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "rotation",
+          "type": "UnityEngine.Quaternion"
+        },
+        {
+          "Name": "velocity",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "angularVelocity",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "syncable",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "performPickUpValidation",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "makeVisibleAfterDelay",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackUseAnimationPatch",
+      "target": "FirearmsAnimator.SetUseTimeMultiplier",
+      "parameters": [
+        {
+          "Name": "speed",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackVisitorCountdownPatch",
+      "target": "CommonAssets.Scripts.Game.EndByExitTrigerScenario.Update",
+      "parameters": []
+    },
+    {
+      "patch": "BackpackVisitorCountdownUiPatch",
+      "target": "EFT.AbstractGame.UpdateExfiltrationUi",
+      "parameters": [
+        {
+          "Name": "point",
+          "type": "EFT.Interactive.ExfiltrationPoint"
+        },
+        {
+          "Name": "contains",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "initial",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "BackpackVisitorSurvivedPatch",
+      "target": "EFT.LocalGame.Stop",
+      "parameters": [
+        {
+          "Name": "profileId",
+          "type": "System.String"
+        },
+        {
+          "Name": "exitStatus",
+          "type": "EFT.ExitStatus"
+        },
+        {
+          "Name": "exitName",
+          "type": "System.String"
+        },
+        {
+          "Name": "delay",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "BallisticEffectPatch",
+      "target": "EFT.Ballistics.BallisticsCalculator.CreateShot",
+      "parameters": [
+        {
+          "Name": "ammo",
+          "type": "EFT.InventoryLogic.Ammo"
+        },
+        {
+          "Name": "origin",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "direction",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "fireIndex",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "player",
+          "type": "System.String"
+        },
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "speedFactor",
+          "type": "System.Single"
+        },
+        {
+          "Name": "fragmentIndex",
+          "type": "System.Int32"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigBreachPatch",
+      "target": "EFT.BreachDoorState.ExecuteDoorInteraction",
+      "parameters": [
+        {
+          "Name": "interactive",
+          "type": "EFT.Interactive.WorldInteractiveObject"
+        },
+        {
+          "Name": "interactionResult",
+          "type": "EFT.Interactive.InteractionResult"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        },
+        {
+          "Name": "user",
+          "type": "EFT.Player"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigDoorPatch",
+      "target": "EFT.BreachDoorState.ExecuteDoorInteraction",
+      "parameters": [
+        {
+          "Name": "interactive",
+          "type": "EFT.Interactive.WorldInteractiveObject"
+        },
+        {
+          "Name": "interactionResult",
+          "type": "EFT.Interactive.InteractionResult"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        },
+        {
+          "Name": "user",
+          "type": "EFT.Player"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigDoorPatch",
+      "target": "EFT.DoorInteractState.ExecuteDoorInteraction",
+      "parameters": [
+        {
+          "Name": "door",
+          "type": "EFT.Interactive.WorldInteractiveObject"
+        },
+        {
+          "Name": "interactionResult",
+          "type": "EFT.Interactive.InteractionResult"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        },
+        {
+          "Name": "user",
+          "type": "EFT.Player"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigInteractionEndPatch",
+      "target": "EFT.BreachDoorState.Exit",
+      "parameters": [
+        {
+          "Name": "toSameState",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigInteractionEndPatch",
+      "target": "EFT.DoorInteractState.Exit",
+      "parameters": [
+        {
+          "Name": "toSameState",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigLegMovementPatch",
+      "target": "EFT.Player.UpdateSpeedLimitByHealth",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigLegSprintPatch",
+      "target": "EFT.MovementContext.get_CanSprint",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigArmHandlingPatch",
+      "target": "EFT.MovementContext.PhysicalConditionIs",
+      "parameters": [
+        {
+          "Name": "c",
+          "type": "EFT.EPhysicalCondition"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigArmsRefreshPatch",
+      "target": "EFT.Player.UpdateArmsCondition",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigAimingSpeedPatch",
+      "target": "EFT.Animations.ProceduralWeaponAnimation.UpdateWeaponVariables",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigTurningPatch",
+      "target": "EFT.Player.GetRotationMultiplier",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigSwapAnimatorPatch",
+      "target": "EFT.Player\u002BFirearmController.SetAnimatorAndProceduralValues",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigBoltCyclePatch",
+      "target": "EFT.Player\u002BFirearmController\u002BBoltActionFireOperation.Start",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigBoltCycleEndPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.OnIdleStartEvent",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigCartridgePatch",
+      "target": "EFT.Player\u002BFirearmController.Shot",
+      "parameters": [
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Weapon"
+        },
+        {
+          "Name": "ammo",
+          "type": "EFT.InventoryLogic.Ammo"
+        },
+        {
+          "Name": "chamberIndex",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "multiShot",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigFleshHitPatch",
+      "target": "BodyPartCollider.ApplyHit",
+      "parameters": [
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        },
+        {
+          "Name": "shotID",
+          "type": "EFT.Ballistics.ShotId"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigFleshHitPatch",
+      "target": "ArmorPlateCollider.ApplyHit",
+      "parameters": [
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        },
+        {
+          "Name": "shotID",
+          "type": "EFT.Ballistics.ShotId"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigArmorStopPatch",
+      "target": "EFT.InventoryLogic.ArmorComponent.ApplyDamage",
+      "parameters": [
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo\u0026"
+        },
+        {
+          "Name": "colliderType",
+          "type": "EBodyPartColliderType"
+        },
+        {
+          "Name": "armorPlateCollider",
+          "type": "EArmorPlateCollider"
+        },
+        {
+          "Name": "damageInfoIsLocal",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "armorComponents",
+          "type": "System.Collections.Generic.List\u00601[[EFT.InventoryLogic.ArmorComponent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "lightVestsDamageReduction",
+          "type": "EFT.SkillManager\u002BFloatBuff"
+        },
+        {
+          "Name": "heavyVestsDamageReduction",
+          "type": "EFT.SkillManager\u002BFloatBuff"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigMeleeDamagePatch",
+      "target": "EFT.GameWorld.HackShot",
+      "parameters": [
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigGrenadeReadyPatch",
+      "target": "EFT.Player\u002BGrenadeHandsController.Spawn",
+      "parameters": [
+        {
+          "Name": "animationSpeed",
+          "type": "System.Single"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigGrenadeThrowPatch",
+      "target": "EFT.Player\u002BBaseGrenadeHandsController.CreateAndRegisterGrenade",
+      "parameters": [
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "rotation",
+          "type": "UnityEngine.Quaternion"
+        },
+        {
+          "Name": "force",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "prewarm",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigGrenadeCompletionPatch",
+      "target": "EFT.Player\u002BBaseGrenadeHandsController.OnDropFinishedAction",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigExplosionPatch",
+      "target": "EFT.Grenade.Explosion",
+      "parameters": [
+        {
+          "Name": "grenade",
+          "type": "EFT.Grenade"
+        },
+        {
+          "Name": "grenadeItem",
+          "type": "EFT.IExplosiveItem"
+        },
+        {
+          "Name": "grenadePosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "playerProfileIDWhoThrew",
+          "type": "System.String"
+        },
+        {
+          "Name": "grenadeBallisticsCalculator",
+          "type": "EFT.Ballistics.IBallisticsCalculator"
+        },
+        {
+          "Name": "originalWeaponItem",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "shift",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "isPlanted",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigFlashTrackingPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.DoStun",
+      "parameters": [
+        {
+          "Name": "maxTime",
+          "type": "System.Single"
+        },
+        {
+          "Name": "normalizedStrength",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigRecoilPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_RecoilDelta",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigErgonomicsPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_ErgonomicsDelta",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigAccuracyPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_CenterOfImpactDelta",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigVelocityPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_VelocityDelta",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigFireRatePatch",
+      "target": "EFT.InventoryLogic.Weapon.get_FireRate",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigFireRatePatch",
+      "target": "EFT.InventoryLogic.Weapon.get_SingleFireRate",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigSwayPatch",
+      "target": "EFT.Animations.BreathEffector.Process",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigDrawSpeedPatch",
+      "target": "EFT.Player\u002BFirearmController.GetWeaponDrawSpeedMultiplier",
+      "parameters": [
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Weapon"
+        },
+        {
+          "Name": "useFastDropAnimationSpeed",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigUtilitySpeedPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BUtilityOperation.Start",
+      "parameters": [
+        {
+          "Name": "utilityType",
+          "type": "EFT.Player\u002BFirearmController\u002BUtilityOperation\u002BEUtilityType"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigJumpPatch",
+      "target": "EFT.JumpPlayerState.Enter",
+      "parameters": [
+        {
+          "Name": "isFromSameState",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigHealthChangePatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.ChangeHealth",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "value",
+          "type": "System.Single"
+        },
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigDamagePatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.ApplyDamage",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "damage",
+          "type": "System.Single"
+        },
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigMedStartPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController\u002BMedEffect.Started",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigMedEndPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController\u002BMedEffect.Residue",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigSurgeryPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.RestoreBodyPart",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "healthPenalty",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigBleedPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.DoBleed",
+      "parameters": [
+        {
+          "Name": "isHeavy",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigMedicalCostPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController\u002BMedEffect.RegularUpdate",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigMedSpeedPatch",
+      "target": "EFT.InventoryLogic.HealthEffectsComponent.get_UseTime",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigManualPackingPatch",
+      "target": "EFT.Player\u002BPlayerInventoryController\u002BLoadMagazineProcess.PlaySound",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigHipPatch",
+      "target": "EFT.Player\u002BFirearmController.UpdateHipInaccuracy",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigInjurySwayPatch",
+      "target": "EFT.Animations.ProceduralWeaponAnimation.PhysicalConditionUpdated",
+      "parameters": [
+        {
+          "Name": "updated",
+          "type": "EFT.EPhysicalCondition"
+        },
+        {
+          "Name": "full",
+          "type": "EFT.EPhysicalCondition"
+        }
+      ]
+    },
+    {
+      "patch": "ChestRigUtilityResetPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BUtilityOperation.Reset",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigBoltResetPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.Reset",
+      "parameters": []
+    },
+    {
+      "patch": "ChestRigFlatErgonomicsPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_ErgonomicsTotal",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceAmbientPatch",
+      "target": "EFT.ActiveHeadphones.ActiveHeadphonesDefaultConfigurator.Configure",
+      "parameters": [
+        {
+          "Name": "template",
+          "type": "EFT.InventoryLogic.HeadphonesTemplate"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceStepScopePatch",
+      "target": "EFT.Player.PlayStepSound",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceStepScopePatch",
+      "target": "EFT.Player.DefaultPlay",
+      "parameters": [
+        {
+          "Name": "bank",
+          "type": "EFT.SoundBank"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        },
+        {
+          "Name": "movementState",
+          "type": "CommonAssets.Scripts.Audio.EAudioMovementState"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceStepScopePatch",
+      "target": "EFT.Player.PlayGearSound",
+      "parameters": [
+        {
+          "Name": "bank",
+          "type": "EFT.SoundBank"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceGunScopePatch",
+      "target": "WeaponSoundPlayer.FireBullet",
+      "parameters": [
+        {
+          "Name": "ammo",
+          "type": "EFT.InventoryLogic.Ammo"
+        },
+        {
+          "Name": "shotPosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "shotDirection",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "pitchMult",
+          "type": "System.Single"
+        },
+        {
+          "Name": "malfunctioned",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "multiShot",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "burstOf2Start",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceGunScopePatch",
+      "target": "WeaponSoundPlayer.StopFiringLoop",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceQueueSourcePatch",
+      "target": "SuperBetterAudioQueue.SetRolloff",
+      "parameters": [
+        {
+          "Name": "distance",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceQueueSourcePatch",
+      "target": "SuperBetterAudioQueue.Enqueue",
+      "parameters": [
+        {
+          "Name": "clip1",
+          "type": "UnityEngine.AudioClip"
+        },
+        {
+          "Name": "clip2",
+          "type": "UnityEngine.AudioClip"
+        },
+        {
+          "Name": "balance",
+          "type": "System.Single"
+        },
+        {
+          "Name": "startTime",
+          "type": "System.Double"
+        },
+        {
+          "Name": "clipTime",
+          "type": "System.Single"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        },
+        {
+          "Name": "pitch",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceQueuePlaybackPatch",
+      "target": "SuperBetterAudioQueue.Update",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceGunPlaybackOutputPatch",
+      "target": "SuperAudioSample.PlayOn",
+      "parameters": [
+        {
+          "Name": "source",
+          "type": "SuperSource"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceScheduledGunSourcePatch",
+      "target": "SuperSource.PlayScheduled",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "System.Double"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSourcePlaybackPatch",
+      "target": "BetterSource.Play",
+      "parameters": [
+        {
+          "Name": "clip1",
+          "type": "UnityEngine.AudioClip"
+        },
+        {
+          "Name": "clip2",
+          "type": "UnityEngine.AudioClip"
+        },
+        {
+          "Name": "balance",
+          "type": "System.Single"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        },
+        {
+          "Name": "forceStereo",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "oneShot",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSourcePlaybackPatch",
+      "target": "BetterSource.PlayScheduled",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "System.Double"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceLocalStepInputPatch",
+      "target": "EFT.SoundBank.Play",
+      "parameters": [
+        {
+          "Name": "source",
+          "type": "BetterSource"
+        },
+        {
+          "Name": "pos",
+          "type": "EnvironmentType"
+        },
+        {
+          "Name": "distance",
+          "type": "System.Single"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        },
+        {
+          "Name": "blendParameter",
+          "type": "System.Single"
+        },
+        {
+          "Name": "forceStereo",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "oneShot",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceLocalItemInputPatch",
+      "target": "BaseSoundPlayer.PlayClipInternal",
+      "parameters": [
+        {
+          "Name": "clip",
+          "type": "UnityEngine.AudioClip"
+        },
+        {
+          "Name": "rolloff",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        },
+        {
+          "Name": "priority",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "stereo",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceClipDistancePatch",
+      "target": "EFT.SoundBank.PickClipsByDistance",
+      "parameters": [
+        {
+          "Name": "clip1",
+          "type": "UnityEngine.AudioClip\u0026"
+        },
+        {
+          "Name": "clip2",
+          "type": "UnityEngine.AudioClip\u0026"
+        },
+        {
+          "Name": "proportions",
+          "type": "System.Single\u0026"
+        },
+        {
+          "Name": "environment",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "distance",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceActorSourcePatch",
+      "target": "EFT.Player.SetRolloff",
+      "parameters": [
+        {
+          "Name": "source",
+          "type": "BetterSource"
+        },
+        {
+          "Name": "rolloff",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSecondaryStepRangePatch",
+      "target": "EFT.Player.UpdateStepSourceRolloff",
+      "parameters": [
+        {
+          "Name": "movementState",
+          "type": "CommonAssets.Scripts.Audio.EAudioMovementState"
+        },
+        {
+          "Name": "includeSpeedMult",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceItemAudioScopePatch",
+      "target": "BaseSoundPlayer.PlayClip",
+      "parameters": [
+        {
+          "Name": "clip",
+          "type": "UnityEngine.AudioClip"
+        },
+        {
+          "Name": "rolloff",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSourceVolumePatch",
+      "target": "BetterSource.UpdateSourceVolume",
+      "parameters": [
+        {
+          "Name": "speed",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSourceVolumePatch",
+      "target": "SuperSource.UpdateSourceVolume",
+      "parameters": [
+        {
+          "Name": "speed",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSourceVolumePatch",
+      "target": "SuperSourceDistant.UpdateSourceVolume",
+      "parameters": [
+        {
+          "Name": "speed",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSourceRangePatch",
+      "target": "SimpleSource.SetRolloff",
+      "parameters": [
+        {
+          "Name": "distance",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSourceRangePatch",
+      "target": "SuperSource.SetRolloff",
+      "parameters": [
+        {
+          "Name": "distance",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSourceRangePatch",
+      "target": "SuperSourceDistant.SetRolloff",
+      "parameters": [
+        {
+          "Name": "distance",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceSourceReleasePatch",
+      "target": "BetterSource.Release",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceCartridgePatch",
+      "target": "EFT.Player\u002BFirearmController.Shot",
+      "parameters": [
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Weapon"
+        },
+        {
+          "Name": "ammo",
+          "type": "EFT.InventoryLogic.Ammo"
+        },
+        {
+          "Name": "chamberIndex",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "multiShot",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceKillPatch",
+      "target": "EFT.Player.OnDead",
+      "parameters": [
+        {
+          "Name": "damageType",
+          "type": "EFT.EDamageType"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceRecoilPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_RecoilDelta",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceAccuracyPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_CenterOfImpactDelta",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceVelocityPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_VelocityDelta",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceFireRatePatch",
+      "target": "EFT.InventoryLogic.Weapon.get_FireRate",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceFireRatePatch",
+      "target": "EFT.InventoryLogic.Weapon.get_SingleFireRate",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceDrawPatch",
+      "target": "EFT.Player\u002BFirearmController.GetWeaponDrawSpeedMultiplier",
+      "parameters": [
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Weapon"
+        },
+        {
+          "Name": "useFastDropAnimationSpeed",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceAimPatch",
+      "target": "EFT.Animations.ProceduralWeaponAnimation.UpdateWeaponVariables",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceSwayPatch",
+      "target": "EFT.Animations.BreathEffector.Process",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceRecoilRecoveryPatch",
+      "target": "EFT.Animations.NewRotationRecoilProcess.CalculateRecoil",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceRecoilRecoveryPatch",
+      "target": "EFT.Animations.OldRotationRecoilProcess.CalculateRecoil",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceRecoilRecoveryPatch",
+      "target": "EFT.Animations.RecoilProcessBase.CalculateRecoil",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceAimWalkingPatch",
+      "target": "EFT.MovementContext.SetAimingSlowdown",
+      "parameters": [
+        {
+          "Name": "isAiming",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "slow",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceDamagePatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.ApplyDamage",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "damage",
+          "type": "System.Single"
+        },
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceContusionPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.DoContusion",
+      "parameters": [
+        {
+          "Name": "applyTime",
+          "type": "System.Single"
+        },
+        {
+          "Name": "strength",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceTinnitusPatch",
+      "target": "EFT.Player.TryStartContusion",
+      "parameters": [
+        {
+          "Name": "time",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceEmittedStepPatch",
+      "target": "GlobalEventDispatcher.PlaySound",
+      "parameters": [
+        {
+          "Name": "person",
+          "type": "EFT.IPlayer"
+        },
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "power",
+          "type": "System.Single"
+        },
+        {
+          "Name": "type",
+          "type": "AISoundType"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceBreachPatch",
+      "target": "EFT.BreachDoorState.ExecuteDoorInteraction",
+      "parameters": [
+        {
+          "Name": "interactive",
+          "type": "EFT.Interactive.WorldInteractiveObject"
+        },
+        {
+          "Name": "interactionResult",
+          "type": "EFT.Interactive.InteractionResult"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        },
+        {
+          "Name": "user",
+          "type": "EFT.Player"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceFoodStartPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController\u002BMedEffect.Started",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceFoodEndPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController\u002BMedEffect.Residue",
+      "parameters": []
+    },
+    {
+      "patch": "EarpieceFlashScope",
+      "target": "EFT.FirearmControllerSharedMethods.ApplyLightAndSoundHealthEffects",
+      "parameters": [
+        {
+          "Name": "players",
+          "type": "System.Collections.Generic.List\u00601[[EFT.IObserverToPlayerBridge, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "playerEmitterCaches",
+          "type": "System.Collections.Generic.Dictionary\u00602[[EFT.IObserverToPlayerBridge, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[EFT.PlayerEmitterCache, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "emitterPosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "blindnessSettings",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "contusionSettings",
+          "type": "UnityEngine.Vector3"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceStepAudibilityPatch",
+      "target": "EFT.Player.CheckSurface",
+      "parameters": [
+        {
+          "Name": "range",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceFirearmHolsterPatch",
+      "target": "EFT.Player\u002BFirearmController.Drop",
+      "parameters": [
+        {
+          "Name": "animationSpeed",
+          "type": "System.Single"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        },
+        {
+          "Name": "fastDrop",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "nextControllerItem",
+          "type": "EFT.InventoryLogic.Item"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceMeleeSwitchPatch",
+      "target": "EFT.Player\u002BBaseKnifeController.Drop",
+      "parameters": [
+        {
+          "Name": "animationSpeed",
+          "type": "System.Single"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        },
+        {
+          "Name": "fastDrop",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "nextControllerItem",
+          "type": "EFT.InventoryLogic.Item"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceFirearmSwitchPatch",
+      "target": "EFT.Player\u002BFirearmController.Spawn",
+      "parameters": [
+        {
+          "Name": "animationSpeed",
+          "type": "System.Single"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        }
+      ]
+    },
+    {
+      "patch": "EarpieceMalfunctionRepairedPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BRepairMalfunction.OnMalfunctionOffEvent",
+      "parameters": []
+    },
+    {
+      "patch": "EffectStatusHealthPanelPatch",
+      "target": "EFT.UI.CharacterHealthPanel.Show",
+      "parameters": [
+        {
+          "Name": "healthController",
+          "type": "EFT.HealthSystem.IHealthController"
+        }
+      ]
+    },
+    {
+      "patch": "EffectStatusKeepVisiblePatch",
+      "target": "EFT.UI.CharacterHealthPanel.AnimatedHide",
+      "parameters": [
+        {
+          "Name": "delaySeconds",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "EffectStatusPreserveVisibilityPatch",
+      "target": "EFT.UI.CharacterHealthPanel.AnimatedShow",
+      "parameters": [
+        {
+          "Name": "autohide",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ElephantGunReloadPatch",
+      "target": "EFT.Player\u002BFirearmController.ReloadBarrels",
+      "parameters": [
+        {
+          "Name": "ammoPack",
+          "type": "EFT.InventoryLogic.AmmoPack"
+        },
+        {
+          "Name": "placeToPutContainedAmmoMagazine",
+          "type": "EFT.InventoryLogic.ItemAddress"
+        },
+        {
+          "Name": "callback",
+          "type": "Comfort.Common.Callback"
+        }
+      ]
+    },
+    {
+      "patch": "ExpandedStorageAutoPanPatch",
+      "target": "EFT.UI.UIExtensions.KeepChildInScrollViewPort",
+      "parameters": [
+        {
+          "Name": "scrollRect",
+          "type": "UnityEngine.UI.ScrollRect"
+        },
+        {
+          "Name": "child",
+          "type": "UnityEngine.RectTransform"
+        },
+        {
+          "Name": "moveDirection",
+          "type": "EFT.UI.EMoveDirection"
+        },
+        {
+          "Name": "margin",
+          "type": "UnityEngine.Vector2"
+        }
+      ]
+    },
+    {
+      "patch": "GrenadePackingDelayPatch",
+      "target": "EFT.Player\u002BPlayerInventoryController\u002BLoadMagazineProcess.method_5",
+      "parameters": []
+    },
+    {
+      "patch": "GrenadePackingDelayPatch",
+      "target": "EFT.Player\u002BPlayerInventoryController\u002BUnloadMagazineProcess.method_4",
+      "parameters": []
+    },
+    {
+      "patch": "ItemDescriptionPatch",
+      "target": "EFT.UI.ItemSpecificationPanel.method_1",
+      "parameters": []
+    },
+    {
+      "patch": "ItemDescriptionLabelPatch",
+      "target": "EFT.UI.ItemInfoWindowLabels.SetDescriptionText",
+      "parameters": [
+        {
+          "Name": "value",
+          "type": "System.String"
+        }
+      ]
+    },
+    {
+      "patch": "InspectItemNameColorPatch",
+      "target": "EFT.UI.ItemSpecificationPanel.method_0",
+      "parameters": []
+    },
+    {
+      "patch": "GridItemNameColorPatch",
+      "target": "EFT.UI.DragAndDrop.GridItemView.GetItemName",
+      "parameters": [
+        {
+          "Name": "nextAddress",
+          "type": "EFT.InventoryLogic.ItemAddress"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryEarpieceAttributePatch",
+      "target": "EFT.InventoryLogic.Headphones..ctor",
+      "parameters": [
+        {
+          "Name": "id",
+          "type": "System.String"
+        },
+        {
+          "Name": "template",
+          "type": "EFT.InventoryLogic.HeadphonesTemplate"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryEarpieceInspectStatsPatch",
+      "target": "EFT.UI.ItemSpecificationPanel.RecreateAttributeBars",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryEarpieceCompareStatsPatch",
+      "target": "EFT.UI.ItemSpecificationPanel.Compare",
+      "parameters": [
+        {
+          "Name": "compareItem",
+          "type": "EFT.InventoryLogic.Item"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryEarpieceStatIconPatch",
+      "target": "EFT.UI.StaticIcons.GetAttributeIcon",
+      "parameters": [
+        {
+          "Name": "id",
+          "type": "System.Enum"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeFxScopePatch",
+      "target": "EFT.Grenade.Explosion",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryExplosionFxCapturePatch",
+      "target": "Systems.Effects.Effects.AddEffectEmit",
+      "parameters": [
+        {
+          "Name": "effect",
+          "type": "Systems.Effects.Effects\u002BEffect"
+        },
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "normal",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "hitCollider",
+          "type": "EFT.Ballistics.BallisticCollider"
+        },
+        {
+          "Name": "withDecal",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        },
+        {
+          "Name": "isKnife",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "isHitPointVisible",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "isGrenade",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "pov",
+          "type": "EFT.EPointOfView"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryExplosionFxPlaybackPatch",
+      "target": "Systems.Effects.Effects\u002BEffect.Emit",
+      "parameters": [
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "normal",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "hitCollider",
+          "type": "EFT.Ballistics.BallisticCollider"
+        },
+        {
+          "Name": "withDecal",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        },
+        {
+          "Name": "isKnife",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "isHitPointVisible",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "isGrenade",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "pov",
+          "type": "EFT.EPointOfView"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryExplosionFxParticlePatch",
+      "target": "Systems.Effects.Effects\u002BEffect\u002BParticleSys.Emit",
+      "parameters": [
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "normal",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "distance",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryExplosionFxMediatorPatch",
+      "target": "EFT.Particles.BasicParticleSystemMediator.Emit",
+      "parameters": [
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "rotation",
+          "type": "UnityEngine.Quaternion"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryExplosionFxQueuePlaybackPatch",
+      "target": "Systems.Effects.Effects.Update",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryExplosionFxNativeQueuePatch",
+      "target": "Systems.Effects.Effects.EmitGrenade",
+      "parameters": [
+        {
+          "Name": "ename",
+          "type": "System.String"
+        },
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "normal",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "volume",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryFireModePatch",
+      "target": "EFT.Player\u002BFirearmController.SetTriggerPressed",
+      "parameters": [
+        {
+          "Name": "pressed",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryFireModeNamePatch",
+      "target": "EFT.UI.AmmoCountPanel.ShowFireMode",
+      "parameters": [
+        {
+          "Name": "fireMode",
+          "type": "EFT.InventoryLogic.Weapon\u002BEFireMode"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeCreatedPatch",
+      "target": "GrenadeFactory.Create",
+      "parameters": [
+        {
+          "Name": "grenadeSettings",
+          "type": "GrenadeSettings"
+        },
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "rotation",
+          "type": "UnityEngine.Quaternion"
+        },
+        {
+          "Name": "force",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.ThrowWeap"
+        },
+        {
+          "Name": "profileId",
+          "type": "System.String"
+        },
+        {
+          "Name": "prewarm",
+          "type": "System.Single"
+        },
+        {
+          "Name": "withBallisticCalculator",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "isBeingPlanted",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeSignaturePatch",
+      "target": "EFT.Grenade.Explosion",
+      "parameters": [
+        {
+          "Name": "grenade",
+          "type": "EFT.Grenade"
+        },
+        {
+          "Name": "grenadeItem",
+          "type": "EFT.IExplosiveItem"
+        },
+        {
+          "Name": "grenadePosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "playerProfileIDWhoThrew",
+          "type": "System.String"
+        },
+        {
+          "Name": "grenadeBallisticsCalculator",
+          "type": "EFT.Ballistics.IBallisticsCalculator"
+        },
+        {
+          "Name": "originalWeaponItem",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "shift",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "isPlanted",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeContactPatch",
+      "target": "EFT.Grenade.OnCollisionEnter",
+      "parameters": [
+        {
+          "Name": "collision",
+          "type": "UnityEngine.Collision"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeAnchorPatch",
+      "target": "EFT.Grenade.LateUpdate",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeTrailFusePatch",
+      "target": "EFT.Grenade.InvokeBlowUpEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeDeferredEmissionPatch",
+      "target": "EFT.Player\u002BBaseGrenadeHandsController.Cook",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeSmokeStartedPatch",
+      "target": "SmokeGrenade.OnExplosion",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeSmokeLifetimePatch",
+      "target": "SmokeGrenade.StartEmissionBehaviour",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeFalloffPatch",
+      "target": "EFT.ExplosionSharedMethods.AffectPlayersShared",
+      "parameters": [
+        {
+          "Name": "playerAndDistances",
+          "type": "System.Collections.Generic.IReadOnlyDictionary\u00602[[EFT.IObserverToPlayerBridge, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[EFT.PlayerEmitterCache, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "grenadeItem",
+          "type": "EFT.IExplosiveItem"
+        },
+        {
+          "Name": "grenadePosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "getDamageInfo",
+          "type": "System.Func\u00601[[EFT.Ballistics.DamageInfo, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "directionalDamageMultiplier",
+          "type": "System.Single"
+        },
+        {
+          "Name": "directionalDamageAngle",
+          "type": "System.Single"
+        },
+        {
+          "Name": "explosionDirection",
+          "type": "System.Nullable\u00601[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "deadlyMinDistance",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeDamagePatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.ApplyDamage",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "damage",
+          "type": "System.Single"
+        },
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeFlashPatch",
+      "target": "EFT.FirearmControllerSharedMethods.ApplyLightAndSoundHealthEffects",
+      "parameters": [
+        {
+          "Name": "players",
+          "type": "System.Collections.Generic.List\u00601[[EFT.IObserverToPlayerBridge, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "playerEmitterCaches",
+          "type": "System.Collections.Generic.Dictionary\u00602[[EFT.IObserverToPlayerBridge, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[EFT.PlayerEmitterCache, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "emitterPosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "blindnessSettings",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "contusionSettings",
+          "type": "UnityEngine.Vector3"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeFlashedPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.DoBurnEyes",
+      "parameters": [
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "distanceStrength",
+          "type": "System.Single"
+        },
+        {
+          "Name": "normalTime",
+          "type": "System.Single"
+        },
+        {
+          "Name": "maxTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeConcussionImmunityPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.DoContusion",
+      "parameters": [
+        {
+          "Name": "applyTime",
+          "type": "System.Single"
+        },
+        {
+          "Name": "strength",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeRecoilPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_RecoilDelta",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeHipPatch",
+      "target": "EFT.Player\u002BFirearmController.UpdateHipInaccuracy",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeSmokeAreaPatch",
+      "target": "SmokeGrenade.UpdateEmissionArea",
+      "parameters": [
+        {
+          "Name": "normalTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeSmokeRadiusPatch",
+      "target": "SmokeGrenade.get_Radius",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeEmissionPatch",
+      "target": "GrenadeEmission.AttachTo",
+      "parameters": [
+        {
+          "Name": "t",
+          "type": "UnityEngine.Transform"
+        },
+        {
+          "Name": "offset",
+          "type": "UnityEngine.Vector3"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeEmissionResetPatch",
+      "target": "Systems.Effects.Effects.DisposeEmissionEffect",
+      "parameters": [
+        {
+          "Name": "emission",
+          "type": "GrenadeEmission"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeDrawPatch",
+      "target": "EFT.Player\u002BBaseGrenadeHandsController.Spawn",
+      "parameters": [
+        {
+          "Name": "animationSpeed",
+          "type": "System.Single"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeThrowAnimationPatch",
+      "target": "EFT.Player\u002BBaseGrenadeHandsController.StartCountdown",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeFirearmDrawPatch",
+      "target": "EFT.Player\u002BFirearmController.Spawn",
+      "parameters": [
+        {
+          "Name": "animationSpeed",
+          "type": "System.Single"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeAttributePatch",
+      "target": "EFT.InventoryLogic.ThrowWeap..ctor",
+      "parameters": [
+        {
+          "Name": "id",
+          "type": "System.String"
+        },
+        {
+          "Name": "template",
+          "type": "EFT.InventoryLogic.ThrowWeapTemplate"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeInspectStatsPatch",
+      "target": "EFT.UI.ItemSpecificationPanel.RecreateAttributeBars",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryGrenadeCompareStatsPatch",
+      "target": "EFT.UI.ItemSpecificationPanel.Compare",
+      "parameters": [
+        {
+          "Name": "compareItem",
+          "type": "EFT.InventoryLogic.Item"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryGrenadeStatIconPatch",
+      "target": "EFT.UI.StaticIcons.GetAttributeIcon",
+      "parameters": [
+        {
+          "Name": "id",
+          "type": "System.Enum"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryHitTrackingPatch",
+      "target": "EFT.Ballistics.Shot.Tick",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMissTrackingPatch",
+      "target": "EFT.Ballistics.BallisticsCalculator.RemovePredicate",
+      "parameters": [
+        {
+          "Name": "shot",
+          "type": "EFT.Ballistics.Shot"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryProjectilePoolCleanupPatch",
+      "target": "EFT.Ballistics.Shot.Release",
+      "parameters": [
+        {
+          "Name": "shot",
+          "type": "EFT.Ballistics.Shot"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryFleshHitPatch",
+      "target": "BodyPartCollider.ApplyHit",
+      "parameters": [
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        },
+        {
+          "Name": "shotID",
+          "type": "EFT.Ballistics.ShotId"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryFleshHitPatch",
+      "target": "ArmorPlateCollider.ApplyHit",
+      "parameters": [
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        },
+        {
+          "Name": "shotID",
+          "type": "EFT.Ballistics.ShotId"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryRocketRadiusPatch",
+      "target": "EFT.RocketLauncher.RocketProjectile.Initialize",
+      "parameters": [
+        {
+          "Name": "settings",
+          "type": "EFT.RocketSettings"
+        },
+        {
+          "Name": "owner",
+          "type": "EFT.IPlayer"
+        },
+        {
+          "Name": "ammo",
+          "type": "EFT.InventoryLogic.Ammo"
+        },
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Weapon"
+        },
+        {
+          "Name": "smokeport",
+          "type": "UnityEngine.Transform"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryRocketDirectHitPatch",
+      "target": "EFT.RocketLauncher.RocketProjectile.ProceedDamage",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "BodyPartCollider"
+        },
+        {
+          "Name": "player",
+          "type": "EFT.IPlayer"
+        },
+        {
+          "Name": "shot",
+          "type": "EFT.Ballistics.Shot"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryUtilityCompletionPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BUtilityOperation.OnIdleStartEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryReloadCompletionPatch",
+      "target": "EFT.Player\u002BFirearmController.ReloadMag",
+      "parameters": [
+        {
+          "Name": "magazine",
+          "type": "EFT.InventoryLogic.Magazine"
+        },
+        {
+          "Name": "itemAddress",
+          "type": "EFT.InventoryLogic.ItemAddress"
+        },
+        {
+          "Name": "callback",
+          "type": "Comfort.Common.Callback"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryReloadCompletionPatch",
+      "target": "EFT.Player\u002BFirearmController.QuickReloadMag",
+      "parameters": [
+        {
+          "Name": "magazine",
+          "type": "EFT.InventoryLogic.Magazine"
+        },
+        {
+          "Name": "callback",
+          "type": "Comfort.Common.Callback"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryReloadCompletionPatch",
+      "target": "EFT.Player\u002BFirearmController.ReloadWithAmmo",
+      "parameters": [
+        {
+          "Name": "ammoPack",
+          "type": "EFT.InventoryLogic.AmmoPack"
+        },
+        {
+          "Name": "callback",
+          "type": "Comfort.Common.Callback"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryReloadCompletionPatch",
+      "target": "EFT.Player\u002BFirearmController.ReloadCylinderMagazine",
+      "parameters": [
+        {
+          "Name": "ammoPack",
+          "type": "EFT.InventoryLogic.AmmoPack"
+        },
+        {
+          "Name": "callback",
+          "type": "Comfort.Common.Callback"
+        },
+        {
+          "Name": "quickReload",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryReloadCompletionPatch",
+      "target": "EFT.Player\u002BFirearmController.ReloadBarrels",
+      "parameters": [
+        {
+          "Name": "ammoPack",
+          "type": "EFT.InventoryLogic.AmmoPack"
+        },
+        {
+          "Name": "placeToPutContainedAmmoMagazine",
+          "type": "EFT.InventoryLogic.ItemAddress"
+        },
+        {
+          "Name": "callback",
+          "type": "Comfort.Common.Callback"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryReloadCompletionPatch",
+      "target": "EFT.Player\u002BFirearmController.ReloadGrenadeLauncher",
+      "parameters": [
+        {
+          "Name": "foundItem",
+          "type": "EFT.InventoryLogic.AmmoPack"
+        },
+        {
+          "Name": "callback",
+          "type": "Comfort.Common.Callback"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryContinuousStatePatch",
+      "target": "EFT.Player\u002BFirearmController.ManualUpdate",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestItemMatchPatch",
+      "target": "EFT.Quests.ConditionsConnectorsManager\u00601[[EFT.Quests.Quest, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]].ContainsPass",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "condition",
+          "type": "EFT.Quests.ConditionItem"
+        },
+        {
+          "Name": "handbook",
+          "type": "EFT.HandBook.IBaseHandbook"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestHitPatch",
+      "target": "EFT.Quests.ConditionHitProgressChecker.Test",
+      "parameters": [
+        {
+          "Name": "testValue",
+          "type": "System.Object"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestEquipmentPatch",
+      "target": "EFT.Quests.ConditionEquipmentProgressChecker.Test",
+      "parameters": [
+        {
+          "Name": "testValue",
+          "type": "System.Object"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestAssemblyPatch",
+      "target": "EFT.InventoryLogic.Inventory.IsWeaponFitsCondition",
+      "parameters": [
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Weapon"
+        },
+        {
+          "Name": "condition",
+          "type": "EFT.Quests.ConditionWeaponAssembly"
+        },
+        {
+          "Name": "displayLog",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestPlacePatch",
+      "target": "EFT.InteractionContextHelper\u002BCG_GetAvailableActions4.method_0",
+      "parameters": [
+        {
+          "Name": "nextItem",
+          "type": "EFT.InventoryLogic.Item"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestHandoverGuardPatch",
+      "target": "EFT.InventoryLogic.ItemManipulator.HandoverQuest",
+      "parameters": [
+        {
+          "Name": "quest",
+          "type": "EFT.Quests.Quest"
+        },
+        {
+          "Name": "items",
+          "type": "EFT.InventoryLogic.Item[]"
+        },
+        {
+          "Name": "itemCondition",
+          "type": "EFT.Quests.ConditionItem"
+        },
+        {
+          "Name": "itemController",
+          "type": "EFT.InventoryLogic.ItemController"
+        },
+        {
+          "Name": "questController",
+          "type": "EFT.Quests.QuestController"
+        },
+        {
+          "Name": "simulate",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestPlaceCommitPatch",
+      "target": "EFT.InteractionContextHelper\u002BCG_GetAvailableActions5.method_0",
+      "parameters": [
+        {
+          "Name": "successful",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestUsePatch",
+      "target": "EFT.Quests.ConditionUseItemProgressChecker.Test",
+      "parameters": [
+        {
+          "Name": "testValue",
+          "type": "System.Object"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestSellPatch",
+      "target": "EFT.Quests.ConditionalController\u00601[[EFT.Quests.Quest, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]].IncreaseSellToTraderCounter",
+      "parameters": [
+        {
+          "Name": "traderId",
+          "type": "System.String"
+        },
+        {
+          "Name": "templateId",
+          "type": "System.String"
+        },
+        {
+          "Name": "count",
+          "type": "System.Int32"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestBadgePatch",
+      "target": "EFT.UI.DragAndDrop.QuestItemViewPanel.smethod_0",
+      "parameters": [
+        {
+          "Name": "quests",
+          "type": "System.Collections.Generic.IEnumerable\u00601[[EFT.Quests.QuestDataClass, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "questWithItem",
+          "type": "EFT.Quests.QuestTemplate\u0026"
+        },
+        {
+          "Name": "conditionItem",
+          "type": "EFT.Quests.ConditionItem\u0026"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryQuestWorldItemPatch",
+      "target": "EFT.GameWorld\u002BCG_ManageQuestLoot.MoveNext",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryStaminaCostPatch",
+      "target": "Stamina.Consume",
+      "parameters": [
+        {
+          "Name": "consumption",
+          "type": "Physical\u002BConsumption"
+        },
+        {
+          "Name": "fromDamage",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeAttackStartPatch",
+      "target": "EFT.Player\u002BKnifeController\u002BKick.Start",
+      "parameters": [
+        {
+          "Name": "eKickType",
+          "type": "EFT.Player\u002BEKickType"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeDamagePatch",
+      "target": "EFT.GameWorld.HackShot",
+      "parameters": [
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeArmorBlockPatch",
+      "target": "EFT.InventoryLogic.ArmorComponent.ApplyDamage",
+      "parameters": [
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo\u0026"
+        },
+        {
+          "Name": "colliderType",
+          "type": "EBodyPartColliderType"
+        },
+        {
+          "Name": "armorPlateCollider",
+          "type": "EArmorPlateCollider"
+        },
+        {
+          "Name": "damageInfoIsLocal",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "armorComponents",
+          "type": "System.Collections.Generic.List\u00601[[EFT.InventoryLogic.ArmorComponent, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "lightVestsDamageReduction",
+          "type": "EFT.SkillManager\u002BFloatBuff"
+        },
+        {
+          "Name": "heavyVestsDamageReduction",
+          "type": "EFT.SkillManager\u002BFloatBuff"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeHealthPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.ApplyDamage",
+      "parameters": [
+        {
+          "Name": "bodyPart",
+          "type": "EBodyPart"
+        },
+        {
+          "Name": "damage",
+          "type": "System.Single"
+        },
+        {
+          "Name": "damageInfo",
+          "type": "EFT.Ballistics.DamageInfo"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeSpeedPatch",
+      "target": "EFT.Player\u002BBaseKnifeController.SetMeleeSpeed",
+      "parameters": [
+        {
+          "Name": "speed",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeReachPatch",
+      "target": "EFT.KnifeCollider.OnFire",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryMeleeDrawPatch",
+      "target": "EFT.Player\u002BKnifeController.Spawn",
+      "parameters": [
+        {
+          "Name": "animationSpeed",
+          "type": "System.Single"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeDrawCompletePatch",
+      "target": "EFT.Player\u002BKnifeController\u002BSpawnOperation.WeaponAppeared",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryMeleeHolsterPatch",
+      "target": "EFT.Player\u002BKnifeController\u002BRemove.Start",
+      "parameters": [
+        {
+          "Name": "onHidden",
+          "type": "System.Action"
+        },
+        {
+          "Name": "fastDrop",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeDropPatch",
+      "target": "EFT.Player\u002BBaseKnifeController.Drop",
+      "parameters": [
+        {
+          "Name": "animationSpeed",
+          "type": "System.Single"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        },
+        {
+          "Name": "fastDrop",
+          "type": "System.Boolean"
+        },
+        {
+          "Name": "nextControllerItem",
+          "type": "EFT.InventoryLogic.Item"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeDestroyPatch",
+      "target": "EFT.Player\u002BBaseKnifeController.Destroy",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryMeleeMovementPatch",
+      "target": "EFT.MovementContext.DirectApplyMotion",
+      "parameters": [
+        {
+          "Name": "motion",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeSprintCostPatch",
+      "target": "Stamina.Process",
+      "parameters": [
+        {
+          "Name": "dt",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeJumpHeightPatch",
+      "target": "EFT.JumpPlayerState.Enter",
+      "parameters": [
+        {
+          "Name": "isFromSameState",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeFallPatch",
+      "target": "EFT.HealthSystem.ActiveHealthController.HandleFall",
+      "parameters": [
+        {
+          "Name": "height",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeMovementAudioPatch",
+      "target": "EFT.Player.CalculateMovementVolumeDefaultMultiplier",
+      "parameters": [
+        {
+          "Name": "movementState",
+          "type": "CommonAssets.Scripts.Audio.EAudioMovementState"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeAiMovementNoisePatch",
+      "target": "GlobalEventDispatcher.PlaySound",
+      "parameters": [
+        {
+          "Name": "person",
+          "type": "EFT.IPlayer"
+        },
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "power",
+          "type": "System.Single"
+        },
+        {
+          "Name": "type",
+          "type": "AISoundType"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeAttributePatch",
+      "target": "EFT.InventoryLogic.KnifeComponent..ctor",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "template",
+          "type": "EFT.InventoryLogic.IKnifeComponentTemplate"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryRedRebelExtractionPatch",
+      "target": "EFT.Interactive.HasItemRequirement.Met",
+      "parameters": [
+        {
+          "Name": "player",
+          "type": "EFT.Player"
+        },
+        {
+          "Name": "point",
+          "type": "EFT.Interactive.ExfiltrationPoint"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryMeleeFirearmDrawPatch",
+      "target": "EFT.Player\u002BFirearmController.Spawn",
+      "parameters": [
+        {
+          "Name": "animationSpeed",
+          "type": "System.Single"
+        },
+        {
+          "Name": "callback",
+          "type": "System.Action"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryWorldCleanupPatch",
+      "target": "EFT.GameWorld.OnDestroy",
+      "parameters": []
+    },
+    {
+      "patch": "ReusableGrenadeProjectilePatch",
+      "target": "EFT.Player\u002BBaseGrenadeHandsController.CreateAndRegisterGrenade",
+      "parameters": [
+        {
+          "Name": "position",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "rotation",
+          "type": "UnityEngine.Quaternion"
+        },
+        {
+          "Name": "force",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "prewarm",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "ReusableGrenadeExplosionPatch",
+      "target": "EFT.Grenade.Explosion",
+      "parameters": [
+        {
+          "Name": "grenade",
+          "type": "EFT.Grenade"
+        },
+        {
+          "Name": "grenadeItem",
+          "type": "EFT.IExplosiveItem"
+        },
+        {
+          "Name": "grenadePosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "playerProfileIDWhoThrew",
+          "type": "System.String"
+        },
+        {
+          "Name": "grenadeBallisticsCalculator",
+          "type": "EFT.Ballistics.IBallisticsCalculator"
+        },
+        {
+          "Name": "originalWeaponItem",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "shift",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "isPlanted",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ReusableGrenadeSelectedPatch",
+      "target": "EFT.Player.TryProceed",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "completeCallback",
+          "type": "Comfort.Common.Callback\u00601[[EFT.IHandsController, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "scheduled",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ReusableGrenadeQuickSelectPatch",
+      "target": "EFT.InventoryLogic.InventoryExtension.GetThrowablePriorityGrenadesList",
+      "parameters": [
+        {
+          "Name": "inventoryController",
+          "type": "EFT.InventoryLogic.InventoryController"
+        }
+      ]
+    },
+    {
+      "patch": "ReusableGrenadeSelectorResultPatch",
+      "target": "EFT.UI.GrenadeSelector.GetGrenade",
+      "parameters": []
+    },
+    {
+      "patch": "ReusableGrenadeEmptyDrawPatch",
+      "target": "EFT.Player.TryProceed",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        },
+        {
+          "Name": "completeCallback",
+          "type": "Comfort.Common.Callback\u00601[[EFT.IHandsController, Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+        },
+        {
+          "Name": "scheduled",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "ReusableGrenadeBotInventoryPatch",
+      "target": "BotGrenadeController.HaveGrenadeOfType",
+      "parameters": [
+        {
+          "Name": "grenadeType",
+          "type": "EFT.InventoryLogic.ThrowWeapType"
+        }
+      ]
+    },
+    {
+      "patch": "ReusableGrenadeBotInventoryPatch",
+      "target": "BotGrenadeController.GetGrenadeCount",
+      "parameters": []
+    },
+    {
+      "patch": "ReusableGrenadeBotInventoryPatch",
+      "target": "BotGrenadeController.CheckGrenadeWithType",
+      "parameters": [
+        {
+          "Name": "grenadeType",
+          "type": "EFT.InventoryLogic.ThrowWeapType"
+        }
+      ]
+    },
+    {
+      "patch": "ReusableGrenadeBotInventoryPatch",
+      "target": "BotGrenadeController.CheckGrenade",
+      "parameters": []
+    },
+    {
+      "patch": "UseItemsAnywhereGrenadeWheelPatch",
+      "target": "UseItemsAnywhere.QuickUseWheel.QuickUseWheelInventory.HasResource",
+      "parameters": [
+        {
+          "Name": "item",
+          "type": "EFT.InventoryLogic.Item"
+        }
+      ]
+    },
+    {
+      "patch": "WeaponCartridgePreparationPatch",
+      "target": "EFT.Player\u002BFirearmController.Shot",
+      "parameters": [
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.Weapon"
+        },
+        {
+          "Name": "ammo",
+          "type": "EFT.InventoryLogic.Ammo"
+        },
+        {
+          "Name": "chamberIndex",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "multiShot",
+          "type": "System.Boolean"
+        }
+      ]
+    },
+    {
+      "patch": "WeaponShellCenterPatch",
+      "target": "EFT.Player\u002BFirearmController.InitiateShot",
+      "parameters": [
+        {
+          "Name": "weapon",
+          "type": "EFT.InventoryLogic.IWeapon"
+        },
+        {
+          "Name": "ammo",
+          "type": "EFT.InventoryLogic.Ammo"
+        },
+        {
+          "Name": "shotPosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "shotDirection",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "fireportPosition",
+          "type": "UnityEngine.Vector3"
+        },
+        {
+          "Name": "chamberIndex",
+          "type": "System.Int32"
+        },
+        {
+          "Name": "overheat",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "WeaponTotalProjectileCountPatch",
+      "target": "EFT.InventoryLogic.Ammo.get_ProjectileCount",
+      "parameters": []
+    },
+    {
+      "patch": "WeaponLiveCombatStatePatch",
+      "target": "EFT.Player\u002BFirearmController.ManualUpdate",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "WeaponAutomaticIntervalPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BAutomaticFireOperation.Update",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.ClientFirearmController\u002BClientBoltActionFireOperation.Start",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BBoltActionFireOperation.Start",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireCylinderMagOperation.Start",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireCylinderMagOperation.OnFireEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireCylinderMagOperation.OnAddAmmoInChamber",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireCylinderMagOperation.OnFireEndEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireCylinderMagOperation.OnIdleStartEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireCylinderMagOperation.FastForward",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireCylinderMagOperation.PrepareShot",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOnlyBarrelFireOperation.PrepareShot",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOnlyBarrelFireOperation.OnAddAmmoInChamber",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOnlyBarrelFireOperation.OnFireEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.Start",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.OnFireEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.PrepareShot",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.OnAddAmmoInChamber",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.Update",
+      "parameters": [
+        {
+          "Name": "deltaTime",
+          "type": "System.Single"
+        }
+      ]
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.OnFireEndEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.OnIdleStartEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFireOperation.FastForward",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFlareGunFire.Start",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFlareGunFire.PrepareShot",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFlareGunFire.OnFireEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BFlareGunFire.OnFireEndEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BLauncherFire.Start",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BLauncherFire.PrepareShot",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BLauncherFire.OnFireEndEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BLauncherFire.OnFireEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BOneOffGunFire.Start",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BOneOffGunFire.PrepareShot",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BOneOffGunFire.OnFireEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BOneOffGunFire.OnFireEndEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BOneOffGunFire.FastForward",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BRocketLauncherFire.Start",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BRocketLauncherFire.PrepareShot",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BRocketLauncherFire.OnFireEvent",
+      "parameters": []
+    },
+    {
+      "patch": "LegendaryCarrierAnimationPatch",
+      "target": "EFT.Player\u002BFirearmController\u002BRocketLauncherFire.OnFireEndEvent",
+      "parameters": []
+    },
+    {
+      "patch": "WeaponRecoilDeltaPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_RecoilDelta",
+      "parameters": []
+    },
+    {
+      "patch": "WeaponErgonomicsDeltaPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_ErgonomicsDelta",
+      "parameters": []
+    },
+    {
+      "patch": "WeaponAccuracyDeltaPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_CenterOfImpactDelta",
+      "parameters": []
+    },
+    {
+      "patch": "WeaponVelocityDeltaPatch",
+      "target": "EFT.InventoryLogic.Weapon.get_VelocityDelta",
+      "parameters": []
+    },
+    {
+      "patch": "WeaponFireRatePatch",
+      "target": "EFT.InventoryLogic.Weapon.get_FireRate",
+      "parameters": []
+    },
+    {
+      "patch": "WeaponSingleFireRatePatch",
+      "target": "EFT.InventoryLogic.Weapon.get_SingleFireRate",
+      "parameters": []
+    },
+    {
+      "patch": "WeaponFireRateAttributePatch",
+      "target": "EFT.InventoryLogic.Weapon..ctor",
+      "parameters": [
+        {
+          "Name": "id",
+          "type": "System.String"
+        },
+        {
+          "Name": "template",
+          "type": "EFT.InventoryLogic.WeaponTemplate"
+        }
+      ]
+    },
+    {
+      "patch": "WeaponReloadSpeedPatch",
+      "target": "EFT.Player\u002BFirearmController.GetWeaponReloadAnimationSpeed",
+      "parameters": []
+    },
+    {
+      "patch": "WeaponReloadAnimatorPatch",
+      "target": "EFT.Player\u002BFirearmController.SetAnimatorAndProceduralValues",
+      "parameters": []
+    }
+  ],
+  "reflectionBindings": [
+    "Physical._player",
+    "EFT.Player\u002BKnifeRaycastHit.collider",
+    "EFT.Player.InteractionRay",
+    "EFT.GameWorld.FindInteractable / RaycastHit.distance",
+    "ActiveHealthController.AddEffect\u003CT\u003E / public PainKiller"
+  ],
+  "skipped": [
+    {
+      "patch": "LegendaryHollywoodFxBlastPatch",
+      "reason": "Optional renderer/UIA assembly absent; controlled adapter tests run separately"
+    }
+  ],
+  "failed": 0,
+  "failures": []
+}

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><ReferenceRoot Condition="'$(ReferenceRoot)'==''">../../../phase2</ReferenceRoot><EarpieceRuntimeSource Condition="'$(EarpieceRuntimeSource)'==''">../../../src/EscapeFromBorderlands.Client/EarpieceRuntime.cs</EarpieceRuntimeSource></PropertyGroup><ItemGroup><Compile Remove="baseline/**/*.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryEarpieceStats.cs" Link="Production/LegendaryEarpieceStats.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/EarpieceMedicalAnimation.cs" Link="Production/EarpieceMedicalAnimation.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/ItemDescriptionPatch.cs" Link="Production/ItemDescriptionPatch.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/EarpieceEffects.cs" Link="Production/EarpieceEffects.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/EarpieceEffectRules.cs" Link="Production/EarpieceEffectRules.cs"/>
+<Compile Include="$(EarpieceRuntimeSource)" Link="Production/EarpieceRuntime.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/EarpieceAudio.cs" Link="Production/EarpieceAudio.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/EarpiecePatches.cs" Link="Production/EarpiecePatches.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/EarpieceSwitching.cs" Link="Production/EarpieceSwitching.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/RarityResolver.cs" Link="Production/RarityResolver.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryCatalog.cs" Link="Production/LegendaryCatalog.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackStorageVariants.cs" Link="Production/BackpackStorageVariants.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackEffectDefinition.cs" Link="Production/BackpackEffectDefinition.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/ChestRigEffectDefinition.cs" Link="Production/ChestRigEffectDefinition.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/MeleeEffectDefinition.cs" Link="Production/MeleeEffectDefinition.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackBoons.cs" Link="Production/BackpackBoons.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/ChestRigBoons.cs" Link="Production/ChestRigBoons.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/GrenadeEffectRules.cs" Link="Production/GrenadeEffectRules.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/GrenadeChargeLedger.cs" Link="Production/GrenadeChargeLedger.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/EffectStatusModel.cs" Link="Production/EffectStatusModel.cs"/>
+<PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.4"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/StatusVisibility.cs" Link="Production/StatusVisibility.cs"/>
+<EmbeddedResource Include="../../../src/EscapeFromBorderlands.Client/LegendaryDefinitions.json" LogicalName="Earpieces.LegendaryDefinitions.json"/>
+<Reference Include="Newtonsoft.Json"><HintPath>$(ReferenceRoot)/Client/Newtonsoft.Json.dll</HintPath></Reference>
+<Reference Include="0Harmony"><HintPath>$(ReferenceRoot)/Server/0Harmony.dll</HintPath></Reference>
+</ItemGroup></Project>

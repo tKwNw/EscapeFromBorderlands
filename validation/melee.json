@@ -1,0 +1,255 @@
+{
+  "passed": 62,
+  "failed": 0,
+  "checks": 62,
+  "results": [
+    {
+      "name": "All 48 approved melee variants are active; discarded entries stay absent",
+      "status": "PASS"
+    },
+    {
+      "name": "All four retired Labrys/hammer variants resolve without Legendary bonuses or active melee state",
+      "status": "PASS"
+    },
+    {
+      "name": "Every melee instance gets four distinct stable melee modifiers and different items can differ",
+      "status": "PASS"
+    },
+    {
+      "name": "Point Taken affects stabs only and composes once with random damage/penetration",
+      "status": "PASS"
+    },
+    {
+      "name": "Standard Issue accepts either primary and EFB AK-74 clones, excludes backpack and AK-105",
+      "status": "PASS"
+    },
+    {
+      "name": "Spy Main rear hits receive 7.66x damage; front/side hits receive ordinary damage",
+      "status": "PASS"
+    },
+    {
+      "name": "Shark Bite requires an existing bleed before its hit",
+      "status": "PASS"
+    },
+    {
+      "name": "Roberto applies heavy bleed only on flesh-damaging stabs",
+      "status": "PASS"
+    },
+    {
+      "name": "Red Tide increments once per successful attack, caps at \u002B300%, and resets on holster",
+      "status": "PASS"
+    },
+    {
+      "name": "Third Time\u0027s the Chop counts missed attacks, empowers every third, and resets on switching",
+      "status": "PASS"
+    },
+    {
+      "name": "Crash Test adds fifty absolute penetration after randomized multiplication",
+      "status": "PASS"
+    },
+    {
+      "name": "Survival Clause uses total health at or below forty percent and ends immediately above it",
+      "status": "PASS"
+    },
+    {
+      "name": "Full Stride samples movement controls on impact, including movement without displacement",
+      "status": "PASS"
+    },
+    {
+      "name": "Blood Bank heals ten total HP only once per flesh attack and never restores blacked parts",
+      "status": "PASS"
+    },
+    {
+      "name": "Trench Foot boosts leg damage and fractures only flesh-damaging leg hits",
+      "status": "PASS"
+    },
+    {
+      "name": "Bodycam Off and Gladius restore maximum Leg Stamina on confirmed kills once",
+      "status": "PASS"
+    },
+    {
+      "name": "Movement bonuses scale horizontal motion and motor limits once; vertical motion and holstered movement stay native",
+      "status": "PASS"
+    },
+    {
+      "name": "Summit and Trailblazer affect only jump/sprint Leg Stamina; restoration and other consumption remain native",
+      "status": "PASS"
+    },
+    {
+      "name": "The Source adds 25% ballistic jump height and grants fall immunity only when held at landing",
+      "status": "PASS"
+    },
+    {
+      "name": "Spy Main reduces native movement audio and AI step power without reducing gunshots",
+      "status": "PASS"
+    },
+    {
+      "name": "Swing speed, reach, and inspect attributes include signature and random modifiers",
+      "status": "PASS"
+    },
+    {
+      "name": "Draw/holster bonuses do not leak into later attack animation speed",
+      "status": "PASS"
+    },
+    {
+      "name": "Every Legendary Red Rebel satisfies the Red Rebel requirement while equipped, whether drawn or holstered",
+      "status": "PASS"
+    },
+    {
+      "name": "Red Rebel compatibility preserves native successes and cannot bypass unrelated extraction requirements",
+      "status": "PASS"
+    },
+    {
+      "name": "Every Red Rebel inspect description contains only weapon and effect information with no extraction wording",
+      "status": "PASS"
+    },
+    {
+      "name": "Ordinary and third-party melee never resolve or modify combat",
+      "status": "PASS"
+    },
+    {
+      "name": "Wombo Combo requires a flesh slash and spends its empowered stab even on a miss",
+      "status": "PASS"
+    },
+    {
+      "name": "Forwarded Notice requires two seconds of actual sprinting and spends its damage/reach charge",
+      "status": "PASS"
+    },
+    {
+      "name": "Damascus Delivery grants movement and sprint stamina benefits while preserving carried weight",
+      "status": "PASS"
+    },
+    {
+      "name": "Catch Your Breath restores maximum Leg Stamina after three stationary seconds and movement ends recovery",
+      "status": "PASS"
+    },
+    {
+      "name": "Borrowed Pulse restores Leg Stamina only when bleeding existed before a flesh hit",
+      "status": "PASS"
+    },
+    {
+      "name": "Outta Options checks all equipped primary cartridges, excludes holster/backpack, and requires a primary",
+      "status": "PASS"
+    },
+    {
+      "name": "Rifleman\u0027s Ration restores Arms, clears Tremor, and refreshes its own 600-second painkiller after holstering",
+      "status": "PASS"
+    },
+    {
+      "name": "True Believer uses the live raid clock with inclusive 20:00 and exclusive 06:00 boundaries",
+      "status": "PASS"
+    },
+    {
+      "name": "Low Tide affects crouched movement but leaves standing/prone movement alone",
+      "status": "PASS"
+    },
+    {
+      "name": "Rib Reaper applies exactly thirty additional stomach HP damage after a flesh chest slash",
+      "status": "PASS"
+    },
+    {
+      "name": "Jarate accepts every sniper-category rifle in either primary, excludes marksman rifles and backpack",
+      "status": "PASS"
+    },
+    {
+      "name": "Hatchet Job modifies head slashes only, including penetration",
+      "status": "PASS"
+    },
+    {
+      "name": "Stitch Witch removes the wielder\u0027s bleeding only on a confirmed melee kill",
+      "status": "PASS"
+    },
+    {
+      "name": "Hoodoo removes only its own pain suppression on holster and preserves medicine effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Paul Bunyan empowers only the first attempted attack per draw; a miss consumes it",
+      "status": "PASS"
+    },
+    {
+      "name": "Blood Pressure activates only during an existing bleed",
+      "status": "PASS"
+    },
+    {
+      "name": "Cutting Season ramps following slashes from zero to one hundred percent, and stabs reset it",
+      "status": "PASS"
+    },
+    {
+      "name": "Campfire Break restores five total HP per second across living injured parts only",
+      "status": "PASS"
+    },
+    {
+      "name": "Sleeping Bag Protocol applies fifty percent protection only while prone",
+      "status": "PASS"
+    },
+    {
+      "name": "Scramble Insurance changes vault/climb speed and Leg costs without changing jump or Arm costs",
+      "status": "PASS"
+    },
+    {
+      "name": "Air Fare gives one half-height jump, consumes native stamina, and cannot re-arm by switching in midair",
+      "status": "PASS"
+    },
+    {
+      "name": "Air Fare re-arms on a new ground jump and preserves ceilings and native jump restrictions",
+      "status": "PASS"
+    },
+    {
+      "name": "Foxhole Foreman reduces crouched explosion and fragment damage only",
+      "status": "PASS"
+    },
+    {
+      "name": "Countermeasure arms on direct external damage and consumes the next attempted attack without stacking",
+      "status": "PASS"
+    },
+    {
+      "name": "Restraining Order protects against marked attackers only, and clears immediately on switching",
+      "status": "PASS"
+    },
+    {
+      "name": "Tip of the Argument always adds fifty percent reach and boosts horizontal long-range stabs only",
+      "status": "PASS"
+    },
+    {
+      "name": "Roman Numerals tracks actual flesh stabs separately by victim and body part",
+      "status": "PASS"
+    },
+    {
+      "name": "Public Forum counts nearby living enemies, excludes friends, and caps attack speed",
+      "status": "PASS"
+    },
+    {
+      "name": "Session cleanup removes owned painkillers without touching medicine or unchanged carried weight",
+      "status": "PASS"
+    },
+    {
+      "name": "Emergency Access opens one locked door without breach eligibility and leaves its four-modifier item identity intact",
+      "status": "PASS"
+    },
+    {
+      "name": "Walls, unlocked doors, non-interactive barriers and refused unlocks do not spend the master-key charge",
+      "status": "PASS"
+    },
+    {
+      "name": "Emergency Access shares its raid charge across copies, holsters and recreated actors with the same profile",
+      "status": "PASS"
+    },
+    {
+      "name": "Master-key use is per player and re-arms only in a new raid world",
+      "status": "PASS"
+    },
+    {
+      "name": "Door probe requires an active melee strike, native unobstructed targeting and actual melee range",
+      "status": "PASS"
+    },
+    {
+      "name": "Linked door colliders resolve, while ordinary and holstered axes cannot use master-key logic",
+      "status": "PASS"
+    },
+    {
+      "name": "Native interaction failures are contained and reentrant callbacks cannot unlock a second door",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><DefineConstants>REUSABLE_GRENADE_TESTS;GRENADE_EFFECT_TESTS</DefineConstants><ReferenceRoot Condition="'$(ReferenceRoot)'==''">../../../grenade_refs4013/phase2</ReferenceRoot></PropertyGroup><ItemGroup>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/UseItemsAnywhereCompatibility.cs" Link="Production/Client/UseItemsAnywhereCompatibility.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryGrenadeDrawAudio.cs" Link="Production/Client/LegendaryGrenadeDrawAudio.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/WavePcm.cs" Link="Production/Client/WavePcm.cs"/>
+<EmbeddedResource Include="../../../src/EscapeFromBorderlands.Client/Audio/HolyHandGrenade.wav" LogicalName="EscapeFromBorderlands.Client.Audio.HolyHandGrenade.wav"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/BotSpawnGroups.cs" Link="Server/BotSpawnGroups.cs"/>
+<Compile Include="../fireball/Stubs.cs" Link="NativeDoubles.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/TrailblazerCollision.cs" Link="Production/Client/TrailblazerCollision.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/SmokeParticleScale.cs" Link="Production/Client/SmokeParticleScale.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/TrailblazerPath.cs" Link="Production/Client/TrailblazerPath.cs"/>
+<EmbeddedResource Include="pop-0211-rolls.json" LogicalName="Grenades.Pop0211Rolls.json"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/GrenadeChargeLedger.cs" Link="Production/Client/GrenadeChargeLedger.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/ReusableGrenadeRuntime.cs" Link="Production/Client/ReusableGrenadeRuntime.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/RarityResolver.cs" Link="Production/Client/RarityResolver.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryCatalog.cs" Link="Production/Client/LegendaryCatalog.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/MeleeEffectDefinition.cs" Link="Production/Client/MeleeEffectDefinition.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackEffectDefinition.cs" Link="Production/Client/BackpackEffectDefinition.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackStorageVariants.cs" Link="Production/Client/BackpackStorageVariants.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackBoons.cs" Link="Production/Client/BackpackBoons.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/ChestRigEffectDefinition.cs" Link="Production/Client/ChestRigEffectDefinition.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/ChestRigBoons.cs" Link="Production/Client/ChestRigBoons.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/EffectStatusModel.cs" Link="Production/Client/EffectStatusModel.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/StatusVisibility.cs" Link="Production/Client/StatusVisibility.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackInventoryAccess.cs" Link="Production/Client/BackpackInventoryAccess.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackGrenadeAction.cs" Link="Production/Client/BackpackGrenadeAction.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/ItemDescriptionPatch.cs" Link="Production/Client/ItemDescriptionPatch.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/LegendaryCatalog.cs" Link="Production/Server/LegendaryCatalog.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/MeleeEffectDefinition.cs" Link="Production/Server/MeleeEffectDefinition.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/BackpackEffectDefinition.cs" Link="Production/Server/BackpackEffectDefinition.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/BackpackStorageVariants.cs" Link="Production/Server/BackpackStorageVariants.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/ChestRigEffectDefinition.cs" Link="Production/Server/ChestRigEffectDefinition.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/RarityConfiguration.cs" Link="Production/Server/RarityConfiguration.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/ReusableGrenadeTestOffer.cs" Link="Production/Server/ReusableGrenadeTestOffer.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/GrenadeSpawnPolicy.cs" Link="Production/Server/GrenadeSpawnPolicy.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/ReusableGrenadeSpawning.cs" Link="Production/Server/ReusableGrenadeSpawning.cs"/>
+<Compile Include="../../../src/EscapeFromBorderlands.Server/CategorySpawnPolicy.cs" Link="Production/Server/CategorySpawnPolicy.cs"/>
+<EmbeddedResource Include="../../../src/EscapeFromBorderlands.Client/LegendaryDefinitions.json" LogicalName="Grenades.LegendaryDefinitions.json"/>
+<Reference Include="Newtonsoft.Json"><HintPath>$(ReferenceRoot)/Client/Newtonsoft.Json.dll</HintPath></Reference>
+<Reference Include="SPTarkov.Server.Core"><HintPath>$(ReferenceRoot)/Server/SPTarkov.Server.Core.dll</HintPath></Reference>
+<Reference Include="SPTarkov.Common"><HintPath>$(ReferenceRoot)/Server/SPTarkov.Common.dll</HintPath></Reference>
+<Reference Include="SPTarkov.DI"><HintPath>$(ReferenceRoot)/Server/SPTarkov.DI.dll</HintPath></Reference>
+<Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryGrenadeStats.cs" Link="Production/Client/LegendaryGrenadeStats.cs"/><Compile Include="../../../src/EscapeFromBorderlands.Client/GrenadeEffectRules.cs" Link="GrenadeEffectRules.cs"/><Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryGrenadeEffects.cs" Link="Production/Client/LegendaryGrenadeEffects.cs"/><Compile Include="../../../src/EscapeFromBorderlands.Client/GrenadeBuffs.cs" Link="Production/Client/GrenadeBuffs.cs"/><Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryGrenadePatches.cs" Link="Production/Client/LegendaryGrenadePatches.cs"/><Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryGrenadeSettings.cs" Link="Production/Client/LegendaryGrenadeSettings.cs"/><EmbeddedResource Include="blast-native-il.json" LogicalName="Grenades.BlastNativeIL.json"/><Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackUseAnimationPatch.cs" Link="Production/Client/BackpackUseAnimationPatch.cs"/><Compile Include="../../../src/EscapeFromBorderlands.Client/BackpackMagazineSpeed.cs" Link="Production/Client/BackpackMagazineSpeed.cs"/><Compile Include="../../../src/EscapeFromBorderlands.Client/GrenadePackingSpeed.cs" Link="Production/Client/GrenadePackingSpeed.cs"/><Compile Include="../../../src/EscapeFromBorderlands.Shared/QuestItemEquivalence.cs" Link="Production/Shared/QuestItemEquivalence.cs"/><Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryQuestItems.cs" Link="Production/Client/LegendaryQuestItems.cs"/></ItemGroup><ItemGroup><Compile Include="../../../src/EscapeFromBorderlands.Client/EarpieceEffects.cs" Link="Production/Client/EarpieceEffects.cs"/></ItemGroup></Project>

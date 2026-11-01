@@ -1,0 +1,365 @@
+{
+  "version": "0.29.1",
+  "targetSptVersion": "4.1.6",
+  "scope": "Native method-body role checks; no game execution",
+  "passed": 89,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "Native accuracy cache receives GetTotalCenterOfImpact(false)",
+      "status": "PASS"
+    },
+    {
+      "name": "Native pellet dispersion cache receives TotalShotgunDispersion",
+      "status": "PASS"
+    },
+    {
+      "name": "Cartridge Shot reads both caches before InitiateShot",
+      "status": "PASS"
+    },
+    {
+      "name": "Single-fire cooldown is initialized from 60 / SingleFireRate",
+      "status": "PASS"
+    },
+    {
+      "name": "Single-fire Update subtracts elapsed deltaTime from that cooldown",
+      "status": "PASS"
+    },
+    {
+      "name": "Automatic operation uses float_7 as elapsed time and _shotsTime as interval",
+      "status": "PASS"
+    },
+    {
+      "name": "Projectile CurrentVelocity getter returns _currentVelocity",
+      "status": "PASS"
+    },
+    {
+      "name": "Ballistics removal predicate checks completion and queues the shot for release",
+      "status": "PASS"
+    },
+    {
+      "name": "Smoke EmitTime getter returns _emitTime and LifeTime scales it by the final curve time",
+      "status": "PASS"
+    },
+    {
+      "name": "Smoke cleanup releases the sound source and clears source/parent fields",
+      "status": "PASS"
+    },
+    {
+      "name": "Melee owner reflection fields bind to native Player instances",
+      "status": "PASS"
+    },
+    {
+      "name": "Every native knife attack resets reach from the selected stab/slash distance before the patched callback",
+      "status": "PASS"
+    },
+    {
+      "name": "Native knife collision uses MaxDistance for its BoxCast range",
+      "status": "PASS"
+    },
+    {
+      "name": "Native melee-speed setter drives both hand animation and player swing animation",
+      "status": "PASS"
+    },
+    {
+      "name": "Native jump skill boost is initialized on entry and scales vertical lift velocity",
+      "status": "PASS"
+    },
+    {
+      "name": "Movement audio hook targets the native rolloff/footstep multiplier",
+      "status": "PASS"
+    },
+    {
+      "name": "Jump consumption reads the native Consumption Delta and stamina multiplier before subtraction",
+      "status": "PASS"
+    },
+    {
+      "name": "Sprint update reads per-consumption Delta and keeps restoration on its own path",
+      "status": "PASS"
+    },
+    {
+      "name": "Native item construction adds corpse-loot protection only when the template Unlootable flag is true",
+      "status": "PASS"
+    },
+    {
+      "name": "Native vault-speed hook updates the speed property and the vault animator after weight/height calculations",
+      "status": "PASS"
+    },
+    {
+      "name": "Native physical weight reads both inventory Deferred caches through the virtual getter",
+      "status": "PASS"
+    },
+    {
+      "name": "Native jump entry initializes the timer, motion counter, lift, delay and descent fields used for the extra jump",
+      "status": "PASS"
+    },
+    {
+      "name": "Native enum Open interaction force-unlocks a locked door before dispatching normal interaction",
+      "status": "PASS"
+    },
+    {
+      "name": "Native interaction probe performs an interaction raycast and an obstruction linecast before returning its target",
+      "status": "PASS"
+    },
+    {
+      "name": "Native knife overlap hook consumes the active hit callback and processes the same collider as the door hook",
+      "status": "PASS"
+    },
+    {
+      "name": "Native knife update gates collision on the active OnHit window and chooses client or AI using Owner",
+      "status": "PASS"
+    },
+    {
+      "name": "LoadMagazine async body has exactly one native process allocation",
+      "status": "PASS"
+    },
+    {
+      "name": "UnloadMagazine async body has exactly one native process allocation",
+      "status": "PASS"
+    },
+    {
+      "name": "EFT.PlayerInputTranslator.vmethod_1 has exactly one concrete inventory search",
+      "status": "PASS"
+    },
+    {
+      "name": "EFT.FirearmHandsInputTranslator.ReloadExternalMagazine has exactly one concrete inventory search",
+      "status": "PASS"
+    },
+    {
+      "name": "BotReload.GetMagazineForReload has exactly one concrete inventory search",
+      "status": "PASS"
+    },
+    {
+      "name": "BotReload.AddAmmoToMagazines has exactly one concrete inventory search",
+      "status": "PASS"
+    },
+    {
+      "name": "Ambient coroutine has exactly one final AudioSource volume assignment",
+      "status": "PASS"
+    },
+    {
+      "name": "Jump horizontal momentum has the expected adjacent magnitude/multiply hook",
+      "status": "PASS"
+    },
+    {
+      "name": "Native medical residue reads the damage-effect duration",
+      "status": "PASS"
+    },
+    {
+      "name": "Walking weight limit has exactly one native assignment before combined movement restrictions",
+      "status": "PASS"
+    },
+    {
+      "name": "Individual extraction has two time reads and the first belongs to its LocationEscape trigger",
+      "status": "PASS"
+    },
+    {
+      "name": "Extraction UI has exactly two native countdown reads",
+      "status": "PASS"
+    },
+    {
+      "name": "Rig grenade hook returns a factory grenade registered with the game level",
+      "status": "PASS"
+    },
+    {
+      "name": "Rig throw completion forwards the native grenade-operation completion event",
+      "status": "PASS"
+    },
+    {
+      "name": "Rig manual packing observes the per-load native UI sound event",
+      "status": "PASS"
+    },
+    {
+      "name": "Rig medical-cost transpiler has exactly one native medkit resource store",
+      "status": "PASS"
+    },
+    {
+      "name": "Native MedEffect is a public nested type; a NonPublic-only lookup is invalid",
+      "status": "PASS"
+    },
+    {
+      "name": "Native medical lifecycle method is public: Started",
+      "status": "PASS"
+    },
+    {
+      "name": "Native medical lifecycle method is public: Residue",
+      "status": "PASS"
+    },
+    {
+      "name": "Native medical lifecycle method is public: RegularUpdate",
+      "status": "PASS"
+    },
+    {
+      "name": "Remaining obfuscated inspection-caption hook reads ItemName and sets the native caption",
+      "status": "PASS"
+    },
+    {
+      "name": "Remaining obfuscated inspection-details hook initializes category, description and weight using Examined",
+      "status": "PASS"
+    },
+    {
+      "name": "Remaining obfuscated tripwire callback uses plantTime for the objective, sound and actual Plant action",
+      "status": "PASS"
+    },
+    {
+      "name": "Jigsaw bypass selects the native composite execution after only the human missing-kit guard",
+      "status": "PASS"
+    },
+    {
+      "name": "Rig bolt hook enters native single-fire operation before configuring bolt-action reload",
+      "status": "PASS"
+    },
+    {
+      "name": "Rig utility hook uses the native check-type field initialized by Start and cleared by Reset",
+      "status": "PASS"
+    },
+    {
+      "name": "Native MedEffect serves food/drink as well as medical kits, requiring item eligibility checks",
+      "status": "PASS"
+    },
+    {
+      "name": "Grenade packing changes the live cooldown read by native Task.Delay: LoadMagazineProcess",
+      "status": "PASS"
+    },
+    {
+      "name": "Grenade packing changes the live cooldown read by native Task.Delay: UnloadMagazineProcess",
+      "status": "PASS"
+    },
+    {
+      "name": "Deferred smoke hook is native Cook: creates emission and attaches it to the held grenade transform",
+      "status": "PASS"
+    },
+    {
+      "name": "Throw-animation hook is native StartCountdown and forwards to the grenade operation",
+      "status": "PASS"
+    },
+    {
+      "name": "Grenade falloff hook targets the native interpolation multiplied by explosive strength",
+      "status": "PASS"
+    },
+    {
+      "name": "Flash adapter targets native player-emitter cache processing and native stun/burn effects",
+      "status": "PASS"
+    },
+    {
+      "name": "Quest item matcher is the native identity/category boundary, preserving FindItem category gating",
+      "status": "PASS"
+    },
+    {
+      "name": "Final client handover target contains the native discard transaction guarded by the new prefix",
+      "status": "PASS"
+    },
+    {
+      "name": "Placement completion reports success and closes the panel before the guarded removal path",
+      "status": "PASS"
+    },
+    {
+      "name": "Native placement success flag gates quest progress before ItemDroppedAtPlace",
+      "status": "PASS"
+    },
+    {
+      "name": "Native placement network bridge forwards the same success flag into PlantItem",
+      "status": "PASS"
+    },
+    {
+      "name": "Grenade inspection binds attributes before native compact/full row construction",
+      "status": "PASS"
+    },
+    {
+      "name": "Grenade comparison targets the native method reading the compared item attributes",
+      "status": "PASS"
+    },
+    {
+      "name": "Headset gear scope targets the native SoundBank/volume overload using the gear source",
+      "status": "PASS"
+    },
+    {
+      "name": "Actor audio scope surrounds native environment/hearing scaling before BetterSource.SetRolloff",
+      "status": "PASS"
+    },
+    {
+      "name": "Secondary footstep transfer has exactly 1 primary-source range read",
+      "status": "PASS"
+    },
+    {
+      "name": "Headset output scaling reads the native cached channel exactly once: BetterSource",
+      "status": "PASS"
+    },
+    {
+      "name": "Headset output scaling reads the native cached channel exactly once: SuperSource",
+      "status": "PASS"
+    },
+    {
+      "name": "Headset output scaling reads the native cached channel exactly once: SuperSourceDistant",
+      "status": "PASS"
+    },
+    {
+      "name": "Native headset configuration exposes separate gun buses and ambient/environment levels",
+      "status": "PASS"
+    },
+    {
+      "name": "Native gun queue invokes the concrete SuperAudioSample playback boundary",
+      "status": "PASS"
+    },
+    {
+      "name": "Gun sample writes channel volumes before scheduled playback, requiring a post-playback refresh",
+      "status": "PASS"
+    },
+    {
+      "name": "The renamed automatic recoil cache feeds the real return vector calculation",
+      "status": "PASS"
+    },
+    {
+      "name": "Interrupted food uses set the native flag tested by the completion adapter",
+      "status": "PASS"
+    },
+    {
+      "name": "Tinnitus duration hook preserves the native worn-headphone check and tinnitus dispatch",
+      "status": "PASS"
+    },
+    {
+      "name": "Malfunction-cleared trigger targets the completed repair event before returning to idle",
+      "status": "PASS"
+    },
+    {
+      "name": "The instance grenade Explosion dispatches one visual before its attributed blast",
+      "status": "PASS"
+    },
+    {
+      "name": "Explosion envelope buffers drive native lifetime, velocity and size emission",
+      "status": "PASS"
+    },
+    {
+      "name": "Native basic-particle reuse selects the current index and advances it after playback",
+      "status": "PASS"
+    },
+    {
+      "name": "The reflected secondary footstep source is passed to native SoundBank playback",
+      "status": "PASS"
+    },
+    {
+      "name": "Native barrel reload validates blindfire, reload eligibility and ammo before forwarding callbacks",
+      "status": "PASS"
+    },
+    {
+      "name": "Native inventory auto-pan updates both axes and translates the content after layout",
+      "status": "PASS"
+    },
+    {
+      "name": "Native deferred effect update has exactly one queued Effect.Emit dispatch",
+      "status": "PASS"
+    },
+    {
+      "name": "Native airdrop config filtering precedes both random/forced generation and fitting",
+      "status": "PASS"
+    },
+    {
+      "name": "Custom native airdrops forward both mapped and fallback requests through shared generation",
+      "status": "PASS"
+    },
+    {
+      "name": "Native crate fitting reads generated item size before slot selection and map fill",
+      "status": "PASS"
+    }
+  ]
+}

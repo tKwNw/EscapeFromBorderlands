@@ -1,0 +1,36 @@
+{
+  "version": "0.29.1",
+  "sptVersion": "4.1.6",
+  "baseline": "0.28.2 native / 0.29.0 upstream",
+  "catalogRevision": 52,
+  "namedDesigns": 1508,
+  "categories": {
+    "firearm": 1229,
+    "backpack": 67,
+    "chestRig": 88,
+    "grenade": 37,
+    "headphones": 39,
+    "melee": 48
+  },
+  "statusTypes": {
+    "Conditional / charged": 1209,
+    "Permanent": 73,
+    "Deployed effect": 1,
+    "Permanent / access rule": 24,
+    "Cooldown / deployed effect": 7,
+    "Conditional / timed": 30,
+    "Instant trigger": 8,
+    "Conditional item use": 2,
+    "Extraction result": 1,
+    "Conditional / timed / charges": 73,
+    "Per-copy charges / recharge": 37,
+    "Timed / charges / cooldown": 14,
+    "Charged": 1,
+    "Conditional": 14,
+    "Persistent triggered effect": 1,
+    "Instant target/kill trigger": 13
+  },
+  "newConditionalHeadsetRows": 14,
+  "permanentHeadsetSignatures": 9,
+  "note": "Static classification of every named design and targeted production-logic regression tests. It is not a live test of every item or state combination. Category HUD toggles remain authoritative. Permanent random modifiers do not get individual rows. Instant receipts use a 2-second display lifetime without claiming a 2-second gameplay buff."
+}

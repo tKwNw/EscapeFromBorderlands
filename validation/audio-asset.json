@@ -1,0 +1,47 @@
+{
+  "passed": 8,
+  "failed": 0,
+  "audio": {
+    "channels": 2,
+    "sampleRate": 44100,
+    "bitsPerSample": 16,
+    "frames": 110250,
+    "durationSeconds": 2.5,
+    "compression": "NONE"
+  },
+  "embeddedSha256": "34c0735008126d344d5e9e4d138deccbecdc1cc7e0de9a42b0f104205a3db1ae",
+  "checks": [
+    {
+      "name": "Audio bytes match upstream and published provenance",
+      "status": "PASS"
+    },
+    {
+      "name": "Bundled cue is 2.5-second stereo 44100-Hz 16-bit PCM",
+      "status": "PASS"
+    },
+    {
+      "name": "Validated client DLL embeds the complete cue under its exact resource name",
+      "status": "PASS"
+    },
+    {
+      "name": "Native AudioClip.Create matches the reflective 5-argument constructor path",
+      "status": "PASS"
+    },
+    {
+      "name": "Native AudioClip.SetData accepts float samples and returns success",
+      "status": "PASS"
+    },
+    {
+      "name": "Native BetterSource.Play matches both clip slots and playback flags",
+      "status": "PASS"
+    },
+    {
+      "name": "Native source-group interface exposes the mixer used by pooled cue playback",
+      "status": "PASS"
+    },
+    {
+      "name": "Audio decoder source is byte-preserved from upstream",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.4" />
+    <Reference Include="0Harmony"><HintPath>$(ReferencesRoot)/Server/0Harmony.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.Server.Core"><HintPath>$(ReferencesRoot)/Server/SPTarkov.Server.Core.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.Common"><HintPath>$(ReferencesRoot)/Server/SPTarkov.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="SPTarkov.DI"><HintPath>$(ReferencesRoot)/Server/SPTarkov.DI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="EscapeFromBorderlands.Server"><HintPath>$(ModServerRoot)/EscapeFromBorderlands.Server.dll</HintPath><Private>false</Private></Reference>
+    <PackageReference Condition="'$(NativeDependenciesRoot)' == ''" Include="FastCloner" Version="3.5.5" />
+    <PackageReference Condition="'$(NativeDependenciesRoot)' == ''" Include="Spectre.Console.Ansi" Version="0.57.2" />
+    <PackageReference Condition="'$(NativeDependenciesRoot)' == ''" Include="ZLinq" Version="1.5.6" />
+    <Reference Include="FastCloner" Condition="'$(NativeDependenciesRoot)' != ''"><HintPath>$(NativeDependenciesRoot)/FastCloner.dll</HintPath></Reference>
+    <Reference Include="Spectre.Console.Ansi" Condition="'$(NativeDependenciesRoot)' != ''"><HintPath>$(NativeDependenciesRoot)/Spectre.Console.Ansi.dll</HintPath></Reference>
+    <Reference Include="ZLinq" Condition="'$(NativeDependenciesRoot)' != ''"><HintPath>$(NativeDependenciesRoot)/ZLinq.dll</HintPath></Reference>
+  </ItemGroup>
+<ItemGroup><Compile Include="../../src/EscapeFromBorderlands.Shared/QuestItemEquivalence.cs" Link="Production/Shared/QuestItemEquivalence.cs" /></ItemGroup></Project>

@@ -1,0 +1,24 @@
+PASS Unpatched native checks reproduce the legendary Mosin rejection
+PASS Native kill and use hooks install and execute without Unity
+PASS Every actual server quest hook installs without duplicate patches on repeated setup
+PASS All 3910 current, storage and retired templates match only their own vanilla source
+PASS Unknown third-party items retain their original identity and native category behavior
+PASS Real native Mosin kill checks accept legendary copies and reject wrong weapons and targets
+PASS Native body-part, distance, role, time and hit-count restrictions remain enforced
+PASS Native weapon-category matching uses the legendary weapon's vanilla base
+PASS Required and forbidden enemy equipment includes legendary base identities
+PASS Required and forbidden attachments retain their native grouping rules
+PASS Kill normalization preserves shared events and specific legendary requirements
+PASS Melee and grenade kill objectives use their own vanilla bases
+PASS Real use-item checker matches base IDs and preserves explicit legendary targets
+PASS Native server FindItem queries handle static and repeatable quests
+PASS Real server selling counter counts matching quantities without rewriting inventory
+PASS Handover keeps all native instructions and sales retain the single identity substitution
+PASS Alias augmentation retains groups and original IDs and is idempotent
+PASS Every expanded and retired EFB template is protected while vanilla sources are not
+PASS Server hand-in guard recognizes direct copies across every legendary item category
+PASS Selected vanilla containers protect deeply nested EFB copies without blocking unrelated containers
+PASS Ordinary hand-ins remain eligible and off-selection legendaries do not block the request
+PASS Actual native handover rejects a mixed request before any inventory or quest mutation
+PASS Server prefix passes ordinary requests into the unchanged native hand-in logic
+Quest compatibility results: 23 cases, 23541 assertions, 0 failures.

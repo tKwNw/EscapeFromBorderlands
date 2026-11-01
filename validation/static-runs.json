@@ -1,0 +1,34 @@
+[
+  {
+    "name": "reflection",
+    "exit": 0
+  },
+  {
+    "name": "native-semantics",
+    "exit": 0
+  },
+  {
+    "name": "port-contracts",
+    "exit": 0
+  },
+  {
+    "name": "number-style",
+    "exit": 0
+  },
+  {
+    "name": "uia-contracts",
+    "exit": 0
+  },
+  {
+    "name": "carry-forward",
+    "exit": 0
+  },
+  {
+    "name": "status-inventory",
+    "exit": 0
+  },
+  {
+    "name": "assets",
+    "exit": 0
+  }
+]

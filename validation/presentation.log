@@ -1,0 +1,17 @@
+PASS new recoil: six occupied compartments activate exactly 30% faster settling
+PASS new recoil: emptying any compartment ends the bonus
+PASS new recoil: a five-compartment bag does not qualify
+PASS new recoil: another signature does not qualify
+PASS new recoil: another player's backpack cannot affect this controller
+PASS new recoil: taking off the backpack restores normal settling
+PASS old recoil: six occupied compartments activate exactly 30% faster settling
+PASS old recoil: emptying any compartment ends the bonus
+PASS old recoil: a five-compartment bag does not qualify
+PASS old recoil: another signature does not qualify
+PASS old recoil: another player's backpack cannot affect this controller
+PASS old recoil: taking off the backpack restores normal settling
+PASS Night Freight bloom: on
+PASS Night Freight bloom: off
+PASS Night Freight bloom: missing
+PASS Night Freight bloom: other bag
+Presentation effects: 16/16 cases passed; 20 assertions; 0 failures.
