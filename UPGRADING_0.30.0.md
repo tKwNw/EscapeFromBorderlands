@@ -12,7 +12,7 @@ This guide is for upgrading an existing Escape From Borderlands installation to 
 
 ## Before upgrading
 
-1. Close Tarkov, SPT server and the launcher.
+1. Close the SPT game, server, and launcher.
 2. Back up your **SPT profile**, existing server `config/config.json`, and `BepInEx/config/com.tkw.escapefromborderlands.client.cfg`.
 3. If a candidate using the intermediate GUID was installed, also back up `BepInEx/config/com.tkw.escapefromborderlands.cfg`.
 4. Remove/replace the old EFB client and server DLLs. Do **not** leave duplicate EFB DLLs in different mod folders.
