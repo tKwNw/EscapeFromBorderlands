@@ -31,5 +31,3 @@ EFB items cannot be handed in or placed for quests. This includes Gunsmith weapo
 - Ordinary eligible hand-ins, builds and placements retain native behavior. A legendary elsewhere in inventory does not block handing in an unrelated ordinary item.
 
 Legendary Mosins and other EFB variants still count as their vanilla bases for non-consuming objectives, including weapon kills/hits, equipment requirements and item finding. Native restrictions such as FIR, distance, body part, time, role and attachments remain enforced. Existing use/sale matching and quest markers are retained. This protection is specific to quest hand-ins, Gunsmith turn-ins and placement; it does not change voluntary trader sales or ordinary item use.
-
-For players upgrading from 0.29.x, see [UPGRADING_0.30.0.md](UPGRADING_0.30.0.md) for GUID/config migration instructions.
