@@ -41,7 +41,7 @@ try {
         try {
             foreach ($file in (Get-ChildItem -LiteralPath $stage -File -Recurse)) {
                 $entryName = $file.FullName.Substring($stage.Length).TrimStart(
-                    [char[]]@('\\', '/')).Replace('\\', '/')
+                    [char[]]@(92, 47)).Replace([char]92, [char]47)
                 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
                     $archive, $file.FullName, $entryName,
                     [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
