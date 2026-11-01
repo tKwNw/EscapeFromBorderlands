@@ -14,6 +14,17 @@ foreach ($path in @($client, $server)) {
     $assembly = [System.Reflection.AssemblyName]::GetAssemblyName($path)
     if ($assembly.Version -ne [Version]'0.30.0.0') { throw "Wrong assembly version for $path : $($assembly.Version)" }
 }
+# Verify framework and SPT-specific client marker so a stale 4.0.13 output
+# cannot be packaged after changing GitHub Desktop branches.
+$serverText = [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($server))
+$clientText = [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($client))
+if (-not $serverText.Contains('.NETCoreApp,Version=v10.0')) {
+    throw 'Wrong server framework: SPT 4.1.6 requires the .NET 10 server DLL.'
+}
+if (-not $clientText.Contains('.NETStandard,Version=v2.1') -or
+    -not $clientText.Contains('com.SPT.core')) {
+    throw 'Wrong client DLL: expected the native SPT 4.1.6 client build.'
+}
 $sptruntime='SPT_Runtime'
 $label='4.1.6'
 $stage = Join-Path $env:TEMP ('efb-forge-stage-' + [guid]::NewGuid().ToString('N'))
