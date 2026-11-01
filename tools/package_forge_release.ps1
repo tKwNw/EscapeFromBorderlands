@@ -14,6 +14,18 @@ foreach ($path in @($client, $server)) {
     $assembly = [System.Reflection.AssemblyName]::GetAssemblyName($path)
     if ($assembly.Version -ne [Version]'0.30.0.0') { throw "Wrong assembly version for $path : $($assembly.Version)" }
 }
+# Block cross-branch output reuse: 4.1.6 server/client binaries share the same
+# output locations when switching branches through GitHub Desktop.
+$serverText = [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($server))
+$clientText = [Text.Encoding]::ASCII.GetString([IO.File]::ReadAllBytes($client))
+if (-not $serverText.Contains('.NETCoreApp,Version=v9.0') -or
+    $serverText.Contains('.NETCoreApp,Version=v10.0')) {
+    throw 'Wrong server framework: this SPT 4.0.13 package needs a .NET 9 server DLL, not a 4.1.6/.NET 10 DLL. Rebuild the 4.0.13 branch against your 4.0.13 game.'
+}
+if (-not $clientText.Contains('.NETStandard,Version=v2.1') -or
+    $clientText.Contains('com.SPT.core')) {
+    throw 'Wrong client DLL: expected the SPT 4.0.13 client, not a 4.1.6 client.'
+}
 $sptruntime='SPT'
 $label='4.0.13'
 $stage = Join-Path $env:TEMP ('efb-forge-stage-' + [guid]::NewGuid().ToString('N'))
