@@ -8,8 +8,8 @@ Escape From Borderlands adds distinct Legendary versions of supported vanilla EF
 
 | SPT version | EFB version | Source branch |
 | --- | --- | --- |
-| **4.0.13** | **0.29.0** | [spt-4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) |
-| **4.1.6** | **0.29.1** | [spt-4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6) |
+| **4.0.13** | **0.30.0** | [spt-4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) |
+| **4.1.6** | **0.30.0** | [spt-4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6) |
 
 Each branch contains the source for its own SPT API version. Fixes and API adaptations for 4.1.6 are not automatically interchangeable with 4.0.13.
 
