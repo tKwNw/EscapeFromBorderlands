@@ -1,0 +1,19 @@
+# Escape From Borderlands — Legendary item catalog
+
+This documentation lists every **named Legendary design** in the EFB **0.30.0** source catalogs for **SPT 4.0.13** and **SPT 4.1.6** (catalog revision **52**). The two SPT versions use identical Legendary definition data; compatibility code and installation paths remain version-specific.
+
+| Category | Named Legendary designs | Full item list |
+| --- | ---: | --- |
+| Guns / firearms | 1,229 | [Weapons](weapons/README.md) |
+| Melee weapons | 48 | [Melee](melee/README.md) |
+| Vests and chest rigs | 88 | [Vests & rigs](vests/README.md) |
+| Backpacks | 67 | [Backpacks](backpacks/README.md) |
+| Grenades | 37 | [Grenades](grenades/README.md) |
+| Headsets / earpieces | 39 | [Headsets](headsets/README.md) |
+| **Total** | **1,508** | |
+
+The vests/rigs represent **440 distinct storage-template identities** across 88 designs: [see the complete vest/rig layout registry](vests/LAYOUTS.md). All categories together contain **1,860 raw Legendary template entries**. These totals include the catalog's non-spawning rig mystery/flea identities where indicated; they are not all additional independently spawning designs.
+
+**About the tables:** The listed signature is the fixed special ability; each Legendary item can also roll 4 compatible random bonuses. The 24-character template IDs help identify exact records for troubleshooting. Names, signature effects, and IDs were generated from the identical Legendary definitions in the [SPT 4.0.13 source](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.0.13/src/EscapeFromBorderlands.Server/LegendaryDefinitions.json) and [SPT 4.1.6 source](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/src/EscapeFromBorderlands.Server/LegendaryDefinitions.json), rather than inferred from screenshots or memory. The underlying vanilla items remain separate and playable.
+
+[← Project README](../README.md)

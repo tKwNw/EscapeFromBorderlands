@@ -1,8 +1,26 @@
 # Escape From Borderlands (EFB)
 
-**Borderlands-inspired Legendary equipment for Single Player Tarkov (SPT).**
+**Borderlands-inspired Legendary equipment for SPT.**
 
-Escape From Borderlands adds distinct Legendary versions of supported vanilla EFT guns, grenades, melee weapons, backpacks, chest rigs, and earpieces. Vanilla items remain available. Legendary equipment features signature effects and configurable spawn behavior.
+Escape From Borderlands adds distinct Legendary versions of supported vanilla weapons, grenades, melee weapons, backpacks, chest rigs, and earpieces. Vanilla items remain available. Legendary equipment features signature effects and configurable spawn behavior.
+## Legendary equipment catalog
+
+Explore **1,508 named Legendary designs** shared by both supported SPT versions. Each item listing includes its Legendary name, signature effect, and template ID.
+
+| Equipment category | Designs | Complete catalog |
+| --- | ---: | --- |
+| Firearms | **1,229** | [Legendary guns](docs/weapons/README.md) |
+| Melee weapons | **48** | [Legendary melee weapons](docs/melee/README.md) |
+| Vests & chest rigs | **88** | [Legendary vests and rigs](docs/vests/README.md) |
+| Backpacks | **67** | [Legendary backpacks](docs/backpacks/README.md) |
+| Grenades | **37** | [Legendary grenades](docs/grenades/README.md) |
+| Headsets & earpieces | **39** | [Legendary headsets](docs/headsets/README.md) |
+
+[**Browse the full Legendary catalog**](docs/README.md) · [View all 440 vest/rig storage identities](docs/vests/LAYOUTS.md)
+
+Both SPT 4.0.13 and SPT 4.1.6 use the same item definitions (catalog revision 52). Item tables document fixed signature abilities; Legendary items can also roll additional random modifiers.
+
+
 
 ## Supported SPT versions and downloads
 
@@ -11,7 +29,7 @@ Escape From Borderlands adds distinct Legendary versions of supported vanilla EF
 | **4.0.13** | **0.30.0** | [Download for SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.30.0-spt-4.0.13/EscapeFromBorderlands_0.30.0_SPT-4.0.13.zip) | [spt-4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) |
 | **4.1.6** | **0.30.0** | [Download for SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.30.0-spt-4.1.6/EscapeFromBorderlands_0.30.0_SPT-4.1.6.zip) | [spt-4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6) |
 
-The [Releases page](https://github.com/tKwNw/EscapeFromBorderlands/releases) contains the compiled installation archives. Each branch contains the source, default configuration, and [Legendary item catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) for its supported SPT API version. Do not install GitHub's automatically generated source-code archive in place of the compiled ZIP.
+The [Releases page](https://github.com/tKwNw/EscapeFromBorderlands/releases) contains the compiled installation archives. Each branch contains the source, default configuration, and [Legendary item catalog](docs/README.md) for its supported SPT API version. Do not install GitHub's automatically generated source-code archive in place of the compiled ZIP.
 
 ## Download verification and VirusTotal
 
@@ -26,7 +44,7 @@ Each report link identifies the exact SHA-256 hash of the corresponding publishe
 
 ## Installation
 
-Close the game, launcher, and SPT server. Back up your profile and existing EFB settings before extracting the installation ZIP into your **SPT game root** (the folder containing `EscapeFromTarkov.exe`).
+Close the game, launcher, and SPT server. Back up your profile and existing EFB settings before extracting the installation ZIP into your **SPT game root** (the main installation folder).
 
 **SPT 4.0.13**
 - Client: `BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll`
@@ -40,7 +58,7 @@ The 0.30.0 release migrates older BepInEx settings to the updated plugin GUID. S
 
 ## Building from source
 
-Select the branch for your SPT version and follow its `BUILDING.md`. Building requires the appropriate .NET SDK and assemblies from your own installed game. Proprietary EFT/SPT binaries and optional-mod dependencies are not bundled.
+Select the branch for your SPT version and follow its `BUILDING.md`. Building requires the appropriate .NET SDK and assemblies from your own installed game. Proprietary game and SPT binaries and optional-mod dependencies are not bundled.
 
 ## Optional compatibility
 
