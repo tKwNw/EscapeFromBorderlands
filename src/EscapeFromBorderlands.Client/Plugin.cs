@@ -30,7 +30,13 @@ public sealed class Plugin : BaseUnityPlugin
         {
             // BepInEx may create a blank config file before Awake. Merge missing
             // legacy entries, respecting any settings already present in the new file.
-            var imported = LegacyClientConfigMigration.Migrate(Paths.ConfigPath, Config.ConfigFilePath);
+            // ConfigFilePath is available across the BepInEx versions used by both
+            // supported SPT branches; Paths.ConfigPath is not exposed by every build.
+            var destination = System.IO.Path.GetFullPath(Config.ConfigFilePath);
+            var configDirectory = System.IO.Path.GetDirectoryName(destination);
+            if (string.IsNullOrEmpty(configDirectory))
+                throw new InvalidOperationException("Cannot locate the BepInEx config directory.");
+            var imported = LegacyClientConfigMigration.Migrate(configDirectory, destination);
             if (imported <= 0) return;
             Config.Reload();
             Logger.LogInfo($"Migrated {imported} previous Escape From Borderlands client config entries; old settings remain backed up.");
