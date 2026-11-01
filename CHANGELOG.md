@@ -73,7 +73,7 @@ All 575 automated behavior/service cases pass, along with native binding, select
 - Expands reflected-receiver and native instruction-role checks, including the remaining obfuscated inspection/disarm hooks and the shared medical effect.
 - Keeps catalog revision 40, all item identities, default config and the latest 4.0.13 content unchanged.
 
-Validation: 435 behavior/service cases; 180 patch groups, 239 targets and 470 argument/field bindings; 44 dynamic selectors, 14 transpiler targets, 119 reflection bindings, 53 native instruction-role checks and 52 export/database/API/preservation checks. Full EFT/Unity and host execution, current APBS and Fika remain untested.
+Validation: 435 behavior/service cases; 180 patch groups, 239 targets and 470 argument/field bindings; 44 dynamic selectors, 14 transpiler targets, 119 reflection bindings, 53 native instruction-role checks and 52 export/database/API/preservation checks. Full game/Unity and host execution, current APBS and Fika remain untested.
 
 # 0.19.4 / SPT 4.1.6
 

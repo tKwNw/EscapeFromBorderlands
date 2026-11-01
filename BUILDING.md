@@ -10,7 +10,7 @@ This branch contains the complete source code and Legendary item definitions for
 
 ## Build
 
-From the repository root, run this command using the folder that contains `EscapeFromTarkov.exe`:
+From the repository root, run this command using your SPT installation root:
 
 ```powershell
 .\build.ps1 -GameRoot 'C:\YOUR-SPT-4.1.6-INSTALLATION'
