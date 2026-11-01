@@ -1,42 +1,53 @@
 # Escape From Borderlands (EFB)
 
-**Borderlands-inspired Legendary equipment for Single Player Tushonka (SPT).**
+**Borderlands-inspired Legendary equipment for Single Player Tarkov (SPT).**
 
-Escape From Borderlands adds distinct Legendary versions of supported vanilla EFT weapons, grenades, melee weapons, backpacks, chest rigs, and earpieces. Vanilla items remain available. Legendary equipment features its own special effects and configurable spawn behavior.
+Escape From Borderlands adds distinct Legendary versions of supported vanilla EFT guns, grenades, melee weapons, backpacks, chest rigs, and earpieces. Vanilla items remain available. Legendary equipment features signature effects and configurable spawn behavior.
 
-## Supported SPT versions
+## Supported SPT versions and downloads
 
-| SPT version | EFB version | Source branch |
+| SPT version | EFB version | Installation ZIP | Source and item catalogs |
+| --- | --- | --- | --- |
+| **4.0.13** | **0.30.0** | [Download for SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.30.0-spt-4.0.13/EscapeFromBorderlands_0.30.0_SPT-4.0.13.zip) | [spt-4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) |
+| **4.1.6** | **0.30.0** | [Download for SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.30.0-spt-4.1.6/EscapeFromBorderlands_0.30.0_SPT-4.1.6.zip) | [spt-4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6) |
+
+The [Releases page](https://github.com/tKwNw/EscapeFromBorderlands/releases) contains the compiled installation archives. Each branch contains the source, default configuration, and [Legendary item catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) for its supported SPT API version. Do not install GitHub's automatically generated source-code archive in place of the compiled ZIP.
+
+## Download verification and VirusTotal
+
+These SHA-256 hashes have been verified against the **published GitHub Release assets** (not merely the source archives):
+
+| SPT version | Installation ZIP SHA-256 | VirusTotal |
 | --- | --- | --- |
-| **4.0.13** | **0.30.0** | [spt-4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) |
-| **4.1.6** | **0.30.0** | [spt-4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6) |
+| **4.0.13** | `cef55996b1097cfa33f5882a16bbf0807ac3bcbf24507a96280eb88a742cde8b` | Report pending |
+| **4.1.6** | `84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e` | Report pending |
 
-Each branch contains the source for its own SPT API version. Fixes and API adaptations for 4.1.6 are not automatically interchangeable with 4.0.13.
+VirusTotal report links will be added after the exact published ZIPs have been scanned and the completed reports verified. A hash verifies file identity, not that a file is malware-free. VirusTotal results also do not guarantee safety.
 
-## Downloads and installation
+## Installation
 
-**Compiled installation packages will be provided on the [Releases page](https://github.com/tKwNw/EscapeFromBorderlands/releases).** The source branches are intended for developers; cloning a branch does not install the mod.
+Close the game, launcher, and SPT server. Back up your profile and existing EFB settings before extracting the installation ZIP into your **SPT game root** (the folder containing `EscapeFromTarkov.exe`).
 
-When releases are published, select the installation archive matching **your SPT version** and extract it into your SPT game root. Back up your existing EFB configuration when upgrading.
+**SPT 4.0.13**
+- Client: `BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll`
+- Server: `SPT/user/mods/EscapeFromBorderlands/`
 
-For SPT 4.0.13:
-- Client plugin: `BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll`
-- Server mod: `SPT/user/mods/EscapeFromBorderlands/`
+**SPT 4.1.6**
+- Client: `BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll`
+- Server: `SPT_Runtime/user/mods/EscapeFromBorderlands/`
 
-For SPT 4.1.6:
-- Client plugin: `BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll`
-- Server mod: `SPT_Runtime/user/mods/EscapeFromBorderlands/`
+The 0.30.0 release migrates older BepInEx settings to the updated plugin GUID. See each version's `UPGRADING_0.30.0.md` for precautions and migration details.
 
 ## Building from source
 
-Open the branch for your SPT version and follow its `BUILDING.md` instructions. Building requires the correct .NET SDK and assemblies from your own installed SPT game. Proprietary game binaries and optional-mod dependencies are not provided here.
+Select the branch for your SPT version and follow its `BUILDING.md`. Building requires the appropriate .NET SDK and assemblies from your own installed game. Proprietary EFT/SPT binaries and optional-mod dependencies are not bundled.
 
 ## Optional compatibility
 
-The 4.1.6 source documents compatibility work involving **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere**, and **HollywoodFX**. Their files are not included, and compatibility may depend on the installed versions. See the 4.1.6 branch's `UIA_COMPATIBILITY.md` and `PORTING.md` for implementation details.
+The 4.1.6 version includes compatibility work for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere**, and **HollywoodFX**. These are optional and not included in the downloads; results may depend on the particular versions installed.
 
-## Releases and issue reports
+## Issues and licensing
 
-Please report issues with the **SPT version**, **EFB version**, other installed mods, steps to reproduce, and relevant logs. Never post private account data or tokens.
+When reporting an issue, include your **SPT version**, **EFB version**, installed mods, steps to reproduce, and relevant log excerpts. Do not post private account details or tokens.
 
-Escape From Borderlands is a community-made SPT mod and is not affiliated with Battlestate Games or Gearbox Software.
+EFB source code is provided under the [MIT license](LICENSE.txt); see [third-party notices](THIRD_PARTY_NOTICES.md) for the separately licensed audio asset. Escape From Borderlands is a community-made SPT mod and is not affiliated with Battlestate Games or Gearbox Software.
