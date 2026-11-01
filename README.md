@@ -1,5 +1,21 @@
 # Escape From Borderlands 0.30.0 — SPT 4.1.6
 
+## Legendary item catalog
+
+Browse the complete EFB 0.30.0 Legendary item roster (**1,508 named designs; catalog revision 52**):
+
+| Item category | Count | Catalog |
+| --- | ---: | --- |
+| Guns / firearms | 1,229 | [All Legendary guns](docs/weapons/README.md) |
+| Melee weapons | 48 | [All Legendary melee weapons](docs/melee/README.md) |
+| Vests / chest rigs | 88 named designs | [All Legendary vests](docs/vests/README.md) · [440 storage identities](docs/vests/LAYOUTS.md) |
+| Backpacks | 67 | [All Legendary backpacks](docs/backpacks/README.md) |
+| Grenades | 37 | [All Legendary grenades](docs/grenades/README.md) |
+| Headsets / earpieces | 39 | [All Legendary headsets](docs/headsets/README.md) |
+
+[Open the complete catalog index](docs/README.md). Every entry includes its signature effect and template ID, taken directly from EFB's current Legendary definitions.
+
+
 Native port of upstream EFB 0.29.0 / SPT 4.0.13, merged into corrected native 0.28.2 using legacy 0.28.0 as the common ancestor. All separately added native fixes and compatibility integrations carry forward. Both DLLs declare release version 0.30.0; CLR assembly versions are 0.30.0.0 and file/product metadata use 0.30.0.
 
 ## New in this update
