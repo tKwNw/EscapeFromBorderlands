@@ -6,11 +6,11 @@ namespace EscapeFromBorderlands.Server;
 
 public record ModMetadata : AbstractModMetadata
 {
-    public override string ModGuid { get; init; } = "com.tkw.escapefromborderlands";
-    public override string Name { get; init; } = "Escape From Borderlands";
+    public override string ModGuid { get; init; } = "com.tKwNw.escapefromborderlands";
+    public override string Name { get; init; } = "EscapeFromBorderlands";
     public override string Author { get; init; } = "tKwNw";
     public override List<string>? Contributors { get; init; } = ["OpenAI Codex"];
-    public override SemVersion Version { get; init; } = new("0.29.0", false);
+    public override SemVersion Version { get; init; } = new("0.30.0", false);
     public override SemRange SptVersion { get; init; } = new("~4.0.13", false);
     public override List<string>? Incompatibilities { get; init; } = [];
     public override Dictionary<string, SemRange>? ModDependencies { get; init; } = [];

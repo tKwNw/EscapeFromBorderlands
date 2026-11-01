@@ -1,6 +1,6 @@
-# Build Escape From Borderlands 0.29.0 (SPT 4.0.13)
+# Build Escape From Borderlands 0.30.0 (SPT 4.0.13)
 
-This branch holds the complete **0.29.0** source for **SPT 4.0.13**.
+This branch holds the complete **0.30.0** source for **SPT 4.0.13**.
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ From this branch's root directory, using a path to your SPT installation:
 
 The script builds both projects from `src/` and places outputs beneath `output/Server` and `output/Client`.
 
-The client and server DLLs must both report version `0.29.0`. Do not substitute 4.1.6 references.
+The client and server DLLs must both report version `0.30.0`. Do not substitute 4.1.6 references.
 
 ## Distribute
 
@@ -29,3 +29,7 @@ The **source repository** is not itself an installation ZIP. Build and package t
 See `README.md` for the expected client/server destinations.
 
 **Validation note:** Source inspection does not replace compiling against an installed SPT 4.0.13 game and verifying behavior in game.
+
+## GUID migration regression test
+
+Run `dotnet run --project tests/GuidMigration/GuidMigration.csproj` to exercise client settings migration without EFT/SPT references. This checks only the migration helper; the full client and server must still be compiled and tested against the installed game.

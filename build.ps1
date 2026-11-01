@@ -8,4 +8,4 @@ dotnet build $ServerProject -c $Configuration "-p:SptServerRoot=$(Join-Path $Gam
 if ($LASTEXITCODE -ne 0) { throw "Server build failed." }
 dotnet build $ClientProject -c $Configuration "-p:EftManagedRoot=$(Join-Path $GameRoot 'EscapeFromTarkov_Data\Managed')" "-p:BepInExCoreRoot=$(Join-Path $GameRoot 'BepInEx\core')" "-p:OutputPath=$(Join-Path $BuildOutput 'Client')"
 if ($LASTEXITCODE -ne 0) { throw "Client build failed." }
-Write-Host "Escape From Borderlands 0.29.0 built in $BuildOutput" -ForegroundColor Green
+Write-Host "Escape From Borderlands 0.30.0 built in $BuildOutput" -ForegroundColor Green

@@ -1,4 +1,4 @@
-# Escape From Borderlands 0.29.0 — SPT 4.0.13
+# Escape From Borderlands 0.30.0 — SPT 4.0.13
 
 Adds 1 shared server setting for legendary items in airdrops, carrying forward all 0.28.3 status-effect and partial grenade charge display fixes.
 
@@ -170,3 +170,8 @@ Each copy has 4 distinct compatible bonuses, using 5% numerical steps. Encore re
 | Door Breaching | Fixed 3-metre trait | Fragmentation |
 
 Grenade weight reduction, throwing Leg Stamina cost reduction and fragment penetration are excluded. Matching grenade buffs refresh or use the strongest active value without stacking.
+
+
+See [FORGE_COMPLIANCE.md](FORGE_COMPLIANCE.md) for the 0.30.0 metadata, configuration-migration, licensing and release requirements.
+
+For players upgrading from 0.29.x, see [UPGRADING_0.30.0.md](UPGRADING_0.30.0.md) for GUID/config migration instructions.
