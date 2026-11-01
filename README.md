@@ -19,10 +19,10 @@ These SHA-256 hashes have been verified against the **published GitHub Release a
 
 | SPT version | Installation ZIP SHA-256 | VirusTotal |
 | --- | --- | --- |
-| **4.0.13** | `cef55996b1097cfa33f5882a16bbf0807ac3bcbf24507a96280eb88a742cde8b` | Report pending |
-| **4.1.6** | `84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e` | Report pending |
+| **4.0.13** | `cef55996b1097cfa33f5882a16bbf0807ac3bcbf24507a96280eb88a742cde8b` | [VirusTotal report](https://www.virustotal.com/gui/file/cef55996b1097cfa33f5882a16bbf0807ac3bcbf24507a96280eb88a742cde8b) |
+| **4.1.6** | `84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e` | [VirusTotal report](https://www.virustotal.com/gui/file/84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e/detection) |
 
-VirusTotal report links will be added after the exact published ZIPs have been scanned and the completed reports verified. A hash verifies file identity, not that a file is malware-free. VirusTotal results also do not guarantee safety.
+Each report link identifies the exact SHA-256 hash of the corresponding published installation ZIP. Detection counts and the current verdict should be reviewed on VirusTotal; matching the hash confirms file identity, not that the file is malware-free. VirusTotal results do not guarantee safety.
 
 ## Installation
 
