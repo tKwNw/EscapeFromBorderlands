@@ -1,6 +1,6 @@
 # Escape From Borderlands (EFB)
 
-**Borderlands-inspired Legendary equipment for Single Player Tarkov (SPT).**
+**Borderlands-inspired Legendary equipment for Single Player Tushonka (SPT).**
 
 Escape From Borderlands adds distinct Legendary versions of supported vanilla EFT weapons, grenades, melee weapons, backpacks, chest rigs, and earpieces. Vanilla items remain available. Legendary equipment features its own special effects and configurable spawn behavior.
 
