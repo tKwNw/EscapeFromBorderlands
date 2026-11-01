@@ -30,8 +30,26 @@ try {
     New-Item -ItemType Directory -Force -Path $Destination | Out-Null
     $zip = Join-Path $Destination "EscapeFromBorderlands_0.30.0_SPT-$label.zip"
     if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip -Force }
+    # ZIP entries use forward-slash paths per ZIP conventions, even on Windows.
+    # Some extraction tools treat backslashes as literal filename characters.
+    Add-Type -AssemblyName 'System.IO.Compression'
     Add-Type -AssemblyName 'System.IO.Compression.FileSystem'
-    [System.IO.Compression.ZipFile]::CreateFromDirectory($stage, $zip)
+    $zipStream = [System.IO.File]::Open($zip, [System.IO.FileMode]::Create)
+    try {
+        $archive = [System.IO.Compression.ZipArchive]::new(
+            $zipStream, [System.IO.Compression.ZipArchiveMode]::Create)
+        try {
+            foreach ($file in (Get-ChildItem -LiteralPath $stage -File -Recurse)) {
+                $entryName = $file.FullName.Substring($stage.Length).TrimStart(
+                    [char[]]@('\\', '/')).Replace('\\', '/')
+                [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+                    $archive, $file.FullName, $entryName,
+                    [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
+            }
+        }
+        finally { $archive.Dispose() }
+    }
+    finally { $zipStream.Dispose() }
     Write-Host "Created $zip. Verify Forge metadata and conduct native/live testing before publishing." -ForegroundColor Green
 } finally {
     if (Test-Path -LiteralPath $stage) { Remove-Item -LiteralPath $stage -Recurse -Force }
