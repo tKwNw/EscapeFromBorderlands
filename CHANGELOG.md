@@ -1,4 +1,4 @@
-# 0.30.0 — SP-Mod compliance candidate / SPT 4.1.6
+# 0.30.0 — SP-Mod compliance / SPT 4.1.6
 
 - Harmonize client and server identifiers; use Forge-compliant BepInEx display name and server metadata name.
 - Migrate BepInEx legacy client configuration on first run without overwriting existing new settings.

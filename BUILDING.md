@@ -1,39 +1,25 @@
-# Build Escape From Borderlands 0.30.0 (SPT 4.1.6)
+# Building Escape From Borderlands 0.30.0 — SPT 4.1.6
 
-This branch holds the complete **0.30.0** source for **SPT 4.1.6**, including separate compatibility fixes and regression tests.
+This branch contains the complete source code and Legendary item definitions for **SPT 4.1.6**. The GitHub Releases page provides compiled, ready-to-install downloads.
 
 ## Prerequisites
 
-- Windows PowerShell.
-- .NET **10 SDK**.
-- A locally installed **SPT 4.1.6** game containing `SPT_Runtime/SPTarkov.Server.Core.dll`, the EFT managed assemblies and BepInEx.
+- Windows PowerShell and the **.NET 10 SDK**.
+- Your own installed **SPT 4.1.6** game, including its client, BepInEx, and server reference assemblies.
+- Do not copy proprietary EFT/SPT DLLs or optional third-party mod DLLs into this repository.
 
-Build from your own installed game. Do **not** upload or redistribute proprietary game, SPT, or optional-mod DLLs.
+## Build
 
-## Compile
-
-From this branch's root directory, point `-GameRoot` at the directory containing `EscapeFromTarkov.exe`:
+From the repository root, run this command using the folder that contains `EscapeFromTarkov.exe`:
 
 ```powershell
-.\build.ps1 -GameRoot 'C:\SPT 4.1'
+.\build.ps1 -GameRoot 'C:\YOUR-SPT-4.1.6-INSTALLATION'
 ```
 
-The script checks the installed native SPT 4.1.6 server assembly, builds server and client, and writes DLL outputs under `output/Server` and `output/Client`.
+The build script produces `output/Client/EscapeFromBorderlands.Client.dll` and `output/Server/EscapeFromBorderlands.Server.dll`. The client targets **.NET Standard 2.1** and the server targets **.NET 10**.
 
-The compiled client and server must both report version `0.30.0`.
+For an installation package, use the SPT-specific paths described in [README.md](README.md), together with `config/config.json`, `LICENSE.txt`, and `THIRD_PARTY_NOTICES.md`.
 
-## Validation
+**Important:** Always build against the correct SPT version. Never reuse binary outputs after switching branches; stale DLLs from another SPT version are not compatible.
 
-The `tests/`, `tools/`, `AUDIT.md`, `PORTING.md`, `UIA_COMPATIBILITY.md`, and `validation/` content from the release source are retained. The included logs and JSON reports are historical validation evidence, **not new test runs performed for this GitHub preparation**.
-
-Read `tests/README.md` for the reference-dependent tests. Optional mods are not bundled.
-
-## Distribute
-
-The **source repository** is not itself an installation ZIP. A fresh-install release should place compiled DLLs and default config at the paths specified in `README.md`, including `SPT_Runtime/user/mods` for server files. Publish that installable ZIP as a separate asset on the matching GitHub Release.
-
-**Validation note:** Source inspection does not replace a fresh compilation against a working SPT 4.1.6 installation or live-game compatibility testing.
-
-## GUID migration regression test
-
-Run `dotnet run --project tests/GuidMigration/GuidMigration.csproj` to exercise client settings migration without EFT/SPT references. This checks only the migration helper; the full client and server must still be compiled and tested against the installed game.
+The production source and build scripts are included. Historical test suites and internal validation tools are preserved in Git history rather than tracked at the current branch head.

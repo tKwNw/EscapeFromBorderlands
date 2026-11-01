@@ -1,8 +1,0 @@
-PASS A manually positioned grid with no provider reserves its complete inventory row
-PASS Existing disabled or ignored providers are repaired and reused
-PASS Repeated opening and smaller bags leave no accumulated bounds
-PASS Stretch anchors report physical bounds instead of adding parent dimensions
-PASS Plain wrappers, inventory rows and scroll content all get a rebuild request
-PASS Standalone bag windows receive complete background and frame dimensions
-PASS Objects without a canvas still resize and queue their complete parent chain
-Backpack layout sizing: 7/7 cases passed; 38 assertions; 0 failures.

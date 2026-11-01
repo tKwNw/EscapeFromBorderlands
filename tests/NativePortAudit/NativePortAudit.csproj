@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><TargetFramework>net10.0</TargetFramework><OutputType>Exe</OutputType><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System.Reflection.MetadataLoadContext"><HintPath>$(MSBuildSDKsPath)/../System.Reflection.MetadataLoadContext.dll</HintPath></Reference>
-    <Reference Include="Microsoft.CodeAnalysis"><HintPath>$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.dll</HintPath></Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp"><HintPath>$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll</HintPath></Reference>
-    <Reference Include="Mono.Cecil"><HintPath>$(ReferencesRoot)/Client/BepInEx/Mono.Cecil.dll</HintPath></Reference>
-  </ItemGroup>
-</Project>

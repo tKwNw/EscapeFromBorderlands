@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><DefineConstants Condition="'$(EfbHfx)'=='true'">$(DefineConstants);HFX_PRESENT</DefineConstants><Nullable>enable</Nullable><ReferenceRoot Condition="'$(ReferenceRoot)'==''">../../../phase2</ReferenceRoot></PropertyGroup><ItemGroup>
-<Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryHollywoodFx.cs" Link="Production/LegendaryHollywoodFx.cs"/>
-<Compile Include="../../../src/EscapeFromBorderlands.Client/LegendaryExplosionFx.cs" Link="Production/LegendaryExplosionFx.cs"/>
-<Compile Include="../earpieces/ProductionNative.cs" Link="Production/Native.cs"/>
-<PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.4"/>
-<Reference Include="0Harmony"><HintPath>$(ReferenceRoot)/Server/0Harmony.dll</HintPath></Reference>
-</ItemGroup></Project>

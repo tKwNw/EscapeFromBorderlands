@@ -1,9 +1,0 @@
-  Determining projects to restore...
-  Restored /workspace/scratch/c373bef83fba/work/port-0291/project/EscapeFromBorderlands/src/EscapeFromBorderlands.Server/EscapeFromBorderlands.Server.csproj (in 72 ms).
-  EscapeFromBorderlands.Server -> /workspace/scratch/c373bef83fba/work/port-0291/build/server/EscapeFromBorderlands.Server.dll
-
-Build succeeded.
-    0 Warning(s)
-    0 Error(s)
-
-Time Elapsed 00:00:04.38

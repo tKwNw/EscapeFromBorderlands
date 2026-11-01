@@ -1,6 +1,0 @@
-PASS HollywoodFX replacement remains visible through native dispatch with wiped native particles
-PASS HollywoodFX deferred particles keep per-blast scale after the native request ends
-PASS HollywoodFX normal pool reuse restores size and original particle modes
-PASS HollywoodFX separate blasts and absolute-radius impacts use independent scales
-PASS HollywoodFX nested emitter roots scale once and unsupported renderers keep running
-Explosion FX: 5/5 cases passed; 17 assertions; 0 failures.

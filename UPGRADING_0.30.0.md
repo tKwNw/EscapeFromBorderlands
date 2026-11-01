@@ -1,6 +1,6 @@
 # Upgrade to Escape From Borderlands 0.30.0 — SPT 4.1.6
 
-This is a **candidate source release** pending native compilation and live SPT testing. Do not replace a working 0.29.x public release until the new binaries have been verified.
+This guide is for upgrading an existing Escape From Borderlands installation to the published **0.30.0** release. Back up your profile and configuration before installing.
 
 ## What changes
 
@@ -16,7 +16,7 @@ This is a **candidate source release** pending native compilation and live SPT t
 2. Back up your **SPT profile**, existing server `config/config.json`, and `BepInEx/config/com.tkw.escapefromborderlands.client.cfg`.
 3. If a candidate using the intermediate GUID was installed, also back up `BepInEx/config/com.tkw.escapefromborderlands.cfg`.
 4. Remove/replace the old EFB client and server DLLs. Do **not** leave duplicate EFB DLLs in different mod folders.
-5. Install the **compiled** and tested 0.30.0 archive for **SPT 4.1.6** when available. Do not extract this source archive as a game installation.
+5. Install the **compiled 0.30.0 installation ZIP** for **SPT 4.1.6** from GitHub Releases. Do not extract the source repository ZIP as a game installation.
 
 ## First launch
 
@@ -27,17 +27,6 @@ This is a **candidate source release** pending native compilation and live SPT t
 - Look for `Migrated ... previous Escape From Borderlands client config entries` in the BepInEx log.
 - Inspect HUD position/size, charge display, and grenade draw-volume options after launch.
 - Verify preexisting Legendary items appear and work in an **existing backed-up profile**.
-
-## Developer checks
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\verify_forge_identity.ps1 -SptVersion '4.1.6'
-dotnet run --project .\tests\GuidMigration\GuidMigration.csproj
-.\build.ps1 -GameRoot 'C:\YOUR SPT INSTALLATION'
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\package_forge_release.ps1
-```
-
-The standalone migration test covers file semantics but does not replace loading both DLLs into a real SPT installation. Test startup, existing profile, APBS and Use Items Anywhere (when installed), and BepInEx settings migration before publishing.
 
 ## Reverting
 
