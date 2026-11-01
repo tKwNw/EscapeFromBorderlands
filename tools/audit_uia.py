@@ -52,7 +52,7 @@ def main():
     callers=[row['Name'] for rid,row in methods(wheel) if 'QuickUseWheelInventory::HasResource' in '\n'.join(a.il(rid))]
     check('Wheel availability paths pass through the patched resource predicate',set(callers)=={'IsItemStillUsable','CreateWheelItem','GetAvailabilityRank'})
     check('EFB resource postfix only narrows usable throwable results','if (__result && __0 is ThrowWeap && !ReusableGrenadeRuntime.Usable(__0)) __result = false;' in adapter)
-    report=dict(version='0.29.1',uiaVersion=version,uiaDllSha256=hashlib.sha256(args.uia_dll.read_bytes()).hexdigest(),scope='Supplied binary metadata/IL and source integration contracts; no UIA/game code execution.',passed=sum(v['status']=='PASS' for v in checks),failed=sum(v['status']=='FAIL' for v in checks),resourceCallers=callers,overlappingTargets=expected,checks=checks)
+    report=dict(version='0.30.0',uiaVersion=version,uiaDllSha256=hashlib.sha256(args.uia_dll.read_bytes()).hexdigest(),scope='Supplied binary metadata/IL and source integration contracts; no UIA/game code execution.',passed=sum(v['status']=='PASS' for v in checks),failed=sum(v['status']=='FAIL' for v in checks),resourceCallers=callers,overlappingTargets=expected,checks=checks)
     args.output.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:report[k] for k in ['uiaVersion','passed','failed']}))
     return int(bool(report['failed']))
 

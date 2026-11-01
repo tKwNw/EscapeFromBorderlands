@@ -282,7 +282,7 @@ def main():
                       'failed': sum(c['status'] == 'FAIL' for c in checks if c['group'] == group)}
               for group in dict.fromkeys(c['group'] for c in checks)}
     report = {
-        'version': '0.29.1', 'targetSptVersion': '4.1.6',
+        'version': '0.30.0', 'targetSptVersion': '4.1.6',
         'status': 'NATIVE_DECLARATIONS_AND_CATALOG_PASS' if not any(c['status'] == 'FAIL' for c in checks) else 'FAIL',
         'scope': 'Export integrity, native API declarations, native target database, and baseline preservation. Compilation and behavioral/native binding results are in separate reports.',
         'referenceManifestSha256': sha(args.references / 'export-manifest.json'),

@@ -30,7 +30,7 @@ def main():
     subprocess.run([sys.executable, str(project / 'tests/PresentationEffects/extract_production.py'), '--source', str(project / 'src/EscapeFromBorderlands.Client/BackpackPresentation.cs')], check=True, cwd=project)
     jobs = [
         ('fixes', 'Latest/fixes/FixTests.csproj', []),
-        ('versions', 'Latest/versioning/VersionContracts.csproj', ['0.29.1', str(client), str(server/'EscapeFromBorderlands.Server.dll')]),
+        ('versions', 'Latest/versioning/VersionContracts.csproj', ['0.30.0', str(client), str(server/'EscapeFromBorderlands.Server.dll')]),
         ('combat', 'Latest/combat/CombatTests.csproj', []),
         ('fireball', 'BackpackFireball/FireballTests.csproj', []),
         ('storage', 'Latest/storage/StorageTests.csproj', []),

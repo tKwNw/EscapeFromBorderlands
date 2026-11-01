@@ -1,6 +1,6 @@
-# Escape From Borderlands 0.29.1 — SPT 4.1.6
+# Escape From Borderlands 0.30.0 — SPT 4.1.6
 
-Native port of upstream EFB 0.29.0 / SPT 4.0.13, merged into corrected native 0.28.2 using legacy 0.28.0 as the common ancestor. All separately added native fixes and compatibility integrations carry forward. Both DLLs declare release version 0.29.1; CLR assembly versions are 0.29.1.0 and file/product metadata use 0.29.1.
+Native port of upstream EFB 0.29.0 / SPT 4.0.13, merged into corrected native 0.28.2 using legacy 0.28.0 as the common ancestor. All separately added native fixes and compatibility integrations carry forward. Both DLLs declare release version 0.30.0; CLR assembly versions are 0.30.0.0 and file/product metadata use 0.30.0.
 
 ## New in this update
 
@@ -45,3 +45,8 @@ The client targets netstandard2.1 with a hard com.SPT.core 4.1.6 dependency. The
 Both production builds have 0 warnings/errors. All 942 behavior/service cases pass across 19 suites. The complete runner has 26 jobs, including semantic-version checks and native audits with UIA present/absent. Carry-forward, status inventory, native method/API, reflection, layout, audio and preservation checks pass. Exact tested input hashes and detailed scope are included in validation/ and AUDIT.md.
 
 No live Windows EFT/Unity session, complete SPT host startup, real UIA gameplay, fully modded APBS or Fika session was run. Airdrop tests invoke patched native services with controlled generation/fitting boundaries; they do not exercise an in-raid drop. Native IL composition models UIA's collector substitution using the actual supplied binary metadata. Installed-game UI/audio/rendering/physics/animation and airdrop confirmation remain outstanding. Fika charge synchronization/reconnect restoration remain upstream limitations.
+
+
+See [FORGE_COMPLIANCE.md](FORGE_COMPLIANCE.md) for the 0.30.0 metadata, configuration-migration, licensing and release requirements.
+
+For players upgrading from 0.29.x, see [UPGRADING_0.30.0.md](UPGRADING_0.30.0.md) for GUID/config migration instructions.

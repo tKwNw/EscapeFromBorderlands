@@ -38,7 +38,7 @@ var aliases=catalog.LegacyAliases.Where(v=>sources.ContainsKey(v.SourceTemplateI
  maxWidth=db.RootElement.GetProperty(v.SourceTemplateId).GetProperty("_props").GetProperty("Grids").EnumerateArray().Max(g=>g.GetProperty("_props").GetProperty("cellsH").GetInt32()),
  effectFree=true
 }).ToArray();
-var result=new{modVersion="0.29.1",sptVersion="4.1.6",catalogRevision=catalog.CatalogRevision,limitCells=7,rawBackpackDesigns=all.Count(v=>v.StorageRollVersion==0),nativeBackpackBases=sources.Count,auditedLayouts=all.Length,auditedRetiredAliases=aliases.Length,totalAuditedTemplateIds=all.Length+aliases.Length,retiredAliases=aliases,variants=audit};
+var result=new{modVersion="0.30.0",sptVersion="4.1.6",catalogRevision=catalog.CatalogRevision,limitCells=7,rawBackpackDesigns=all.Count(v=>v.StorageRollVersion==0),nativeBackpackBases=sources.Count,auditedLayouts=all.Length,auditedRetiredAliases=aliases.Length,totalAuditedTemplateIds=all.Length+aliases.Length,retiredAliases=aliases,variants=audit};
 
 File.WriteAllText(Path.Combine(destination,"backpack_width_audit.json"),JsonSerializer.Serialize(result,new JsonSerializerOptions{WriteIndented=true}));
 Console.WriteLine($"Audited {all.Length} layouts across {sources.Count} native bases and {all.Count(v=>v.StorageRollVersion==0)} legendary designs using production catalog expansion and BackpackStorage.Apply.");
