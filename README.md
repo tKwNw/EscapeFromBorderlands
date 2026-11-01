@@ -15,6 +15,13 @@ Browse the complete EFB 0.30.0 Legendary item roster (**1,508 named designs; cat
 
 [Open the complete catalog index](docs/README.md). Every entry includes its signature effect and template ID, taken directly from EFB's current Legendary definitions.
 
+## Download verification
+
+- **Published EFB 0.30.0 installation ZIP SHA-256:** `84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e`
+- **VirusTotal:** [View file report](https://www.virustotal.com/gui/file/84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e/detection)
+
+The report link matches the published release ZIP's SHA-256. Consult VirusTotal for current detection results; a file hash alone does not establish whether a file is safe.
+
 ## Install
 
 - Client: `BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll`
