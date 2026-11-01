@@ -12,9 +12,9 @@ namespace EscapeFromBorderlands.Client;
 [BepInDependency("com.janky.hollywoodfx", BepInDependency.DependencyFlags.SoftDependency)]
 public sealed class Plugin : BaseUnityPlugin
 {
-    public const string PluginGuid = "com.tkw.escapefromborderlands.client";
-    public const string PluginName = "Escape From Borderlands";
-    public const string PluginVersion = "0.29.0";
+    public const string PluginGuid = "com.tKwNw.escapefromborderlands";
+    public const string PluginName = "tKwNw-EscapeFromBorderlands";
+    public const string PluginVersion = "0.30.0";
 
     internal static ManualLogSource LogSource { get; private set; } = null!;
     internal static Plugin Instance { get; private set; } = null!;
@@ -22,10 +22,34 @@ public sealed class Plugin : BaseUnityPlugin
     private Harmony? _harmony;
     private GameWorld? _world;
 
+    private void MigrateLegacyClientConfig()
+    {
+        try
+        {
+            // BepInEx may create a blank config file before Awake. Merge missing
+            // legacy entries, respecting any settings already present in the new file.
+            // ConfigFilePath is available across the BepInEx versions used by both
+            // supported SPT branches; Paths.ConfigPath is not exposed by every build.
+            var destination = System.IO.Path.GetFullPath(Config.ConfigFilePath);
+            var configDirectory = System.IO.Path.GetDirectoryName(destination);
+            if (string.IsNullOrEmpty(configDirectory))
+                throw new InvalidOperationException("Cannot locate the BepInEx config directory.");
+            var imported = LegacyClientConfigMigration.Migrate(configDirectory, destination);
+            if (imported <= 0) return;
+            Config.Reload();
+            Logger.LogInfo($"Migrated {imported} previous Escape From Borderlands client config entries; old settings remain backed up.");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning($"Could not migrate previous Escape From Borderlands client settings: {ex.Message}");
+        }
+    }
+
     private void Awake()
     {
         Instance = this;
         LogSource = Logger;
+        MigrateLegacyClientConfig();
         StatusHudSettings.Bind(Config);
         LegendaryGrenadeSettings.Bind(Config);
         _harmony = new Harmony(PluginGuid);
