@@ -1,10 +1,10 @@
 # Escape From Borderlands — SPT 4.1.6
 
-**EFB 0.31.2 · Borderlands-inspired Legendary equipment for SPT.**
+**EFB 0.31.4 · Borderlands-inspired Legendary equipment for SPT.**
 
 ## Download and install
 
-[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.1.6/EscapeFromBorderlands_0.31.2_SPT-4.1.6.zip) · [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.1.6/EscapeFromBorderlands_0.31.2_SPT-4.1.6_Upgrade.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.2-spt-4.1.6)
+[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.4-spt-4.1.6/EscapeFromBorderlands_0.31.4_SPT-4.1.6.zip) · [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.4-spt-4.1.6/EscapeFromBorderlands_0.31.4_SPT-4.1.6_Upgrade.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.4-spt-4.1.6)
 
 For a fresh installation, close the game, launcher and server, then extract the installation ZIP into your **SPT game root**. The package installs:
 
@@ -16,6 +16,8 @@ For a fresh installation, close the game, launcher and server, then extract the 
 ## Legendary equipment
 
 Legendary items have a fixed signature ability and 4 compatible random bonuses. Inspect an item to see its effects and rolls. Vanilla items remain available, and Legendary firearms use their normal compatible attachments.
+
+Generated Legendary flea offers show their signature ability and `????` for each of the 4 random bonuses. Each purchased copy reveals its own bonuses; existing owned items keep their rolls.
 
 Find Legendaries on PMCs, bosses and other non-Scav factions, or among supported airdrop loot. Spawn chances are configurable by faction and equipment category. Flea market availability can also be enabled in the settings.
 

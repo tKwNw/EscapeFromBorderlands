@@ -26,6 +26,7 @@ internal sealed class LegendaryCatalog
             PropertyNameCaseInsensitive = true,
         }) ?? throw new InvalidOperationException("Embedded Legendary catalog was empty.");
         BackpackStorageVariants.Expand(catalog.Variants);
+        LegendaryFleaVariants.Expand(catalog.Variants);
         return catalog;
     }
 }
@@ -47,6 +48,7 @@ internal sealed class VariantDefinition
     public bool IsEarpiece { get; set; }
     public bool SpawnEnabled { get; set; } = true;
     public bool IsMysteryFleaOffer { get; set; }
+    public string FleaRevealTemplateId { get; set; } = string.Empty;
     public double SpawnWeight { get; set; } = 1d;
     public int StorageRollVersion { get; set; }
     public int StorageRows { get; set; }

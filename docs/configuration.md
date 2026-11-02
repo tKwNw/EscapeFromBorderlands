@@ -18,7 +18,7 @@ Close the server before editing `config.json`, save your changes, then restart i
 | `autoDetectApbs` | `true` | Detects APBS automatically. The same spawn settings are used with or without APBS. |
 | `airdropLegendaryChancePercent` | `1` | 0–100% chance per supported loot item, shared across all airdrop types. |
 | `statRewardsLegendaryChancePercent` | `1` | 0–100% chance per supported random equipment reward when Stat Rewards is installed. |
-| `allowFleaMarketTrading` | `false` | Allows Legendary items on the flea market. |
+| `allowFleaMarketTrading` | `false` | Allows Legendary items on the flea market. Generated stock hides its 4 random bonuses until purchase in every category. |
 | `priceMultipliers.Legendary` | `10.0` | Legendary price multiplier relative to the vanilla base. |
 | `createDefaultPresets` | `true` | Creates ready-to-use Legendary weapon presets. |
 
