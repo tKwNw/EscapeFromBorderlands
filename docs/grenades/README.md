@@ -1,6 +1,6 @@
 # Legendary grenades — Escape From Borderlands
 
-**EFB 0.30.0 · SPT source catalog revision 52**
+**EFB 0.31.2 · SPT source catalog revision 54**
 
 37 Legendary reusable grenade variants. Charges and recharge times below are the catalog defaults; gameplay and configurable cooldowns may adjust them.
 

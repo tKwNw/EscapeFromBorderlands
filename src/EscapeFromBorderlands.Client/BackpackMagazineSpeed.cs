@@ -45,12 +45,12 @@ internal static class BackpackMagazineSpeedPatch
     {
         var factor = GrenadeBuffs.Packing(BackpackRuntime.Actor(inventory));
         return GrenadePackingSpeed.Track(new Player.PlayerInventoryController.Class1204(inventory, magazine, ammo, count, elite,
-            ChestRigInventory.LoadTime(inventory, BackpackInventoryAccess.MagazineTime(inventory, seconds), false) / factor), factor);
+            ChestRigInventory.LoadTime(inventory, BackpackInventoryAccess.MagazineTime(inventory, seconds), false) / factor), factor * ServiceWindow.Speed(BackpackRuntime.Actor(inventory)));
     }
     internal static Player.PlayerInventoryController.Class1207 Unload(InventoryController inventory, MagazineItemClass magazine, float seconds, bool elite)
     {
         var factor = GrenadeBuffs.Packing(BackpackRuntime.Actor(inventory));
         return GrenadePackingSpeed.Track(new Player.PlayerInventoryController.Class1207(inventory, magazine,
-            ChestRigInventory.LoadTime(inventory, BackpackInventoryAccess.MagazineTime(inventory, seconds), true) / factor, elite), factor);
+            ChestRigInventory.LoadTime(inventory, BackpackInventoryAccess.MagazineTime(inventory, seconds), true) / factor, elite), factor * ServiceWindow.Speed(BackpackRuntime.Actor(inventory)));
     }
 }

@@ -14,7 +14,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.tKwNw.escapefromborderlands";
     public const string PluginName = "tKwNw-EscapeFromBorderlands";
-    public const string PluginVersion = "0.30.0";
+    public const string PluginVersion = "0.31.2";
 
     internal static ManualLogSource LogSource { get; private set; } = null!;
     internal static Plugin Instance { get; private set; } = null!;
@@ -88,6 +88,7 @@ public sealed class Plugin : BaseUnityPlugin
         LegendaryRuntime.MaintainVolleys();
         LegendaryRuntime.ObserveHeldWeapon(world?.MainPlayer);
         EarpieceRuntime.Maintain(world);
+        ServiceWindowPlayback.Maintain();
         ChestRigRuntime.Maintain(world);
         MeleeRuntime.Maintain(world);
         AdvancedMeleeRuntime.Maintain(world);
@@ -100,6 +101,7 @@ public sealed class Plugin : BaseUnityPlugin
 
     internal static void ResetSession()
     {
+        ServiceWindowPlayback.Reset();
         EarpieceRuntime.Suspend();
         EffectStatusHud.Reset();
         ChestRigRuntime.Reset();
@@ -116,7 +118,7 @@ public sealed class Plugin : BaseUnityPlugin
         LegendaryRuntime.ResetSession();
         RarityResolver.ResetSession();
         ReusableGrenadeRuntime.Reset();
-        LegendaryGrenadeDrawAudio.Reset();
+        LegendaryGrenadeDrawAudio.ResetSession();
         LegendaryGrenadeSettings.Reset();
         EarpieceRuntime.Reset();
     }

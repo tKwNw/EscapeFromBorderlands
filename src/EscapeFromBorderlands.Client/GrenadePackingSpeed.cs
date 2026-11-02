@@ -19,9 +19,10 @@ internal static class GrenadePackingSpeed
     {
         var initial = Operations.TryGetValue(operation, out var entry) ? entry.InitialFactor : 1f;
         var inventory = Native.Get(operation, "InventoryController_0") as InventoryController;
-        var current = inventory is null ? 1f : GrenadeBuffs.Packing(BackpackRuntime.Actor(inventory));
-        // Float_1 already includes the creation-time bonus and native elite
-        // progression. Remove only that grenade factor and apply its live value.
+        var player = inventory is null ? null : BackpackRuntime.Actor(inventory);
+        var current = GrenadeBuffs.Packing(player) * ServiceWindow.Speed(player);
+        // Float_1 includes creation-time bonuses and native elite progression.
+        // Replace only the live grenade/menu factors, retaining other bonuses.
         return nativeSeconds * initial / current;
     }
 }

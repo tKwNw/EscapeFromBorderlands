@@ -73,7 +73,7 @@ internal static class ChestRigInventory
         var speed=unload?1f:s.Roll.ChestRig.Packing;
         if(unload&&s.Key=="TR05-1")speed*=3f;
         if(s.Key=="TR04-1")speed*=1.5f;
-        if(!unload&&s.Key=="TR17-2"&&s.Player.SearchController?.SearchOperations?.Any()==true)speed*=1.75f;
+        speed*=ServiceWindow.Speed(s.Player);
         return seconds/speed;
     }
     internal static void AutoReloadHolsteredPistol(ChestRigRuntime.State s)

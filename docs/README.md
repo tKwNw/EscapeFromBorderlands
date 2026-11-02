@@ -1,6 +1,6 @@
 # Escape From Borderlands — Legendary item catalog
 
-This documentation lists every **named Legendary design** in the EFB **0.30.0** source catalogs for **SPT 4.0.13** and **SPT 4.1.6** (catalog revision **52**). The two SPT versions use identical Legendary definition data; compatibility code and installation paths remain version-specific.
+This documentation lists every **named Legendary design** in the EFB **0.31.2** source catalogs for **SPT 4.0.13** (catalog revision **54**). The SPT 4.1.6 port is maintained separately and has not yet received this release.
 
 | Category | Named Legendary designs | Full item list |
 | --- | ---: | --- |

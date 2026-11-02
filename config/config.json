@@ -4,6 +4,7 @@
   "createDefaultPresets": true,
   "allowFleaMarketTrading": false,
   "airdropLegendaryChancePercent": 1,
+  "statRewardsLegendaryChancePercent": 1,
   "priceMultipliers": {
     "Legendary": 10.0
   },

@@ -363,7 +363,7 @@ internal static class ChestRigRuntime
         var s=Get(p);if(s is null)return 1f;
         if(kind=="aimCost"&&s.Key=="AR24-2"&&Health(p,EBodyPart.Chest)<.35f&&p.HandsController is Player.FirearmController{IsTriggerPressed:true})return 0f;
         if(kind=="aimCost")return s.Roll.ChestRig.AimCost*(s.Key=="TR08-2"&&s.StationarySeconds>=3f?.5f:1f)*(s.Key=="AR22-2"&&s.Active("stamina")?.5f:1f);
-        if(kind=="armRecovery")return (s.Key=="AR20-1"?1.25f:1f)*(s.Key=="TR17-2"&&p.SearchController?.SearchOperations?.Any()==true?1.75f:1f);
+        if(kind=="armRecovery")return s.Key=="AR20-1"?1.25f:1f;
         if(kind=="sprintCost")return s.Key=="AR16-2"&&ChestRigLegSprintPatch.Fractured(p)?.7f:1f;
         if(kind=="legRecovery")return (s.Key=="AR20-1"?1.25f:1f)*(s.Key=="AR16-1"&&p.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem is null?1.7f:1f)*(s.Key=="AR22-2"&&s.Active("stamina")?1.6f:1f);
         return 1f;
@@ -430,7 +430,7 @@ internal static class ChestRigRuntime
         }
         active|=Knight(s)||s.Key=="AR18-2"&&BlackParts(s.Player)>0||s.Key=="AR24-2"&&Health(s.Player,EBodyPart.Chest)<.35f||s.Key=="AR26-2"&&Health(s.Player)<.5f||s.Key=="AR06-2"&&BlackArms(player)||s.Key=="AR11-1"&&s.Reloading;
         active|=s.Key=="TR13-1"&&ThreeFirearms(player)||s.Key=="TR14-1"&&AdvancedMeleeRuntime.Crouched(player);
-        active|=s.Key=="TR17-2"&&player.SearchController?.SearchOperations?.Any()==true;
+        active|=ServiceWindow.Active(player);
         active|=s.Key=="TR33-1"&&held is not null&&player.HandsController?.IsAiming==true&&AdvancedMeleeRuntime.Crouched(player);
         active|=s.Key=="AR01-2"&&s.StillSeconds>=3f||s.Key=="AR14-2"&&player.HandsController is Player.BaseKnifeController;
         active|=s.Key=="AR16-1"&&player.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem is null;

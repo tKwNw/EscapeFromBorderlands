@@ -1,6 +1,6 @@
 # Legendary backpacks — Escape From Borderlands
 
-**EFB 0.30.0 · SPT source catalog revision 52**
+**EFB 0.31.2 · SPT source catalog revision 54**
 
 67 Legendary backpack variants. Signature effects and item IDs match the catalog. Some backpacks also modify inventory grid layouts; the effect description is the user-facing description.
 

@@ -1,6 +1,6 @@
 # Legendary firearms — Escape From Borderlands
 
-**1,229 named Legendary firearm variants** from the SPT-compatible EFB catalog (revision 52). Includes both normal firearms and any special/launcher entries that exist in the catalog.
+**1,229 named Legendary firearm variants** from the SPT-compatible EFB catalog (revision 54). Includes both normal firearms and any special/launcher entries that exist in the catalog.
 
 Every listed receiver is a separate EFB item; normal vanilla weapons and interchangeable attachments remain available. Each Legendary weapon also rolls 4 random modifiers; the **signature** below is the fixed identifying effect. Descriptions reflect the exact source catalog text.
 

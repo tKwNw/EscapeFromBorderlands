@@ -1,6 +1,6 @@
 # Legendary vests and chest rigs — Escape From Borderlands
 
-**88 named Legendary vest/rig designs**, represented by **440 template identities** in catalog revision 52.
+**88 named Legendary vest/rig designs**, represented by **440 template identities** in catalog revision 54.
 
 Each named design has 4 spawnable storage layouts plus 1 non-spawning mystery/flea template identity. These five identities share the **same signature effect**; they are not five different abilities.
 
@@ -57,7 +57,7 @@ Each named design has 4 spawnable storage layouts plus 1 non-spawning mystery/fl
 | LBT-1961A Load Bearing Chest Rig (Goons Edition) | Birdsong | A kill with a suppressed firearm restores 30% of maximum Arm Stamina and 30% of maximum Leg Stamina. 10-second cooldown. | 5 |
 | LBT-1961A Load Bearing Chest Rig (Goons Edition) | Spotter's Rest | While aiming through a magnified optic, gain -50% aim sway. Bolt-action cycling is also 50% faster, including when unscoped. | 5 |
 | LBT-1961A Load Bearing Chest Rig (MAS Grey) | Loose Change | Automatically pack 1 cartridge every 2 seconds into every non-full carried magazine that is not installed in a firearm. Consumes matching loose ammunition from anywhere on your person. Empty magazines use the 1st compatible ammunition available. | 5 |
-| LBT-1961A Load Bearing Chest Rig (MAS Grey) | Service Window | While a loot window is open, Arm Stamina recovery and manual magazine packing anywhere on your person are 75% faster. | 5 |
+| LBT-1961A Load Bearing Chest Rig (MAS Grey) | Service Window | While the inventory menu is open, medical item use and ammunition loading and unloading are 50% faster. | 5 |
 | NPP KlASS Bagariy plate carrier (EMR) | Hard Count | After firing 40 cartridges without reloading, every 3rd additional shot deals +100% damage. Releasing the trigger or switching weapons does not clear the effect. Reloading resets the full sequence. | 5 |
 | NPP KlASS Bagariy plate carrier (EMR) | Port Authority | Adds a separate 3x4 compartment for firearms, including their attached parts and loaded ammunition. Loose items cannot be stored there. +25% Arm and Leg Stamina regeneration. | 5 |
 | Poyas-A + Poyas-B gear rig | Belt and Braces | With a firearm whose full loaded capacity is at least 30 cartridges, full-auto fire gains -25% recoil and reloads are 40% faster. Loaded capacity includes chambered rounds. Magazines may be carried anywhere on your person. | 5 |

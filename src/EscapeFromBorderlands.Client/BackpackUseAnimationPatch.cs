@@ -11,12 +11,10 @@ internal static class BackpackUseAnimationPatch
     {
         var p = Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => ReferenceEquals(p.HandsAnimator, __instance));
         if (p is null) return;
+        var controller = ServiceWindow.MedicalController(p, __instance);
         EarpieceMedicalAnimation.Record(__instance, p, System.Convert.ToSingle(__args[0]));
-        var multiplier = System.Convert.ToSingle(__args[0]) * GrenadeBuffs.Medicine(p) * EarpieceRuntime.MedicalSpeed(p);
-        if (p.HandsController is Player.MedsController controller) multiplier /= BackpackNative.UseFactor(p, controller.Item);
-        // Native medical initialization assigns HandsAnimator before the new
-        // controller necessarily becomes HandsController. The smoke bonus can
-        // therefore use the animator's actor even during that transition.
+        var multiplier = System.Convert.ToSingle(__args[0]) * GrenadeBuffs.Medicine(p) * EarpieceRuntime.MedicalSpeed(p, controller?.Item);
+        if (controller?.Item is { } item) multiplier /= BackpackNative.UseFactor(p, item);
         __args[0] = multiplier;
     }
 }
