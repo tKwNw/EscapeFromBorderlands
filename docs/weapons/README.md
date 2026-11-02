@@ -1,6 +1,6 @@
 # Legendary firearms — Escape From Borderlands
 
-**SPT 4.0.13 · EFB 0.31.2**
+**SPT 4.0.13 · EFB 0.31.3**
 
 **1,229 Legendary firearm designs.** Each has a fixed signature ability and 4 random bonuses. Vanilla firearms and their compatible attachments remain available.
 

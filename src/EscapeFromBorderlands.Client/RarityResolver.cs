@@ -14,7 +14,8 @@ internal static class RarityResolver
     private static readonly Dictionary<string, ShotRoll> RollsByInstance = new(StringComparer.Ordinal);
     private static readonly HashSet<string> LoggedInstances = new(StringComparer.Ordinal);
 
-    public static int DefinitionCount => Definitions.Values.Select(d => string.IsNullOrEmpty(d.StorageFamilyId) ? d.TemplateId : d.StorageFamilyId).Distinct(StringComparer.Ordinal).Count();
+    public static int DefinitionCount => Definitions.Values.Select(d => !string.IsNullOrEmpty(d.FleaRevealTemplateId)
+        ? d.FleaRevealTemplateId : string.IsNullOrEmpty(d.StorageFamilyId) ? d.TemplateId : d.StorageFamilyId).Distinct(StringComparer.Ordinal).Count();
     public static int CatalogRevision => Catalog.CatalogRevision;
 
     public static void ResetSession()
@@ -72,6 +73,13 @@ internal static class RarityResolver
 
     private static ShotRoll RollProcedural(string instanceId, VariantDefinition definition)
     {
+        if (definition.IsMysteryFleaOffer)
+        {
+            var preview = new ShotRoll(definition, $"Legendary — {definition.DisplayName}", "#FF9D28");
+            for (var i = 0; i < 4; i++) preview.AffixDescriptions.Add("????");
+            if (definition.GrenadeChargesPerRaid > 0) ApplyGrenadeSignature(preview);
+            return preview;
+        }
         var rng = new StableRandom(Fnv1a(instanceId + ":" + definition.TemplateId));
         if (definition.GrenadeChargesPerRaid > 0) return RollGrenade(rng, definition);
         if (definition.IsEarpiece) return RollEarpiece(rng, definition);
@@ -229,7 +237,13 @@ internal static class RarityResolver
                 roll.AffixDescriptions[replacement] = text;
             }
         }
-        switch (definition.RuntimeKey)
+        ApplyGrenadeSignature(roll);
+        return roll;
+    }
+
+    private static void ApplyGrenadeSignature(ShotRoll roll)
+    {
+        switch (roll.Definition.RuntimeKey)
         {
             case "GR02": roll.GrenadeFragmentMultiplier *= 1.75f; break;
             case "GR06": roll.GrenadeFragmentMultiplier *= 2f; break;
@@ -239,7 +253,6 @@ internal static class RarityResolver
             case "GR40": roll.GrenadeThrowDistanceMultiplier *= 1.5f; break;
             case "GR51": roll.GrenadeFlashRadiusMultiplier *= 2f; break;
         }
-        return roll;
     }
 
     private static ShotRoll RollEarpiece(StableRandom rng, VariantDefinition definition)
@@ -306,7 +319,6 @@ internal static class RarityResolver
     private static ShotRoll RollChestRig(StableRandom rng, VariantDefinition definition)
     {
         var roll = new ShotRoll(definition, $"Legendary — {definition.DisplayName}", "#FF9D28");
-        if (definition.IsMysteryFleaOffer) { for (var i = 0; i < 4; i++) roll.AffixDescriptions.Add("????"); return roll; }
         var pool = Enumerable.Range(0, 11).Where(i => i != 10 || definition.ChestRigEffect!.HasTurningPenalty).ToList();
         var count = 4;
         if (definition.StorageRows > 0) { roll.AffixDescriptions.Add("Expanded Pouch +1 row in the largest original compartment"); count--; }
@@ -338,11 +350,6 @@ internal static class RarityResolver
     private static ShotRoll RollBackpack(StableRandom rng, VariantDefinition definition)
     {
         var roll = new ShotRoll(definition, $"Legendary — {definition.DisplayName}", "#FF9D28");
-        if (definition.IsMysteryFleaOffer)
-        {
-            for (var i = 0; i < 4; i++) roll.AffixDescriptions.Add("????");
-            return roll;
-        }
         var pool = new List<int> { 0, 1, 2, 3, 4, 5, 6, 7 };
         var count = 4;
         // Layout choices are weighted like a four-of-ten draw. Conditional on

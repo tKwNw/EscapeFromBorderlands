@@ -1,6 +1,6 @@
 # Legendary backpacks — Escape From Borderlands
 
-**SPT 4.0.13 · EFB 0.31.2**
+**SPT 4.0.13 · EFB 0.31.3**
 
 **67 Legendary backpack designs.** Each has a fixed signature ability and 4 random bonuses. Storage changes are described on the item.
 

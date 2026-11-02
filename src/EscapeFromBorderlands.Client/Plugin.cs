@@ -14,7 +14,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.tKwNw.escapefromborderlands";
     public const string PluginName = "tKwNw-EscapeFromBorderlands";
-    public const string PluginVersion = "0.31.2";
+    public const string PluginVersion = "0.31.3";
 
     internal static ManualLogSource LogSource { get; private set; } = null!;
     internal static Plugin Instance { get; private set; } = null!;

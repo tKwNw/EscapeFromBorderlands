@@ -9,29 +9,35 @@ namespace EscapeFromBorderlands.Server;
 
 internal sealed class BackpackFleaRolls
 {
-    private readonly Dictionary<string, VariantDefinition> _bags;
+    private readonly Dictionary<string, VariantDefinition> _variants;
     private readonly Dictionary<string, VariantDefinition[]> _layouts;
+    private readonly Dictionary<string, string> _revealedTemplates;
     private readonly bool _tradingEnabled;
 
     internal BackpackFleaRolls(IEnumerable<VariantDefinition> definitions, bool tradingEnabled)
     {
         _tradingEnabled = tradingEnabled;
-        _bags = definitions.Where(v => v.BackpackEffect is not null || v.ChestRigEffect is not null)
-            .ToDictionary(v => v.TemplateId, StringComparer.Ordinal);
-        _layouts = _bags.Values.Where(v => v.StorageRollVersion == BackpackStorageVariants.CurrentLayoutVersion && !v.IsMysteryFleaOffer && v.SpawnEnabled)
+        _variants = definitions.ToDictionary(v => v.TemplateId, StringComparer.Ordinal);
+        _layouts = _variants.Values.Where(v => (v.BackpackEffect is not null || v.ChestRigEffect is not null) &&
+                v.StorageRollVersion == BackpackStorageVariants.CurrentLayoutVersion && !v.IsMysteryFleaOffer && v.SpawnEnabled)
             .GroupBy(v => v.StorageFamilyId, StringComparer.Ordinal)
             .ToDictionary(g => g.Key, g => g.ToArray(), StringComparer.Ordinal);
+        _revealedTemplates = _variants.Values.Where(v => v.IsMysteryFleaOffer &&
+                _variants.TryGetValue(v.FleaRevealTemplateId, out var target) && !target.IsMysteryFleaOffer && target.SpawnEnabled)
+            .ToDictionary(v => v.TemplateId, v => v.FleaRevealTemplateId, StringComparer.Ordinal);
     }
 
-    // Only the mystery identity generates NPC stock. Known player-owned bags
+    // Only the mystery identity generates NPC stock. Known player-owned copies
     // can still be listed normally; this does not change their flea flags.
     internal bool AllowGeneratedOffer(string templateId) =>
-        !_bags.TryGetValue(templateId, out var bag) ||
-        _tradingEnabled && bag.IsMysteryFleaOffer && _layouts.ContainsKey(bag.StorageFamilyId);
+        !_variants.TryGetValue(templateId, out var variant) ||
+        _tradingEnabled && variant.IsMysteryFleaOffer &&
+            (_revealedTemplates.ContainsKey(templateId) || _layouts.ContainsKey(variant.StorageFamilyId));
 
     internal string PurchasedTemplate(string templateId, Func<double> randomUnit)
     {
-        if (!_bags.TryGetValue(templateId, out var offer) || !offer.IsMysteryFleaOffer ||
+        if (_revealedTemplates.TryGetValue(templateId, out var revealed)) return revealed;
+        if (!_variants.TryGetValue(templateId, out var offer) || !offer.IsMysteryFleaOffer ||
             !_layouts.TryGetValue(offer.StorageFamilyId, out var layouts)) return templateId;
         var total = layouts.Sum(v => v.SpawnWeight);
         var pick = Math.Clamp(randomUnit(), 0d, 1d) * total;
