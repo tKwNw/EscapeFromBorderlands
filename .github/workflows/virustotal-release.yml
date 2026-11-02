@@ -29,7 +29,7 @@ jobs:
           VT_API_KEY: ${{ secrets.VT_API_KEY }}
         shell: bash
         run: |
-          python3 - <<'PYTHON'
+          python3 -u - <<'PYTHON'
           """Submit published EFB runtime ZIPs; maintain only the marked report section."""
           import hashlib
           import json
@@ -51,9 +51,10 @@ jobs:
           
           
           class RequestFailed(RuntimeError):
-              def __init__(self, service, status):
+              def __init__(self, service, status, operation=""):
                   self.status = status
-                  super().__init__(f"{service} request failed (HTTP {status}).")
+                  detail = f" during {operation}" if operation else ""
+                  super().__init__(f"{service} request failed (HTTP {status}){detail}.")
           
           
           class Client:
@@ -89,7 +90,8 @@ jobs:
                               seconds = min(60, max(16, int(retry))) if retry.isdigit() else 60
                               time.sleep(seconds)
                               continue
-                          raise RequestFailed(service, error.code) from None
+                          resource = url.removeprefix("https://api.github.com") if service == "GitHub" else "/api/v3/files"
+                          raise RequestFailed(service, error.code, f"{method} {resource}") from None
                       except (URLError, TimeoutError):
                           if attempt < 3 and method != "PATCH":
                               time.sleep(16)
@@ -97,11 +99,9 @@ jobs:
                           raise RuntimeError(f"{service} could not be reached; rerun the workflow.") from None
                   raise RuntimeError("Request attempts exhausted.")
           
-              def github(self, path, method="GET", payload=None, etag=None):
+              def github(self, path, method="GET", payload=None):
                   data = None if payload is None else json.dumps(payload).encode("utf-8")
                   headers = {"Content-Type": "application/json"}
-                  if etag:
-                      headers["If-Match"] = etag
                   url = f"https://api.github.com/repos/{REPOSITORY}" + ("/" + path if path else "")
                   return self.request("GitHub", url, method, data, headers)
           
@@ -168,34 +168,43 @@ jobs:
               return body[:body.index(START)] + section + body[body.index(END) + len(END):]
           
           
+          def write_summary(release, reports):
+              summary = os.environ.get("GITHUB_STEP_SUMMARY")
+              if summary:
+                  with open(summary, "a", encoding="utf-8") as file:
+                      file.write(f"## {release['tag_name']}\n\nSubmitted to VirusTotal; analysis continues asynchronously.\n\n")
+                      for name, digest in reports:
+                          file.write(f"- [{name}](https://www.virustotal.com/gui/file/{digest}/detection)\n")
+          
+          
           def scan_release(client, release):
               assets = select_assets(release)
               identity = asset_identity(assets)
               reports = []
               for asset in assets:
+                  print(f"Downloading {asset['name']}.")
                   data = client.download(release, asset)
                   if not 0 < len(data) <= MAX_UPLOAD or len(data) != asset["size"]:
                       raise RuntimeError("The downloaded runtime ZIP size does not match GitHub's asset metadata.")
                   digest = hashlib.sha256(data).hexdigest()
                   if asset.get("digest") and asset["digest"] != "sha256:" + digest:
                       raise RuntimeError("The downloaded runtime ZIP hash does not match GitHub's asset digest.")
+                  print(f"Submitting {asset['name']} to VirusTotal.")
                   client.upload(asset["name"], data)
                   reports.append((asset["name"], digest))
                   print(f"Submitted {asset['name']} to VirusTotal.")
+              # Preserve submitted report links even if the later GitHub update fails.
+              write_summary(release, reports)
               section = report_section(reports)
-              for attempt in range(3):
-                  fresh, etag = client.github(f"releases/{release['id']}")
-                  if fresh["tag_name"] != release["tag_name"] or asset_identity(select_assets(fresh)) != identity:
-                      raise RuntimeError("The release assets changed during scanning. Rerun for the new files.")
-                  updated = merge_body(fresh.get("body"), section)
-                  if updated == (fresh.get("body") or ""):
-                      break
-                  try:
-                      client.github(f"releases/{release['id']}", "PATCH", {"body": updated}, etag)
-                      break
-                  except RequestFailed as error:
-                      if error.status != 412 or attempt == 2:
-                          raise
+              fresh, _ = client.github(f"releases/{release['id']}")
+              if fresh["tag_name"] != release["tag_name"] or asset_identity(select_assets(fresh)) != identity:
+                  raise RuntimeError("The release assets changed during scanning. Rerun for the new files.")
+              updated = merge_body(fresh.get("body"), section)
+              if updated != (fresh.get("body") or ""):
+                  print(f"Updating report links for {release['tag_name']}.")
+                  # GitHub does not support conditional PATCH requests for releases.
+                  # Merge the latest body and update only that field, without If-Match.
+                  client.github(f"releases/{release['id']}", "PATCH", {"body": updated})
               return reports
           
           
@@ -233,19 +242,14 @@ jobs:
               if not github_token or not vt_key:
                   raise RuntimeError("Add the VT_API_KEY repository Actions secret before running this workflow.")
               client = Client(github_token, vt_key)
+              print("Checking GitHub repository and release metadata.")
               repository, _ = client.github("")
               if repository.get("private") is not False:
                   raise RuntimeError("Only publicly released EFB runtime files are submitted.")
               event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
               releases = releases_for_event(client, event, os.environ.get("GITHUB_EVENT_NAME", ""))
               for release in releases:
-                  reports = scan_release(client, release)
-                  summary = os.environ.get("GITHUB_STEP_SUMMARY")
-                  if summary:
-                      with open(summary, "a", encoding="utf-8") as file:
-                          file.write(f"## {release['tag_name']}\n\nSubmitted to VirusTotal; analysis continues asynchronously.\n\n")
-                          for name, digest in reports:
-                              file.write(f"- [{name}](https://www.virustotal.com/gui/file/{digest}/detection)\n")
+                  scan_release(client, release)
                   print(f"Updated scan links for {release['tag_name']}.")
           
           
