@@ -8,7 +8,7 @@ Browse the complete EFB 0.30.0 Legendary item roster (**1,508 named designs; cat
 | --- | ---: | --- |
 | Guns / firearms | 1,229 | [All Legendary guns](docs/weapons/README.md) |
 | Melee weapons | 48 | [All Legendary melee weapons](docs/melee/README.md) |
-| Vests / chest rigs | 88 named designs | [All Legendary vests](docs/vests/README.md) · [440 storage identities](docs/vests/LAYOUTS.md) |
+| Vests / chest rigs | 88 | [All Legendary vests](docs/vests/README.md) · [440 storage identities](docs/vests/LAYOUTS.md) |
 | Backpacks | 67 | [All Legendary backpacks](docs/backpacks/README.md) |
 | Grenades | 37 | [All Legendary grenades](docs/grenades/README.md) |
 | Headsets / earpieces | 39 | [All Legendary headsets](docs/headsets/README.md) |
