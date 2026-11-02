@@ -66,7 +66,8 @@ jobs:
                   headers = dict(headers or {})
                   headers["User-Agent"] = "EscapeFromBorderlands-release-scanner"
                   if service == "GitHub":
-                      if not url.startswith(f"https://api.github.com/repos/{REPOSITORY}/"):
+                      base = f"https://api.github.com/repos/{REPOSITORY}"
+                      if url != base and not url.startswith(base + "/"):
                           raise RuntimeError("Unexpected GitHub API destination.")
                       headers.update(Authorization=f"Bearer {self.github_token}", Accept="application/vnd.github+json")
                   elif service == "VirusTotal":
@@ -101,7 +102,8 @@ jobs:
                   headers = {"Content-Type": "application/json"}
                   if etag:
                       headers["If-Match"] = etag
-                  return self.request("GitHub", f"https://api.github.com/repos/{REPOSITORY}/{path}", method, data, headers)
+                  url = f"https://api.github.com/repos/{REPOSITORY}" + ("/" + path if path else "")
+                  return self.request("GitHub", url, method, data, headers)
           
               def download(self, release, asset):
                   tag = quote(release["tag_name"], safe="")
