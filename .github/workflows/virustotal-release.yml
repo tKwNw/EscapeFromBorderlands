@@ -1,0 +1,259 @@
+name: VirusTotal release scans
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag; leave blank to scan the latest stable release for each SPT version'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: virustotal-${{ github.event.release.tag_name || inputs.tag || 'latest' }}
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    if: github.repository == 'tKwNw/EscapeFromBorderlands'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Submit runtime ZIPs and update report links
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          VT_API_KEY: ${{ secrets.VT_API_KEY }}
+        shell: bash
+        run: |
+          python3 - <<'PYTHON'
+          """Submit published EFB runtime ZIPs; maintain only the marked report section."""
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import re
+          import sys
+          import time
+          from urllib.error import HTTPError, URLError
+          from urllib.parse import quote
+          from urllib.request import Request, urlopen
+          import uuid
+          
+          REPOSITORY = "tKwNw/EscapeFromBorderlands"
+          TAG = re.compile(r"v([0-9]+\.[0-9]+\.[0-9]+)-spt-([0-9]+\.[0-9]+\.[0-9]+)\Z")
+          MAX_UPLOAD = 32_000_000
+          START = "<!-- efb-virustotal:start -->"
+          END = "<!-- efb-virustotal:end -->"
+          
+          
+          class RequestFailed(RuntimeError):
+              def __init__(self, service, status):
+                  self.status = status
+                  super().__init__(f"{service} request failed (HTTP {status}).")
+          
+          
+          class Client:
+              def __init__(self, github_token, vt_key):
+                  self.github_token = github_token
+                  self.vt_key = vt_key
+                  self.next_vt_request = 0
+          
+              def request(self, service, url, method="GET", data=None, headers=None):
+                  headers = dict(headers or {})
+                  headers["User-Agent"] = "EscapeFromBorderlands-release-scanner"
+                  if service == "GitHub":
+                      if not url.startswith(f"https://api.github.com/repos/{REPOSITORY}/"):
+                          raise RuntimeError("Unexpected GitHub API destination.")
+                      headers.update(Authorization=f"Bearer {self.github_token}", Accept="application/vnd.github+json")
+                  elif service == "VirusTotal":
+                      if url != "https://www.virustotal.com/api/v3/files":
+                          raise RuntimeError("Unexpected VirusTotal API destination.")
+                      headers["x-apikey"] = self.vt_key
+                  else:
+                      raise RuntimeError("Unexpected service.")
+                  for attempt in range(4):
+                      if service == "VirusTotal":
+                          time.sleep(max(0, self.next_vt_request - time.monotonic()))
+                          self.next_vt_request = time.monotonic() + 16
+                      try:
+                          with urlopen(Request(url, data=data, headers=headers, method=method), timeout=90) as response:
+                              return json.loads(response.read()), response.headers.get("ETag")
+                      except HTTPError as error:
+                          if error.code in (429, 500, 502, 503, 504) and attempt < 3 and method != "PATCH":
+                              retry = error.headers.get("Retry-After", "60")
+                              seconds = min(60, max(16, int(retry))) if retry.isdigit() else 60
+                              time.sleep(seconds)
+                              continue
+                          raise RequestFailed(service, error.code) from None
+                      except (URLError, TimeoutError):
+                          if attempt < 3 and method != "PATCH":
+                              time.sleep(16)
+                              continue
+                          raise RuntimeError(f"{service} could not be reached; rerun the workflow.") from None
+                  raise RuntimeError("Request attempts exhausted.")
+          
+              def github(self, path, method="GET", payload=None, etag=None):
+                  data = None if payload is None else json.dumps(payload).encode("utf-8")
+                  headers = {"Content-Type": "application/json"}
+                  if etag:
+                      headers["If-Match"] = etag
+                  return self.request("GitHub", f"https://api.github.com/repos/{REPOSITORY}/{path}", method, data, headers)
+          
+              def download(self, release, asset):
+                  tag = quote(release["tag_name"], safe="")
+                  filename = quote(asset["name"], safe="")
+                  url = f"https://github.com/{REPOSITORY}/releases/download/{tag}/{filename}"
+                  # Release assets are public. No GitHub or VirusTotal credential is sent
+                  # to GitHub's redirect target or embedded in any URL.
+                  request = Request(url, headers={"User-Agent": "EscapeFromBorderlands-release-scanner"})
+                  with urlopen(request, timeout=90) as response:
+                      data = response.read(MAX_UPLOAD + 1)
+                  return data
+          
+              def upload(self, name, data):
+                  boundary = "efb" + uuid.uuid4().hex
+                  head = (f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{name}"\r\n'
+                          "Content-Type: application/zip\r\n\r\n").encode("ascii")
+                  body = head + data + f"\r\n--{boundary}--\r\n".encode("ascii")
+                  response, _ = self.request("VirusTotal", "https://www.virustotal.com/api/v3/files", "POST", body,
+                                             {"Content-Type": f"multipart/form-data; boundary={boundary}"})
+                  if not isinstance(response.get("data", {}).get("id"), str) or not response["data"]["id"]:
+                      raise RuntimeError("VirusTotal did not return an analysis ID.")
+          
+          
+          def select_assets(release):
+              if release.get("draft"):
+                  raise RuntimeError("Draft releases are excluded.")
+              match = TAG.fullmatch(release.get("tag_name", ""))
+              if not match:
+                  raise RuntimeError("Use an EFB tag such as v0.31.2-spt-4.1.6.")
+              version, spt = match.groups()
+              prefix = f"EscapeFromBorderlands_{version}_SPT-{spt}"
+              allowed = [prefix + ".zip", prefix + "_Upgrade.zip"]
+              assets = [a for a in release.get("assets", []) if a.get("name") in allowed]
+              names = [a["name"] for a in assets]
+              if allowed[0] not in names or len(names) != len(set(names)):
+                  raise RuntimeError("The published release must contain 1 unambiguous Full installation ZIP.")
+              for asset in assets:
+                  if asset.get("state") != "uploaded" or not 0 < asset.get("size", 0) <= MAX_UPLOAD:
+                      raise RuntimeError("A runtime ZIP is incomplete, empty or larger than the supported 32 MB upload limit.")
+              return sorted(assets, key=lambda a: allowed.index(a["name"]))
+          
+          
+          def asset_identity(assets):
+              return [(a["id"], a["name"], a["size"], a.get("digest"), a.get("updated_at")) for a in assets]
+          
+          
+          def report_section(reports):
+              lines = [START, "## VirusTotal"]
+              for name, digest in reports:
+                  label = "Upgrade ZIP" if name.endswith("_Upgrade.zip") else "Full installation ZIP"
+                  lines.append(f"- [{label} scan report](https://www.virustotal.com/gui/file/{digest}/detection)")
+              return "\n".join(lines + [END])
+          
+          
+          def merge_body(body, section):
+              body = body or ""
+              if START not in body and END not in body:
+                  separator = "" if not body or body.endswith("\n\n") else "\n\n"
+                  return body + separator + section + "\n"
+              if body.count(START) != 1 or body.count(END) != 1 or body.index(END) < body.index(START):
+                  raise RuntimeError("The existing VirusTotal section has ambiguous markers; release text was not changed.")
+              return body[:body.index(START)] + section + body[body.index(END) + len(END):]
+          
+          
+          def scan_release(client, release):
+              assets = select_assets(release)
+              identity = asset_identity(assets)
+              reports = []
+              for asset in assets:
+                  data = client.download(release, asset)
+                  if not 0 < len(data) <= MAX_UPLOAD or len(data) != asset["size"]:
+                      raise RuntimeError("The downloaded runtime ZIP size does not match GitHub's asset metadata.")
+                  digest = hashlib.sha256(data).hexdigest()
+                  if asset.get("digest") and asset["digest"] != "sha256:" + digest:
+                      raise RuntimeError("The downloaded runtime ZIP hash does not match GitHub's asset digest.")
+                  client.upload(asset["name"], data)
+                  reports.append((asset["name"], digest))
+                  print(f"Submitted {asset['name']} to VirusTotal.")
+              section = report_section(reports)
+              for attempt in range(3):
+                  fresh, etag = client.github(f"releases/{release['id']}")
+                  if fresh["tag_name"] != release["tag_name"] or asset_identity(select_assets(fresh)) != identity:
+                      raise RuntimeError("The release assets changed during scanning. Rerun for the new files.")
+                  updated = merge_body(fresh.get("body"), section)
+                  if updated == (fresh.get("body") or ""):
+                      break
+                  try:
+                      client.github(f"releases/{release['id']}", "PATCH", {"body": updated}, etag)
+                      break
+                  except RequestFailed as error:
+                      if error.status != 412 or attempt == 2:
+                          raise
+              return reports
+          
+          
+          def releases_for_event(client, event, event_name):
+              if event_name == "release":
+                  release_id = event.get("release", {}).get("id")
+                  if not isinstance(release_id, int) or release_id <= 0:
+                      raise RuntimeError("A published release ID is required.")
+                  release, _ = client.github(f"releases/{release_id}")
+                  return [release]
+              if event_name != "workflow_dispatch":
+                  raise RuntimeError("This workflow supports published releases and manual runs only.")
+              tag = str(event.get("inputs", {}).get("tag", "")).strip()
+              if tag:
+                  if not TAG.fullmatch(tag):
+                      raise RuntimeError("Use a release tag such as v0.31.2-spt-4.1.6.")
+                  release, _ = client.github("releases/tags/" + quote(tag, safe=""))
+                  return [release]
+              releases, _ = client.github("releases?per_page=100")
+              latest = {}
+              for release in sorted(releases, key=lambda row: row.get("published_at") or "", reverse=True):
+                  match = TAG.fullmatch(release.get("tag_name", ""))
+                  if match and not release.get("draft") and not release.get("prerelease"):
+                      latest.setdefault(match.group(2), release)
+              if not latest:
+                  raise RuntimeError("No published stable EFB releases were found.")
+              return list(latest.values())
+          
+          
+          def main():
+              if os.environ.get("GITHUB_REPOSITORY", "").lower() != REPOSITORY.lower():
+                  raise RuntimeError("This workflow is scoped to the EFB repository.")
+              github_token = os.environ.get("GITHUB_TOKEN", "")
+              vt_key = os.environ.get("VT_API_KEY", "").strip()
+              if not github_token or not vt_key:
+                  raise RuntimeError("Add the VT_API_KEY repository Actions secret before running this workflow.")
+              client = Client(github_token, vt_key)
+              repository, _ = client.github("")
+              if repository.get("private") is not False:
+                  raise RuntimeError("Only publicly released EFB runtime files are submitted.")
+              event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
+              releases = releases_for_event(client, event, os.environ.get("GITHUB_EVENT_NAME", ""))
+              for release in releases:
+                  reports = scan_release(client, release)
+                  summary = os.environ.get("GITHUB_STEP_SUMMARY")
+                  if summary:
+                      with open(summary, "a", encoding="utf-8") as file:
+                          file.write(f"## {release['tag_name']}\n\nSubmitted to VirusTotal; analysis continues asynchronously.\n\n")
+                          for name, digest in reports:
+                              file.write(f"- [{name}](https://www.virustotal.com/gui/file/{digest}/detection)\n")
+                  print(f"Updated scan links for {release['tag_name']}.")
+          
+          
+          if __name__ == "__main__":
+              try:
+                  main()
+              except Exception as error:
+                  # Keep exception details/HTTP bodies (which may contain credentials)
+                  # out of runner output. Known diagnostics contain only fixed text.
+                  message = str(error) if isinstance(error, RuntimeError) else f"{type(error).__name__}; rerun or inspect the workflow configuration."
+                  print(message, file=sys.stderr)
+                  raise SystemExit(1)
+          PYTHON
