@@ -1,6 +1,6 @@
 # Legendary melee weapons — Escape From Borderlands
 
-**SPT 4.0.13 · EFB 0.31.2**
+**SPT 4.0.13 / SPT 4.1.6**
 
 **48 Legendary melee designs.** Each has a fixed signature ability and 4 random bonuses. Check the effect for conditions such as holding the melee weapon.
 

@@ -1,6 +1,6 @@
 # Legendary headsets / earpieces — Escape From Borderlands
 
-**SPT 4.0.13 · EFB 0.31.2**
+**SPT 4.0.13 / SPT 4.1.6**
 
 **39 Legendary headset designs.** Each has a fixed signature ability and 4 random bonuses. Effects follow the conditions listed below while the headset is equipped.
 
