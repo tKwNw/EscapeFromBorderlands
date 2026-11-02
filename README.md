@@ -62,7 +62,7 @@ Select the branch for your SPT version and follow its `BUILDING.md`. Building re
 
 ## Optional compatibility
 
-The 4.1.6 version includes compatibility work for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere**, and **HollywoodFX**. These are optional and not included in the downloads; results may depend on the particular versions installed.
+Both version include compatibility work for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere**, and **HollywoodFX**. These are optional and not included in the downloads; results may depend on the particular versions installed.
 
 ## Issues and licensing
 
