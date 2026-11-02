@@ -1,6 +1,6 @@
 # Legendary vests and chest rigs — Escape From Borderlands
 
-**SPT 4.1.6 · EFB 0.30.0**
+**SPT 4.1.6 · EFB 0.31.2**
 
 **88 Legendary vest and chest rig designs.** Each has a fixed signature ability and 4 random bonuses. Designs can have different storage layouts while sharing the same signature ability.
 
@@ -57,7 +57,7 @@
 | LBT-1961A Load Bearing Chest Rig (Goons Edition) | Birdsong | A kill with a suppressed firearm restores 30% of maximum Arm Stamina and 30% of maximum Leg Stamina. 10-second cooldown. |
 | LBT-1961A Load Bearing Chest Rig (Goons Edition) | Spotter's Rest | While aiming through a magnified optic, gain -50% aim sway. Bolt-action cycling is also 50% faster, including when unscoped. |
 | LBT-1961A Load Bearing Chest Rig (MAS Grey) | Loose Change | Automatically pack 1 cartridge every 2 seconds into every non-full carried magazine that is not installed in a firearm. Consumes matching loose ammunition from anywhere on your person. Empty magazines use the 1st compatible ammunition available. |
-| LBT-1961A Load Bearing Chest Rig (MAS Grey) | Service Window | While a loot window is open, Arm Stamina recovery and manual magazine packing anywhere on your person are 75% faster. |
+| LBT-1961A Load Bearing Chest Rig (MAS Grey) | Service Window | While the inventory menu is open, medical item use and ammunition loading and unloading are 50% faster. |
 | NPP KlASS Bagariy plate carrier (EMR) | Hard Count | After firing 40 cartridges without reloading, every 3rd additional shot deals +100% damage. Releasing the trigger or switching weapons does not clear the effect. Reloading resets the full sequence. |
 | NPP KlASS Bagariy plate carrier (EMR) | Port Authority | Adds a separate 3x4 compartment for firearms, including their attached parts and loaded ammunition. Loose items cannot be stored there. +25% Arm and Leg Stamina regeneration. |
 | Poyas-A + Poyas-B gear rig | Belt and Braces | With a firearm whose full loaded capacity is at least 30 cartridges, full-auto fire gains -25% recoil and reloads are 40% faster. Loaded capacity includes chambered rounds. Magazines may be carried anywhere on your person. |

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "catalogRevision": 52,
+  "catalogRevision": 54,
   "vanillaWeaponCount": 168,
   "legendaryCount": 1860,
   "legacyAliases": [
@@ -48484,7 +48484,7 @@
       "shortName": "Service Window",
       "description": "A tactical load-bearing system designed to carry magazines, grenades, and special equipment, while using low-profile body armor. Manufactured by London Bridge Trading.",
       "effectKind": "chestRig",
-      "effectText": "While a loot window is open, Arm Stamina recovery and manual magazine packing anywhere on your person are 75% faster.",
+      "effectText": "While the inventory menu is open, medical item use and ammunition loading and unloading are 50% faster.",
       "runtimeKey": "TR17-2",
       "chestRigEffect": {
         "key": "TR17-2",
@@ -48519,7 +48519,7 @@
       "shortName": "Service Window",
       "description": "A tactical load-bearing system designed to carry magazines, grenades, and special equipment, while using low-profile body armor. Manufactured by London Bridge Trading.",
       "effectKind": "chestRig",
-      "effectText": "While a loot window is open, Arm Stamina recovery and manual magazine packing anywhere on your person are 75% faster.",
+      "effectText": "While the inventory menu is open, medical item use and ammunition loading and unloading are 50% faster.",
       "runtimeKey": "TR17-2",
       "chestRigEffect": {
         "key": "TR17-2",
@@ -48554,7 +48554,7 @@
       "shortName": "Service Window",
       "description": "A tactical load-bearing system designed to carry magazines, grenades, and special equipment, while using low-profile body armor. Manufactured by London Bridge Trading.",
       "effectKind": "chestRig",
-      "effectText": "While a loot window is open, Arm Stamina recovery and manual magazine packing anywhere on your person are 75% faster.",
+      "effectText": "While the inventory menu is open, medical item use and ammunition loading and unloading are 50% faster.",
       "runtimeKey": "TR17-2",
       "chestRigEffect": {
         "key": "TR17-2",
@@ -48589,7 +48589,7 @@
       "shortName": "Service Window",
       "description": "A tactical load-bearing system designed to carry magazines, grenades, and special equipment, while using low-profile body armor. Manufactured by London Bridge Trading.",
       "effectKind": "chestRig",
-      "effectText": "While a loot window is open, Arm Stamina recovery and manual magazine packing anywhere on your person are 75% faster.",
+      "effectText": "While the inventory menu is open, medical item use and ammunition loading and unloading are 50% faster.",
       "runtimeKey": "TR17-2",
       "chestRigEffect": {
         "key": "TR17-2",
@@ -48624,7 +48624,7 @@
       "shortName": "Service Window",
       "description": "A tactical load-bearing system designed to carry magazines, grenades, and special equipment, while using low-profile body armor. Manufactured by London Bridge Trading.",
       "effectKind": "chestRig",
-      "effectText": "While a loot window is open, Arm Stamina recovery and manual magazine packing anywhere on your person are 75% faster.",
+      "effectText": "While the inventory menu is open, medical item use and ammunition loading and unloading are 50% faster.",
       "runtimeKey": "TR17-2",
       "chestRigEffect": {
         "key": "TR17-2",

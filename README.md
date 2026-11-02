@@ -1,10 +1,10 @@
 # Escape From Borderlands — SPT 4.1.6
 
-**EFB 0.30.0 · Borderlands-inspired Legendary equipment for SPT.**
+**EFB 0.31.2 · Borderlands-inspired Legendary equipment for SPT.**
 
 ## Download and install
 
-[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.30.0-spt-4.1.6/EscapeFromBorderlands_0.30.0_SPT-4.1.6.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.30.0-spt-4.1.6)
+[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.1.6/EscapeFromBorderlands_0.31.2_SPT-4.1.6.zip) · [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.1.6/EscapeFromBorderlands_0.31.2_SPT-4.1.6_Upgrade.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.2-spt-4.1.6)
 
 For a fresh installation, close the game, launcher and server, then extract the installation ZIP into your **SPT game root**. The package installs:
 
@@ -39,7 +39,7 @@ Legendary equipment counts as its vanilla base for objectives such as weapon kil
 
 The [configuration guide](docs/configuration.md) covers spawn chances, flea availability, prices, grenade recharge times, draw-sound volume and the status display.
 
-Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. These mods are optional and are not bundled with EFB.
+Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. These mods are optional and are not bundled with EFB. Optional **Stat Rewards** integration has its own configurable Legendary reward chance.
 
 ## Building from source
 

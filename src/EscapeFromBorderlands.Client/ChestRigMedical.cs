@@ -129,6 +129,11 @@ internal static class ChestRigMedical
         if(s.Key=="AR15-2"&&s.Active("door")&&type==EDamageType.Bullet&&part is EBodyPart.LeftLeg or EBodyPart.RightLeg)factor*=.75f;
         return factor;
     }
-    internal static float UseSpeed(Player p)
-    {var s=ChestRigRuntime.Get(p);return s?.Key=="TR28-2"&&s.Active("medical")?1.5f:1f;}
+    internal static float UseSpeed(Player p,Item? item=null)
+    {
+        var s=ChestRigRuntime.Get(p);
+        if(s?.Key=="TR28-2"&&s.Active("medical"))return 1.5f;
+        item??=(p.HandsController as Player.MedsController)?.Item;
+        return ServiceWindow.IsMedical(item)?ServiceWindow.Speed(p):1f;
+    }
 }

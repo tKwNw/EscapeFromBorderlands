@@ -17,6 +17,7 @@ Close the server before editing `config.json`, save your changes, then restart i
 | `factionSpawnChances` | `1` per category | Separate equipment chances for each other supported non-Scav faction group. |
 | `autoDetectApbs` | `true` | Detects APBS automatically. The same spawn settings are used with or without APBS. |
 | `airdropLegendaryChancePercent` | `1` | 0–100% chance per supported loot item, shared across all airdrop types. |
+| `statRewardsLegendaryChancePercent` | `1` | 0–100% chance per supported random equipment reward when Stat Rewards is installed. |
 | `allowFleaMarketTrading` | `false` | Allows Legendary items on the flea market. |
 | `priceMultipliers.Legendary` | `10.0` | Legendary price multiplier relative to the vanilla base. |
 | `createDefaultPresets` | `true` | Creates ready-to-use Legendary weapon presets. |
@@ -24,6 +25,8 @@ Close the server before editing `config.json`, save your changes, then restart i
 Bot spawn percentages accept **0–99**. Each category has its own value: `guns`, `melee`, `backpacks`, `chestRigs`, `grenades` and `earpieces`. A value of 0 disables Legendary selection for that category. These settings affect supported equipment; they do not give every bot a fixed number of Legendary items. Ordinary Scavs are excluded.
 
 The airdrop percentage is a chance for each eligible item, rather than a chance for the entire crate. At 0%, airdrop Legendary conversions are disabled. At 100%, every eligible supported item is converted; unrelated loot remains available.
+
+Stat Rewards integration is optional. Its reward chance is separate from bot, airdrop and flea settings.
 
 Missing server options are added automatically when EFB starts. Keep existing values when updating; see the [upgrade guide](https://github.com/tKwNw/EscapeFromBorderlands/blob/main/UPGRADING.md).
 

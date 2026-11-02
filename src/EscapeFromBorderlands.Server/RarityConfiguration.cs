@@ -13,6 +13,8 @@ public sealed class RarityConfiguration
     public bool AllowFleaMarketTrading { get; set; } = false;
     public double AirdropLegendaryChancePercent { get; set; } = 1d;
     public double AirdropFraction => (double.IsFinite(AirdropLegendaryChancePercent) ? Math.Clamp(AirdropLegendaryChancePercent, 0d, 100d) : 1d) / 100d;
+    public double StatRewardsLegendaryChancePercent { get; set; } = 1d;
+    public double StatRewardsFraction => (double.IsFinite(StatRewardsLegendaryChancePercent) ? Math.Clamp(StatRewardsLegendaryChancePercent, 0d, 100d) : 1d) / 100d;
     public Dictionary<string, double> PriceMultipliers { get; set; } = new(StringComparer.OrdinalIgnoreCase) { ["Legendary"] = 10d };
     // Compatibility inputs only. Canonical config files omit these old scalars.
     public double StandalonePmcLegendaryChancePercent { get; set; } = 1d;
@@ -158,6 +160,7 @@ public sealed class RarityConfiguration
                     if (rates[category] is null) rates[category] = config.FactionChance(method, name, category);
         if (node["addToNonScavFactions"] is null) node["addToNonScavFactions"] = config.AddToNonScavFactions;
         node["airdropLegendaryChancePercent"] = config.AirdropFraction * 100d;
+        node["statRewardsLegendaryChancePercent"] = config.StatRewardsFraction * 100d;
         foreach (var key in LegacyScalars) node.Remove(key);
         node.Remove("enableReusableGrenadeTestOffer");
         config = Read(node);

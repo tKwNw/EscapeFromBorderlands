@@ -161,7 +161,7 @@ internal static class ChestRigMedicalCostPatch
 internal static class ChestRigMedSpeedPatch
 {
     private static void Postfix(HealthEffectsComponent __instance,ref float __result)
-    {if(BackpackNative.ItemOwner(__instance.Item) is { } p)__result/=ChestRigMedical.UseSpeed(p)*GrenadeBuffs.Medicine(p)*EarpieceRuntime.MedicalSpeed(p,__instance.Item);}
+    {if(BackpackNative.ItemOwner(__instance.Item) is { } p)__result/=ChestRigMedical.UseSpeed(p,__instance.Item)*GrenadeBuffs.Medicine(p)*EarpieceRuntime.MedicalSpeed(p,__instance.Item);}
 }
 [HarmonyPatch(typeof(Player.PlayerInventoryController.LoadMagazineProcess),nameof(Player.PlayerInventoryController.LoadMagazineProcess.PlaySound))]
 internal static class ChestRigManualPackingPatch
