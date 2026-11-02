@@ -2,78 +2,53 @@
 
 **Borderlands-inspired Legendary equipment for SPT.**
 
-Escape From Borderlands adds distinct Legendary versions of supported vanilla weapons, grenades, melee weapons, backpacks, chest rigs, and earpieces. Vanilla items remain available. Legendary equipment features signature effects and configurable spawn behavior.
-## Legendary equipment catalog
+EFB adds Legendary versions of vanilla firearms, melee weapons, chest rigs, backpacks, grenades and headsets, each with a signature ability and random bonuses.
 
-Explore **1,508 named Legendary designs** in each supported SPT version. Each item listing includes its Legendary name, signature effect, and template ID.
+## Download and install
 
-| Equipment category | Designs | Complete catalog |
-| --- | ---: | --- |
-| Firearms | **1,229** | [Legendary guns](docs/weapons/README.md) |
-| Melee weapons | **48** | [Legendary melee weapons](docs/melee/README.md) |
-| Vests & chest rigs | **88** | [Legendary vests and rigs](docs/vests/README.md) |
-| Backpacks | **67** | [Legendary backpacks](docs/backpacks/README.md) |
-| Grenades | **37** | [Legendary grenades](docs/grenades/README.md) |
-| Headsets & earpieces | **39** | [Legendary headsets](docs/headsets/README.md) |
+Choose the download that matches your installed SPT version.
 
-[**Browse the full Legendary catalog**](docs/README.md) · [View all 440 vest/rig storage identities](docs/vests/LAYOUTS.md)
-
-The catalog below documents **EFB 0.31.2 / SPT 4.0.13**, revision **54**. SPT 4.1.6 remains on **EFB 0.30.0**, revision **52**, with the same design counts and its earlier Service Window signature. [Browse the 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md). Item tables document fixed signature abilities; Legendary items can also roll additional random modifiers.
-
-
-
-## Supported SPT versions and downloads
-
-| SPT version | EFB version | Installation ZIP | Source and item catalogs |
+| SPT version | EFB version | Download | Release notes |
 | --- | --- | --- | --- |
-| **4.0.13** | **0.31.2** | [Download for SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.0.13/EscapeFromBorderlands_0.31.2_SPT-4.0.13.zip) | [spt-4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) |
-| **4.1.6** | **0.30.0** | [Download for SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.30.0-spt-4.1.6/EscapeFromBorderlands_0.30.0_SPT-4.1.6.zip) | [spt-4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6) |
+| 4.0.13 | 0.31.2 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.0.13/EscapeFromBorderlands_0.31.2_SPT-4.0.13.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.2-spt-4.0.13) |
+| 4.1.6 | 0.30.0 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.30.0-spt-4.1.6/EscapeFromBorderlands_0.30.0_SPT-4.1.6.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.30.0-spt-4.1.6) |
 
-The [Releases page](https://github.com/tKwNw/EscapeFromBorderlands/releases) contains the compiled installation archives. Each branch contains the source, default configuration, and [Legendary item catalog](docs/README.md) for its supported SPT API version. Do not install GitHub's automatically generated source-code archive in place of the compiled ZIP.
+Source branches: [SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) · [SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6). Each includes its build instructions.
 
-## Changes in EFB 0.31.2 — SPT 4.0.13
+For a fresh installation, close the game, launcher and server, then extract the installation ZIP into your **SPT game root**. Use the compiled installation ZIP from [Releases](https://github.com/tKwNw/EscapeFromBorderlands/releases).
 
-- **Service Window:** 50% faster medical item use and ammunition loading/unloading while the inventory menu is open, including the first medical use, surgery kits, painkillers and injectors.
-- **Holy Hand Grenade:** draw-sound recovery across raids and delayed audio initialization; default volume remains 0.50.
-- **Optional Stat Rewards compatibility:** independent `statRewardsLegendaryChancePercent` setting, default 1%, range 0–100%, per supported random equipment reward.
+**Already using EFB?** Follow the [upgrade guide](UPGRADING.md) to update while keeping your settings. The same guide applies to every EFB release.
 
-[Read the complete 4.0.13 release notes](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.0.13/RELEASE_NOTES_0.31.2.md). The 4.1.6 port will follow separately and retain its existing compatibility fixes.
+## Legendary equipment
 
-## Download verification and VirusTotal
+Legendary items have a fixed signature ability and 4 compatible random bonuses. Inspect an item to see its effects and rolls. Vanilla items remain available, and Legendary firearms use their normal compatible attachments.
 
-These SHA-256 hashes have been verified against the **published GitHub Release assets** (not merely the source archives):
+Find Legendaries on PMCs, bosses and other non-Scav factions, or among supported airdrop loot. Spawn chances are configurable by faction and equipment category. Flea market availability can also be enabled in the settings.
 
-| SPT version | Installation ZIP SHA-256 | VirusTotal |
-| --- | --- | --- |
-| **4.0.13** | `e2dddab4f0cb046bdb9f3c373fb5f4f06acdfc44288fb208645ddc6241075be2` | [Look up this hash](https://www.virustotal.com/gui/file/e2dddab4f0cb046bdb9f3c373fb5f4f06acdfc44288fb208645ddc6241075be2) |
-| **4.1.6** | `84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e` | [VirusTotal report](https://www.virustotal.com/gui/file/84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e/detection) |
+Legendary grenades are reusable: each copy has its own charges, bonuses and recharge timer. Empty copies stay in your inventory and are skipped by grenade quick select until a charge returns.
 
-Each report link identifies the exact SHA-256 hash of the corresponding published installation ZIP. Detection counts and the current verdict should be reviewed on VirusTotal; matching the hash confirms file identity, not that the file is malware-free. VirusTotal results do not guarantee safety.
+Legendary equipment counts as its vanilla base for objectives such as weapon kills and equipment requirements. Quest hand-ins, Gunsmith turn-ins and placement objectives exclude Legendary items to protect them from accidental loss.
 
-## Installation
+| Category | Legendary designs | Item list |
+| --- | ---: | --- |
+| Firearms | 1,229 | [Browse](docs/weapons/README.md) |
+| Melee weapons | 48 | [Browse](docs/melee/README.md) |
+| Vests and chest rigs | 88 | [Browse](docs/vests/README.md) |
+| Backpacks | 67 | [Browse](docs/backpacks/README.md) |
+| Grenades | 37 | [Browse](docs/grenades/README.md) |
+| Headsets and earpieces | 39 | [Browse](docs/headsets/README.md) |
+| **Total** | **1,508** | |
 
-Close the game, launcher, and SPT server. Back up your profile and existing EFB settings before extracting the installation ZIP into your **SPT game root** (the main installation folder).
+[Browse the complete item catalog](docs/README.md). This catalog follows the SPT 4.0.13 release. [View the SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) for that version's effects.
 
-**SPT 4.0.13**
-- Client: `BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll`
-- Server: `SPT/user/mods/EscapeFromBorderlands/`
+## Settings and compatibility
 
-**SPT 4.1.6**
-- Client: `BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll`
-- Server: `SPT_Runtime/user/mods/EscapeFromBorderlands/`
+Use the [configuration guide](docs/configuration.md) to adjust Legendary spawn chances, flea availability, prices, grenade recharge times, draw-sound volume and the status display.
 
-The 0.30.0 release migrates older BepInEx settings to the updated plugin GUID. See each version's `UPGRADING_0.30.0.md` for precautions and migration details.
+Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. These mods are optional and are not bundled with EFB. The SPT 4.0.13 release also supports optional **Stat Rewards** integration with a separate Legendary reward chance.
 
-## Building from source
+## Help and credits
 
-Select the branch for your SPT version and follow its `BUILDING.md`. Building requires the appropriate .NET SDK and assemblies from your own installed game. Proprietary game and SPT binaries and optional-mod dependencies are not bundled.
+Report problems through [GitHub Issues](https://github.com/tKwNw/EscapeFromBorderlands/issues). Include your SPT version, EFB version, installed mods and steps to reproduce the issue.
 
-## Optional compatibility
-
-Both version include compatibility work for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere**, and **HollywoodFX**. These are optional and not included in the downloads; results may depend on the particular versions installed.
-
-## Issues and licensing
-
-When reporting an issue, include your **SPT version**, **EFB version**, installed mods, steps to reproduce, and relevant log excerpts. Do not post private account details or tokens.
-
-EFB source code is provided under the [MIT license](LICENSE.txt); see [third-party notices](THIRD_PARTY_NOTICES.md) for the separately licensed audio asset. Escape From Borderlands is a community-made SPT mod and is not affiliated with Battlestate Games or Gearbox Software.
+EFB source code uses the [MIT license](LICENSE.txt). See [third-party notices](THIRD_PARTY_NOTICES.md) for the separately licensed audio. Escape From Borderlands is a community-made SPT mod and is not affiliated with Battlestate Games or Gearbox Software.
