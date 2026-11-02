@@ -11,7 +11,7 @@ Choose the download that matches your installed SPT version.
 | SPT version | EFB version | Download | Release notes |
 | --- | --- | --- | --- |
 | 4.0.13 | 0.31.3 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.3-spt-4.0.13/EscapeFromBorderlands_0.31.3_SPT-4.0.13.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.3-spt-4.0.13/EscapeFromBorderlands_0.31.3_SPT-4.0.13_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.3-spt-4.0.13) |
-| 4.1.6 | 0.31.2 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.1.6/EscapeFromBorderlands_0.31.2_SPT-4.1.6.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.1.6/EscapeFromBorderlands_0.31.2_SPT-4.1.6_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.2-spt-4.1.6) |
+| 4.1.6 | 0.31.4 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.4-spt-4.1.6/EscapeFromBorderlands_0.31.4_SPT-4.1.6.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.4-spt-4.1.6/EscapeFromBorderlands_0.31.4_SPT-4.1.6_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.4-spt-4.1.6) |
 
 Source branches: [SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) · [SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6). Each includes its build instructions.
 
@@ -23,7 +23,7 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 Legendary items have a fixed signature ability and 4 compatible random bonuses. Inspect an item to see its effects and rolls. Vanilla items remain available, and Legendary firearms use their normal compatible attachments.
 
-In EFB 0.31.3 for SPT 4.0.13, generated Legendary flea offers hide their 4 random bonuses as `????` until purchase. The signature ability stays visible.
+Generated Legendary flea offers hide their 4 random bonuses as `????` until purchase. The signature ability stays visible.
 
 Find Legendaries on PMCs, bosses and other non-Scav factions, or among supported airdrop loot. Spawn chances are configurable by faction and equipment category. Flea market availability can also be enabled in the settings.
 
