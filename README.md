@@ -39,7 +39,7 @@ Legendary equipment counts as its vanilla base for objectives such as weapon kil
 | Headsets and earpieces | 39 | [Browse](docs/headsets/README.md) |
 | **Total** | **1,508** | |
 
-[Browse the complete item catalog](docs/README.md). Both supported SPT versions share this item catalog. [View the SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) for that version's effects.
+[Browse the complete item catalog](docs/README.md). Both supported SPT versions share this item catalog.
 
 ## Settings and compatibility
 
