@@ -1,6 +1,8 @@
 # Legendary headsets / earpieces — Escape From Borderlands
 
-**EFB 0.30.0 · SPT source catalog revision 52**
+**EFB 0.31.2 · SPT 4.0.13 catalog revision 54**
+
+This page documents SPT 4.0.13. [SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) remains at EFB 0.30.0 / revision 52.
 
 39 Legendary earpiece variants. Signature effects apply according to the conditions in the catalog, generally while the earpiece is equipped.
 

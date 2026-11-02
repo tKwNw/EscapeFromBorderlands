@@ -1,6 +1,6 @@
 # Escape From Borderlands — Legendary item catalog
 
-This documentation lists every **named Legendary design** in the EFB **0.30.0** source catalogs for **SPT 4.0.13** and **SPT 4.1.6** (catalog revision **52**). The two SPT versions use identical Legendary definition data; compatibility code and installation paths remain version-specific.
+This documentation lists every **named Legendary design** in **EFB 0.31.2 for SPT 4.0.13**, catalog revision **54**. SPT 4.1.6 remains on EFB 0.30.0 / revision 52, with the same design counts and its earlier Service Window signature. [Open the SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md). Compatibility code and installation paths remain version-specific.
 
 | Category | Named Legendary designs | Full item list |
 | --- | ---: | --- |
@@ -14,6 +14,6 @@ This documentation lists every **named Legendary design** in the EFB **0.30.0** 
 
 The vests/rigs represent **440 distinct storage-template identities** across 88 designs: [see the complete vest/rig layout registry](vests/LAYOUTS.md). All categories together contain **1,860 raw Legendary template entries**. These totals include the catalog's non-spawning rig mystery/flea identities where indicated; they are not all additional independently spawning designs.
 
-**About the tables:** The listed signature is the fixed special ability; each Legendary item can also roll 4 compatible random bonuses. The 24-character template IDs help identify exact records for troubleshooting. Names, signature effects, and IDs were generated from the identical Legendary definitions in the [SPT 4.0.13 source](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.0.13/src/EscapeFromBorderlands.Server/LegendaryDefinitions.json) and [SPT 4.1.6 source](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/src/EscapeFromBorderlands.Server/LegendaryDefinitions.json), rather than inferred from screenshots or memory. The underlying vanilla items remain separate and playable.
+**About the tables:** The listed signature is the fixed special ability; each Legendary item can also roll 4 compatible random bonuses. The 24-character template IDs help identify exact records for troubleshooting. Names, signature effects and IDs match the [SPT 4.0.13 source definitions](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.0.13/src/EscapeFromBorderlands.Server/LegendaryDefinitions.json). For the earlier Service Window effect, use the [SPT 4.1.6 definitions](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/src/EscapeFromBorderlands.Server/LegendaryDefinitions.json). The underlying vanilla items remain separate and playable.
 
 [← Project README](../README.md)

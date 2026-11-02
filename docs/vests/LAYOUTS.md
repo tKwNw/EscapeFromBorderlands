@@ -1,6 +1,8 @@
 # Vest and chest-rig storage identities — Escape From Borderlands
 
-**440 template identities** for 88 named designs, from catalog revision 52.
+**440 template identities** for 88 named designs, from catalog revision 54.
+
+This page documents SPT 4.0.13. [SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) remains at EFB 0.30.0 / revision 52.
 
 The 4 normal layout configurations per design have additional row/column values; the 5th record is a non-spawning mystery/flea identity (not an extra active Legendary effect). The **item IDs below are distinct** despite the shared name and signature.
 

@@ -1,6 +1,8 @@
 # Legendary melee weapons — Escape From Borderlands
 
-**EFB 0.30.0 · SPT source catalog revision 52**
+**EFB 0.31.2 · SPT 4.0.13 catalog revision 54**
+
+This page documents SPT 4.0.13. [SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) remains at EFB 0.30.0 / revision 52.
 
 48 Legendary melee variants. The signature effect shown is taken directly from the item catalog; effects may require the melee weapon to be held.
 
