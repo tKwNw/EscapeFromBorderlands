@@ -27,7 +27,7 @@ Bot spawn percentages accept **0–99**. Each category has its own value: `guns`
 
 The airdrop percentage is a chance for each eligible item, rather than a chance for the entire crate. At 0%, airdrop Legendary conversions are disabled. At 100%, every eligible supported item is converted; unrelated loot remains available.
 
-Stat Rewards integration is available in the SPT 4.0.13 release. Its reward chance is separate from bot, airdrop and flea settings.
+Stat Rewards integration is optional in both supported SPT versions. Its reward chance is separate from bot, airdrop and flea settings.
 
 Missing server options are added automatically when EFB starts. Keep existing values when updating; see the [upgrade guide](https://github.com/tKwNw/EscapeFromBorderlands/blob/main/UPGRADING.md).
 

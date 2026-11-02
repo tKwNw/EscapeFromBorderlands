@@ -10,8 +10,8 @@ Choose the download that matches your installed SPT version.
 
 | SPT version | EFB version | Download | Release notes |
 | --- | --- | --- | --- |
-| 4.0.13 | 0.31.2 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.0.13/EscapeFromBorderlands_0.31.2_SPT-4.0.13.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.2-spt-4.0.13) |
-| 4.1.6 | 0.30.0 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.30.0-spt-4.1.6/EscapeFromBorderlands_0.30.0_SPT-4.1.6.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.30.0-spt-4.1.6) |
+| 4.0.13 | 0.31.2 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.0.13/EscapeFromBorderlands_0.31.2_SPT-4.0.13.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.0.13/EscapeFromBorderlands_0.31.2_SPT-4.0.13_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.2-spt-4.0.13) |
+| 4.1.6 | 0.31.2 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.1.6/EscapeFromBorderlands_0.31.2_SPT-4.1.6.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.2-spt-4.1.6/EscapeFromBorderlands_0.31.2_SPT-4.1.6_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.2-spt-4.1.6) |
 
 Source branches: [SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) · [SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6). Each includes its build instructions.
 
@@ -39,13 +39,13 @@ Legendary equipment counts as its vanilla base for objectives such as weapon kil
 | Headsets and earpieces | 39 | [Browse](docs/headsets/README.md) |
 | **Total** | **1,508** | |
 
-[Browse the complete item catalog](docs/README.md). This catalog follows the SPT 4.0.13 release. [View the SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) for that version's effects.
+[Browse the complete item catalog](docs/README.md). Both supported SPT versions share this item catalog. [View the SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) for that version's effects.
 
 ## Settings and compatibility
 
 Use the [configuration guide](docs/configuration.md) to adjust Legendary spawn chances, flea availability, prices, grenade recharge times, draw-sound volume and the status display.
 
-Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. These mods are optional and are not bundled with EFB. The SPT 4.0.13 release also supports optional **Stat Rewards** integration with a separate Legendary reward chance.
+Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. These mods are optional and are not bundled with EFB. Both releases also support optional **Stat Rewards** integration with a separate Legendary reward chance.
 
 ## Help and credits
 

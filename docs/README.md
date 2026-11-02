@@ -14,6 +14,6 @@ Each listing shows the item's fixed signature ability. Legendary items also roll
 | Headsets and earpieces | 39 | [Browse](headsets/README.md) |
 | **Total** | **1,508** | |
 
-This catalog follows the SPT 4.0.13 release. [Browse the SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) for that version's effects.
+Both supported SPT versions share this catalog. [Browse the SPT 4.1.6 catalog](https://github.com/tKwNw/EscapeFromBorderlands/blob/spt-4.1.6/docs/README.md) for that version's effects.
 
 [← EFB home](../README.md) · [Configuration](configuration.md)
