@@ -1,42 +1,52 @@
-# Escape From Borderlands 0.30.0 — SPT 4.1.6
+# Escape From Borderlands — SPT 4.1.6
 
-## Legendary item catalog
+**EFB 0.30.0 · Borderlands-inspired Legendary equipment for SPT.**
 
-Browse the complete EFB 0.30.0 Legendary item roster (**1,508 named designs; catalog revision 52**):
+## Download and install
 
-| Item category | Count | Catalog |
-| --- | ---: | --- |
-| Guns / firearms | 1,229 | [All Legendary guns](docs/weapons/README.md) |
-| Melee weapons | 48 | [All Legendary melee weapons](docs/melee/README.md) |
-| Vests / chest rigs | 88 | [All Legendary vests](docs/vests/README.md) · [440 storage identities](docs/vests/LAYOUTS.md) |
-| Backpacks | 67 | [All Legendary backpacks](docs/backpacks/README.md) |
-| Grenades | 37 | [All Legendary grenades](docs/grenades/README.md) |
-| Headsets / earpieces | 39 | [All Legendary headsets](docs/headsets/README.md) |
+[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.30.0-spt-4.1.6/EscapeFromBorderlands_0.30.0_SPT-4.1.6.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.30.0-spt-4.1.6)
 
-[Open the complete catalog index](docs/README.md). Every entry includes its signature effect and template ID, taken directly from EFB's current Legendary definitions.
-
-## Download verification
-
-- **Published EFB 0.30.0 installation ZIP SHA-256:** `84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e`
-- **VirusTotal:** [View file report](https://www.virustotal.com/gui/file/84d271146280ee52c20576c6f1e40173749f12bce81e27e4bf1313a35ab35b0e/detection)
-
-The report link matches the published release ZIP's SHA-256. Consult VirusTotal for current detection results; a file hash alone does not establish whether a file is safe.
-
-## Install
+For a fresh installation, close the game, launcher and server, then extract the installation ZIP into your **SPT game root**. The package installs:
 
 - Client: `BepInEx/plugins/EscapeFromBorderlands/EscapeFromBorderlands.Client.dll`
-- Server: `SPT_Runtime/user/mods/EscapeFromBorderlands/EscapeFromBorderlands.Server.dll`
+- Server: `SPT_Runtime/user/mods/EscapeFromBorderlands/`
 
-Optional integrations: **APBS**, **Use Items Anywhere 2.1.6**, and **HollywoodFX**. These mods are not bundled or required.
+**Updating an existing installation?** Follow the [shared upgrade guide](https://github.com/tKwNw/EscapeFromBorderlands/blob/main/UPGRADING.md) to keep your settings. [Other supported SPT versions](https://github.com/tKwNw/EscapeFromBorderlands#download-and-install).
 
-## Protect legendary gear from consuming quest objectives
+## Legendary equipment
 
-EFB items cannot be handed in or placed for quests. This includes Gunsmith weapon turn-ins, explicit legendary quest targets, owned storage layouts and retired compatibility aliases. Ordinary containers holding legendary items are protected too, including nested contents.
+Legendary items have a fixed signature ability and 4 compatible random bonuses. Inspect an item to see its effects and rolls. Vanilla items remain available, and Legendary firearms use their normal compatible attachments.
 
-- Hand-in selection excludes protected copies, even when a native category or exact-template match would normally accept them.
-- The final client handover transaction rejects protected selections before any item discard. The server checks the whole request before native processing; a mixed ordinary/legendary selection is rejected as a whole, so an ordinary item listed first is not partially consumed.
-- Gunsmith keeps its native receiver and build requirements and rejects protected weapons or weapons holding protected items.
-- Placement selection excludes protected items. The completion callback rechecks contents and takes the native cancellation path if a legendary was added during the placement timer. Canceled placement neither removes the item nor advances quest progress.
-- Ordinary eligible hand-ins, builds and placements retain native behavior. A legendary elsewhere in inventory does not block handing in an unrelated ordinary item.
+Find Legendaries on PMCs, bosses and other non-Scav factions, or among supported airdrop loot. Spawn chances are configurable by faction and equipment category. Flea market availability can also be enabled in the settings.
 
-Legendary Mosins and other EFB variants still count as their vanilla bases for non-consuming objectives, including weapon kills/hits, equipment requirements and item finding. Native restrictions such as FIR, distance, body part, time, role and attachments remain enforced. Existing use/sale matching and quest markers are retained. This protection is specific to quest hand-ins, Gunsmith turn-ins and placement; it does not change voluntary trader sales or ordinary item use.
+Legendary grenades are reusable: each copy has its own charges, bonuses and recharge timer. Empty copies stay in your inventory and are skipped by grenade quick select until a charge returns.
+
+Legendary equipment counts as its vanilla base for objectives such as weapon kills and equipment requirements. Quest hand-ins, Gunsmith turn-ins and placement objectives exclude Legendary items to protect them from accidental loss.
+
+| Category | Legendary designs | Item list |
+| --- | ---: | --- |
+| Firearms | 1,229 | [Browse](docs/weapons/README.md) |
+| Melee weapons | 48 | [Browse](docs/melee/README.md) |
+| Vests and chest rigs | 88 | [Browse](docs/vests/README.md) |
+| Backpacks | 67 | [Browse](docs/backpacks/README.md) |
+| Grenades | 37 | [Browse](docs/grenades/README.md) |
+| Headsets and earpieces | 39 | [Browse](docs/headsets/README.md) |
+| **Total** | **1,508** | |
+
+[Browse the complete item catalog](docs/README.md) for the Legendary names and signature effects in this SPT version.
+
+## Settings and compatibility
+
+The [configuration guide](docs/configuration.md) covers spawn chances, flea availability, prices, grenade recharge times, draw-sound volume and the status display.
+
+Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. These mods are optional and are not bundled with EFB.
+
+## Building from source
+
+See [build instructions](BUILDING.md) for this SPT branch.
+
+## Help and credits
+
+Report problems through [GitHub Issues](https://github.com/tKwNw/EscapeFromBorderlands/issues). Include your SPT version, EFB version, installed mods and steps to reproduce the issue.
+
+EFB source code uses the [MIT license](LICENSE.txt). See [third-party notices](THIRD_PARTY_NOTICES.md) for the separately licensed audio. Escape From Borderlands is a community-made SPT mod and is not affiliated with Battlestate Games or Gearbox Software.
