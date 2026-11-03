@@ -60,9 +60,8 @@ internal static partial class AdvancedMeleeRuntime
         Resetting = true;
         try
         {
-            foreach (var effect in KillPainkillers.Values) effect.ForceRemove();
-            foreach (var player in WeightReduced)
-                if (player?.HealthController?.IsAlive == true) player.Physical.OnWeightUpdated();
+            // Session teardown only discards EFB state. Live unequips use
+            // EndHold/Maintain instead of refreshing disposed physical objects.
             KillPainkillers.Clear(); KillPainkillerSources.Clear(); WeightReduced.Clear(); Flights.Clear();
         }
         finally { Resetting = false; }
@@ -106,13 +105,13 @@ internal static partial class AdvancedMeleeRuntime
         if (world is null) return;
         foreach (var player in world.AllAlivePlayersList)
         {
-            if (player?.HealthController?.IsAlive != true) continue;
+            if (!PlayerRefresh.CanObserve(player)) continue;
             var held = MeleeRuntime.Held(player);
             var reduced = held?.Effect.WeightMultiplier < 1f;
             if (reduced != WeightReduced.Contains(player))
             {
                 if (reduced) WeightReduced.Add(player); else WeightReduced.Remove(player);
-                player.Physical.OnWeightUpdated();
+                PlayerRefresh.Weight(player, "melee weight");
             }
             if (Flights.TryGetValue(player, out var flight))
             {

@@ -19,6 +19,7 @@ Close the server before editing `config.json`, save your changes, then restart i
 | `airdropLegendaryChancePercent` | `1` | 0–100% chance per supported loot item, shared across all airdrop types. |
 | `statRewardsLegendaryChancePercent` | `1` | 0–100% chance per supported random equipment reward when Stat Rewards is installed. |
 | `allowFleaMarketTrading` | `false` | Allows Legendary items on the flea market. Generated stock hides its 4 random bonuses until purchase in every category. |
+| `allowFenceToSellEfbItems` | `false` | Allows active EFB items in Fence's offers under normal stocking rules. With `false`, blocks generated and resold EFB offers in normal and maximum-reputation stock. Players can still sell EFB items to Fence. |
 | `priceMultipliers.Legendary` | `10.0` | Legendary price multiplier relative to the vanilla base. |
 | `createDefaultPresets` | `true` | Creates ready-to-use Legendary weapon presets. |
 
@@ -26,7 +27,9 @@ Bot spawn percentages accept **0–99**. Each category has its own value: `guns`
 
 The airdrop percentage is a chance for each eligible item, rather than a chance for the entire crate. At 0%, airdrop Legendary conversions are disabled. At 100%, every eligible supported item is converted; unrelated loot remains available.
 
-Stat Rewards integration is available in the SPT 4.0.13 release. Its reward chance is separate from bot, airdrop and flea settings.
+Stat Rewards integration is optional. Its reward chance is separate from bot, airdrop and flea settings.
+
+Fence's setting is independent of the flea-market toggle and Legendary spawn chances. Set `allowFenceToSellEfbItems` to `true` to permit otherwise eligible active EFB stock; it does not guarantee Legendary offers. Retired compatibility aliases and mystery purchase-preview templates stay excluded. Existing EFB offers, including an offer with a nested EFB item, are removed when blocking is enabled. Completed player sales retain their normal payment and reputation behavior. Restart the server after changing this option.
 
 Missing server options are added automatically when EFB starts. Keep existing values when updating; see the [upgrade guide](https://github.com/tKwNw/EscapeFromBorderlands/blob/main/UPGRADING.md).
 

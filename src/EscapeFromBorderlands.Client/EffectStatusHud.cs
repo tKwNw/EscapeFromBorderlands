@@ -16,6 +16,8 @@ internal static class EffectStatusHud
     {
         internal GameObject Root = null!;
         internal Component Icon = null!, Label = null!;
+        internal EffectStatusText.Layout TextLayout = null!;
+        internal Color LastColor;
     }
     private static CharacterHealthPanel? Panel;
     private static GameObject? Root;
@@ -24,8 +26,8 @@ internal static class EffectStatusHud
     private static Sprite? ClockSprite;
     private static Texture2D? ClockTexture;
     private static readonly List<Row> Rows = new();
-    private static float NextUpdate;
-    private static bool Failed, PreviousAutoHide;
+    private static float NextUpdate, NextFailureReport;
+    private static bool PreviousAutoHide;
     internal static bool HoldingVisible { get; private set; }
     internal static void Attach(CharacterHealthPanel panel)
     {
@@ -36,13 +38,18 @@ internal static class EffectStatusHud
     internal static void Reset()
     {
         EffectStatusModel.ResetNotices();
+        ClearVisuals();
+        NextUpdate = NextFailureReport = 0f;
+    }
+    private static void ClearVisuals()
+    {
         if (HoldingVisible && (UnityEngine.Object?)(object?)Panel != null)
             try { HoldingVisible = false; Native.Call(Panel!, "AnimatedShow", PreviousAutoHide); } catch { /* native UI may already be closing */ }
         if (Root != null) UnityEngine.Object.Destroy(Root);
         if (ClockSprite != null) UnityEngine.Object.Destroy(ClockSprite);
         if (ClockTexture != null) UnityEngine.Object.Destroy(ClockTexture);
         Root = null; Anchor = null; ClockSprite = null; ClockTexture = null;
-        Rows.Clear(); HoldingVisible = false; NextUpdate = 0f; Failed = false;
+        Rows.Clear(); HoldingVisible = false; TextTemplate = null;
     }
     private static void Hide()
     {
@@ -54,7 +61,7 @@ internal static class EffectStatusHud
     internal static void Maintain(GameWorld? world)
     {
         if (StatusHudSettings.Enabled?.Value == false) { Hide(); return; }
-        if (Time.time < NextUpdate || Failed || (UnityEngine.Object?)(object?)Panel == null) return;
+        if (Time.time < NextUpdate || (UnityEngine.Object?)(object?)Panel == null) return;
         NextUpdate = Time.time + .05f;
         try
         {
@@ -79,6 +86,8 @@ internal static class EffectStatusHud
                 Hide();
                 return;
             }
+            if (!TryTextSource(out var textAssets))
+            { Hide(); NextUpdate = Time.time + .25f; return; }
             if (Root == null) Create();
             if (Root == null) return;
             var layout = (RectTransform)Root.transform;
@@ -87,20 +96,20 @@ internal static class EffectStatusHud
             layout.anchoredPosition = new Vector2(origin.x - parent.rect.xMin + StatusHudSettings.HorizontalOffset.Value,
                 origin.y - parent.rect.yMax - 8f - StatusHudSettings.VerticalOffset.Value);
             layout.localScale = Vector3.one * StatusHudSettings.Scale.Value;
-            Root.SetActive(true);
+            if (!Root.activeSelf) Root.SetActive(true);
             if (!HoldingVisible) { PreviousAutoHide = Native.Get(Panel, "AutoHide") is true; HoldingVisible = true; Native.Call(Panel!, "AnimatedShow", false); }
             var heights = new float[statuses.Count];
             for (var i = 0; i < statuses.Count; i++)
             {
                 if (i == Rows.Count) Rows.Add(CreateRow());
                 var row = Rows[i]; var status = statuses[i];
-                row.Root.SetActive(true);
+                if (!row.Root.activeSelf) row.Root.SetActive(true);
                 var color = status.Active ? new Color(.4f, .851f, .937f, 1f) : new Color(.68f, .68f, .68f, 1f);
-                Native.Set(row.Icon, "color", color); Native.Set(row.Label, "color", color);
-                Native.Set(row.Label, "text", status.Label);
-                var preferred = Native.Number(row.Label, "preferredHeight");
-                if (float.IsNaN(preferred) || float.IsInfinity(preferred)) preferred = 25f;
-                heights[i] = Math.Max(25f, preferred + 4f);
+                if (row.LastColor != color)
+                { row.LastColor = color; Native.Set(row.Icon, "color", color); Native.Set(row.Label, "color", color); }
+                if (!row.TextLayout.Update(textAssets, status.Label, Time.frameCount))
+                { Hide(); NextUpdate = Time.time + .25f; return; }
+                heights[i] = row.TextLayout.Height;
                 var textRect = (RectTransform)row.Label.transform;
                 textRect.sizeDelta = new Vector2(EffectStatusLayout.TextWidth, heights[i]);
                 ((RectTransform)row.Root.transform).sizeDelta = new Vector2(EffectStatusLayout.Width, heights[i]);
@@ -113,15 +122,33 @@ internal static class EffectStatusHud
         }
         catch (Exception e)
         {
-            Failed = true;
-            if (Root != null) Root.SetActive(false);
-            HoldingVisible = false;
-            if ((UnityEngine.Object?)(object?)Panel != null) Native.Call(Panel!, "AnimatedShow", PreviousAutoHide);
-            Plugin.LogSource.LogError($"EFB effect-status HUD could not be displayed: {e}");
+            // Preserve gameplay timers/notices and retry the visual binding.
+            // A transient unloaded font must not disable this HUD for the raid.
+            ClearVisuals();
+            NextUpdate = Time.time + 1f;
+            if (Time.unscaledTime >= NextFailureReport)
+            {
+                NextFailureReport = Time.unscaledTime + 30f;
+                Plugin.LogSource.LogWarning($"EFB effect-status HUD will retry after a display error: {e}");
+            }
         }
     }
 
     internal static bool KeepVisible(CharacterHealthPanel panel) => HoldingVisible && ReferenceEquals(Panel, panel);
+    private static bool TryTextSource(out EffectStatusText.Assets assets)
+    {
+        var template = Native.Get(Panel, "_effectIconTemplate");
+        var candidate = Native.Get(template, "_stackCount") as Component;
+        if (EffectStatusText.TryAssets(candidate, out assets)) { TextTemplate = candidate; return true; }
+        if (EffectStatusText.TryAssets(TextTemplate, out assets)) return true;
+        var type = AccessTools.TypeByName("TMPro.TMP_Text");
+        if (type is not null && (UnityEngine.Object?)(object?)Panel != null)
+            foreach (var text in ((Component)(object)Panel!).GetComponentsInChildren(type, true).OfType<Component>())
+                if ((Root == null || !text.transform.IsChildOf(Root.transform)) && EffectStatusText.TryAssets(text, out assets))
+                { TextTemplate = text; return true; }
+        assets = default;
+        return false;
+    }
     private static void Create()
     {
         if (TextTemplate == null) throw new InvalidOperationException("Native health-effect text template was not found.");
@@ -158,6 +185,7 @@ internal static class EffectStatusHud
     private static Row CreateRow()
     {
         var row = new Row { Root = new GameObject("EFB timer", typeof(RectTransform)) };
+        row.Root.SetActive(false);
         row.Root.layer = Root!.layer;
         var rect = (RectTransform)row.Root.transform; rect.SetParent(Root!.transform, false);
         rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f); rect.sizeDelta = new Vector2(EffectStatusLayout.Width, 25f);
@@ -168,6 +196,7 @@ internal static class EffectStatusHud
         var labelObject = UnityEngine.Object.Instantiate(TextTemplate!.gameObject, rect, false);
         labelObject.name = "Effect name and timer"; labelObject.SetActive(true);
         row.Label = labelObject.GetComponent(TextTemplate.GetType());
+        row.TextLayout = new EffectStatusText.Layout(row.Label, Time.frameCount);
         var labelRect = (RectTransform)labelObject.transform;
         labelRect.anchorMin = labelRect.anchorMax = labelRect.pivot = new Vector2(0f, 1f);
         labelRect.anchoredPosition = new Vector2(28f, 0f); labelRect.sizeDelta = new Vector2(EffectStatusLayout.TextWidth, 25f);

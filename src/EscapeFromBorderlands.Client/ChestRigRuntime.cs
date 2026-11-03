@@ -71,10 +71,10 @@ internal static class ChestRigRuntime
     [ThreadStatic] internal static ShotScope? CurrentShot;
     private static GameWorld? World;
     private static float NextScan;
-    internal static Item? Worn(Player? p) => p?.InventoryController?.Inventory?.Equipment.GetSlot(EquipmentSlot.TacticalVest)?.ContainedItem;
+    internal static Item? Worn(Player? p) => p?.InventoryController?.Inventory?.Equipment?.GetSlot(EquipmentSlot.TacticalVest)?.ContainedItem;
     internal static State? Get(Player? p)
     {
-        if (p?.HealthController?.IsAlive != true) return null;
+        if (!PlayerRefresh.CanObserve(p)) { if (p is not null) Forget(p); return null; }
         var rig = Worn(p);
         if (States.TryGetValue(p, out var old) && old.Rig.Id == rig?.Id) return old;
         if (old is not null) { States.Remove(p); ChestRigMedical.Unequip(old); }
@@ -88,6 +88,12 @@ internal static class ChestRigRuntime
         return s;
     }
     internal static bool Is(Player? p, string key) => Get(p)?.Key == key;
+    private static void Forget(Player p)
+    {
+        if (!States.TryGetValue(p, out var state)) return;
+        States.Remove(p);
+        ChestRigMedical.Unequip(state);
+    }
     internal static void Reset() { States.Clear(); Names.Clear(); Records.Clear(); Shots.Clear(); ImpactScopes.Clear(); Volleys.Clear(); CurrentShot = null; World = null; NextScan = 0f; ChestRigMedical.Reset(); ChestRigInventory.Reset(); ChestRigCombat.Reset(); }
     internal static void Maintain(GameWorld? world)
     {
@@ -97,10 +103,12 @@ internal static class ChestRigRuntime
         if (world is null || Time.time < NextScan) return;
         NextScan = Time.time + .05f;
         ChestRigCombat.Maintain();
-        foreach (var p in world.RegisteredPlayers.OfType<Player>().ToArray())
+        var players = world.RegisteredPlayers.OfType<Player>().ToArray();
+        foreach (var old in States.Keys.Where(p => !PlayerRefresh.CanObserve(p) || Array.IndexOf(players, p) < 0).ToArray()) Forget(old);
+        foreach (var p in players)
         {
-            var had = States.ContainsKey(p); var s = Get(p);
-            if (s is null) { if (had) Refresh(p); continue; }
+            var s = Get(p);
+            if (s is null) continue;
             var dt = Math.Max(0f, Math.Min(.25f, Time.time - s.LastTick)); s.LastTick = Time.time;
             var prone = p.MovementContext.IsInPronePose;
             if (s.Key == "TR02-2" && prone && !s.WasProne) s.Arm("workout", 15f);
@@ -155,11 +163,11 @@ internal static class ChestRigRuntime
             ChestRigMedical.Maintain(s, dt);
             ChestRigInventory.Maintain(s, dt);
             var weight = Weight(p, p.InventoryController.Inventory.TotalWeight.Value);
-            if (float.IsNaN(s.LastWeight) || Math.Abs(weight - s.LastWeight) > .001f) { s.LastWeight = weight; p.Physical.OnWeightUpdated(); }
+            if (float.IsNaN(s.LastWeight) || Math.Abs(weight - s.LastWeight) > .001f) { s.LastWeight = weight; PlayerRefresh.Weight(p, "chest-rig weight"); }
         }
     }
     internal static void Refresh(Player p)
-    { p.UpdateSpeedLimitByHealth();p.UpdateArmsCondition(); if(p.ProceduralWeaponAnimation is { } animation)animation.PhysicalConditionUpdated(EPhysicalCondition.LeftArmDamaged,p.MovementContext.PhysicalCondition); if (p.HandsController is Player.FirearmController f) { f.RecalculateErgonomic(); p.ProceduralWeaponAnimation.UpdateWeaponVariables(); f.UpdateHipInaccuracy(); } p.Physical.OnWeightUpdated(); }
+    { PlayerRefresh.Equipment(p); }
     internal static bool Primary(Player p, Weapon w) => new[] { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon }.Any(slot => p.InventoryController.Inventory.Equipment.GetSlot(slot).ContainedItem?.Id == w.Id);
     internal static bool Secondary(Player p, Weapon w) => p.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Holster).ContainedItem?.Id == w.Id;
     internal static bool Pistol(Weapon w) => w.WeapClass == "pistol";
