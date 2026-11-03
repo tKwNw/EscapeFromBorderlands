@@ -16,7 +16,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.tKwNw.escapefromborderlands";
     public const string PluginName = "tKwNw-EscapeFromBorderlands";
-    public const string PluginVersion = "0.31.4";
+    public const string PluginVersion = "0.31.6";
 
     internal static ManualLogSource LogSource { get; private set; } = null!;
     internal static Plugin Instance { get; private set; } = null!;
@@ -81,7 +81,7 @@ public sealed class Plugin : BaseUnityPlugin
 
     private void Update()
     {
-        var world = Singleton<GameWorld>.Instance;
+        var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
         if (_world != world) { ResetSession(); _world = world; }
         AdvancedLegendaryActions.Maintain(world);
         LegendaryExplosionFx.Maintain(world);
@@ -97,32 +97,40 @@ public sealed class Plugin : BaseUnityPlugin
         BackpackRuntime.Maintain(world);
         BackpackVisitorExtraction.Maintain(world);
         EffectStatusHud.Maintain(world);
+        PlayerRefresh.Maintain(world);
     }
 
     private void LateUpdate() => ExpandedStorageNavigation.Maintain();
 
     internal static void ResetSession()
     {
-        ServiceWindowPlayback.Reset();
-        EarpieceRuntime.Suspend();
-        EffectStatusHud.Reset();
-        ChestRigRuntime.Reset();
-        BackpackRuntime.Reset();
-        BackpackVisitorExtraction.Reset();
-        MasterKeyRuntime.Reset();
-        MeleeRuntime.Reset();
-        MeleeAnimation.Reset();
-        ProjectileEffectSpawner.ResetSession();
-        LegendaryExplosionFx.Reset();
-        AdvancedLegendaryActions.ResetSession();
-        LegendaryFireModePatch.ResetSession();
-        WeaponCombatState.ResetSession();
-        LegendaryRuntime.ResetSession();
-        RarityResolver.ResetSession();
-        ReusableGrenadeRuntime.Reset();
-        LegendaryGrenadeDrawAudio.ResetSession();
-        LegendaryGrenadeSettings.Reset();
-        EarpieceRuntime.Reset();
+        if (PlayerRefresh.Resetting) return;
+        PlayerRefresh.Resetting = true;
+        try
+        {
+            PlayerRefresh.Reset();
+            SessionCleanup.Run(nameof(ServiceWindowPlayback), ServiceWindowPlayback.Reset);
+            SessionCleanup.Run("earpiece suspend", EarpieceRuntime.Suspend);
+            SessionCleanup.Run(nameof(EffectStatusHud), EffectStatusHud.Reset);
+            SessionCleanup.Run(nameof(ChestRigRuntime), ChestRigRuntime.Reset);
+            SessionCleanup.Run(nameof(BackpackRuntime), BackpackRuntime.Reset);
+            SessionCleanup.Run(nameof(BackpackVisitorExtraction), BackpackVisitorExtraction.Reset);
+            SessionCleanup.Run(nameof(MasterKeyRuntime), MasterKeyRuntime.Reset);
+            SessionCleanup.Run(nameof(MeleeRuntime), MeleeRuntime.Reset);
+            SessionCleanup.Run(nameof(MeleeAnimation), MeleeAnimation.Reset);
+            SessionCleanup.Run(nameof(ProjectileEffectSpawner), ProjectileEffectSpawner.ResetSession);
+            SessionCleanup.Run(nameof(LegendaryExplosionFx), LegendaryExplosionFx.Reset);
+            SessionCleanup.Run(nameof(AdvancedLegendaryActions), AdvancedLegendaryActions.ResetSession);
+            SessionCleanup.Run(nameof(LegendaryFireModePatch), LegendaryFireModePatch.ResetSession);
+            SessionCleanup.Run(nameof(WeaponCombatState), WeaponCombatState.ResetSession);
+            SessionCleanup.Run(nameof(LegendaryRuntime), LegendaryRuntime.ResetSession);
+            SessionCleanup.Run(nameof(RarityResolver), RarityResolver.ResetSession);
+            SessionCleanup.Run(nameof(ReusableGrenadeRuntime), ReusableGrenadeRuntime.Reset);
+            SessionCleanup.Run(nameof(LegendaryGrenadeDrawAudio), LegendaryGrenadeDrawAudio.ResetSession);
+            SessionCleanup.Run(nameof(LegendaryGrenadeSettings), LegendaryGrenadeSettings.Reset);
+            SessionCleanup.Run(nameof(EarpieceRuntime), EarpieceRuntime.Reset);
+        }
+        finally { PlayerRefresh.Resetting = false; }
     }
 }
 
@@ -131,6 +139,15 @@ internal static class LegendaryWorldCleanupPatch
 {
     private static void Prefix(GameWorld __instance)
     {
-        if (Singleton<GameWorld>.Instance == __instance || !Singleton<GameWorld>.Instantiated) Plugin.ResetSession();
+        if ((Singleton<GameWorld>.Instance == __instance || !Singleton<GameWorld>.Instantiated) && PlayerRefresh.CloseWorld(__instance)) Plugin.ResetSession();
+    }
+}
+
+[HarmonyPatch(typeof(GameWorld), nameof(GameWorld.Dispose))]
+internal static class LegendaryWorldDisposalPatch
+{
+    private static void Prefix(GameWorld __instance)
+    {
+        if ((Singleton<GameWorld>.Instance == __instance || !Singleton<GameWorld>.Instantiated) && PlayerRefresh.CloseWorld(__instance)) Plugin.ResetSession();
     }
 }

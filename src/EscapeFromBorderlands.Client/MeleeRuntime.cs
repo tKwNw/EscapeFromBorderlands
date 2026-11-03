@@ -42,14 +42,15 @@ internal static class MeleeRuntime
 
     public static void Reset()
     {
-        foreach (var held in States.Values.ToArray()) AdvancedMeleeRuntime.EndHold(held);
-        States.Clear(); LegStaminaOwners.Clear(); MeleeWeaponSwitch.Reset(); AdvancedMeleeRuntime.Reset();
+        States.Clear(); LegStaminaOwners.Clear();
+        SessionCleanup.Run(nameof(MeleeWeaponSwitch), MeleeWeaponSwitch.Reset);
+        SessionCleanup.Run(nameof(AdvancedMeleeRuntime), AdvancedMeleeRuntime.Reset);
     }
-    public static void Forget(Player? player) { if (player != null && States.TryGetValue(player, out var held)) { States.Remove(player); AdvancedMeleeRuntime.EndHold(held); } }
+    public static void Forget(Player? player) { if (player is not null && States.TryGetValue(player, out var held)) { States.Remove(player); if (PlayerRefresh.CanObserve(player)) AdvancedMeleeRuntime.EndHold(held); } }
 
     public static HeldState? Held(Player? player)
     {
-        if (player is null) return null;
+        if (!PlayerRefresh.CanObserve(player)) { Forget(player); return null; }
         if (player.HealthController?.IsAlive != true || player.HandsController is not Player.BaseKnifeController controller ||
             controller.Destroyed || RarityResolver.Resolve(controller.Item) is not { } roll || roll.Definition.MeleeEffect is null)
         {

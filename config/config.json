@@ -3,6 +3,7 @@
   "addToPmcWeapons": true,
   "createDefaultPresets": true,
   "allowFleaMarketTrading": false,
+  "allowFenceToSellEfbItems": false,
   "airdropLegendaryChancePercent": 1,
   "statRewardsLegendaryChancePercent": 1,
   "priceMultipliers": {

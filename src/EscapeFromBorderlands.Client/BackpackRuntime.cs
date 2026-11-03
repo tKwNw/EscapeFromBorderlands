@@ -57,7 +57,7 @@ internal static class BackpackRuntime
     internal static Item? Worn(Player? p) => p?.InventoryController?.Inventory?.Equipment.GetSlot(EquipmentSlot.Backpack)?.ContainedItem;
     internal static State? Get(Player? p)
     {
-        if (Resetting || p is null || p.HealthController?.IsAlive != true) return null;
+        if (Resetting || !PlayerRefresh.CanObserve(p)) return null;
         var bag = Worn(p);
         if (States.TryGetValue(p, out var previous) && previous.Bag.Id != bag?.Id)
         {
@@ -93,12 +93,11 @@ internal static class BackpackRuntime
         Resetting = true;
         try
         {
-        var affected = States.Keys.Concat(EquipmentChanges).Distinct().ToArray();
-        foreach (var effect in MilkPainkillers.Values) effect.ForceRemove();
+        // The old world owns its native health/physical objects. Discard our
+        // references without calling back into players during world destruction.
         MilkPainkillers.Clear();
         States.Clear(); EquipmentChanges.Clear(); Records.Clear(); Values.Clear(); StaminaOwners.Clear(); World = null; ScanTime = 0;
         BackpackNative.Reset();
-        foreach (var p in affected) if (p?.HealthController?.IsAlive == true) p.Physical.OnWeightUpdated();
         }
         finally { Resetting = false; }
     }
@@ -110,9 +109,12 @@ internal static class BackpackRuntime
         if (world is null || Time.time < ScanTime) return;
         ScanTime = Time.time + .05f;
         BackpackNative.MaintainWorld();
-        foreach (var player in world.RegisteredPlayers.OfType<Player>().ToArray())
+        var players = world.RegisteredPlayers.OfType<Player>().ToArray();
+        foreach (var old in States.Keys.Where(p => !PlayerRefresh.CanObserve(p) || Array.IndexOf(players, p) < 0).ToArray())
+        { States.Remove(old); EquipmentChanges.Remove(old); MilkPainkillers.Remove(old); }
+        foreach (var player in players)
         {
-            if (player?.HealthController?.IsAlive != true) continue;
+            if (!PlayerRefresh.CanObserve(player)) continue;
             Register(player);
             var s = Get(player);
             var equipmentChanged = EquipmentChanges.Remove(player);
@@ -122,7 +124,7 @@ internal static class BackpackRuntime
             {
                 if (equipmentChanged)
                 {
-                    BackpackPresentation.Restore(player); player.Physical.OnWeightUpdated();
+                    BackpackPresentation.Restore(player); PlayerRefresh.Weight(player, "backpack removal");
                     if (player.HandsController is Player.FirearmController firearm) { firearm.RecalculateErgonomic(); player.ProceduralWeaponAnimation.UpdateWeaponVariables(); }
                 }
                 if (world.MainPlayer == player) BackpackRaidReport.Capture(player);
@@ -165,7 +167,7 @@ internal static class BackpackRuntime
             // including the end of a timer, rather than updating after the next shot.
             var effectiveWeight = Weight(player, player.InventoryController.Inventory.TotalWeight.Value);
             if (!Mathf.Approximately(effectiveWeight, s.LastPhysicalWeight) || float.IsNaN(s.LastPhysicalWeight))
-            { s.LastPhysicalWeight = effectiveWeight; player.Physical.OnWeightUpdated(); }
+            { s.LastPhysicalWeight = effectiveWeight; PlayerRefresh.Weight(player, "backpack weight"); }
         }
     }
     private static void Register(Player p)

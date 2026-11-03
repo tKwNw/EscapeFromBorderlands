@@ -11,6 +11,7 @@ public sealed class RarityConfiguration
     public bool AddToPmcWeapons { get; set; } = true;
     public bool CreateDefaultPresets { get; set; } = true;
     public bool AllowFleaMarketTrading { get; set; } = false;
+    public bool AllowFenceToSellEfbItems { get; set; } = false;
     public double AirdropLegendaryChancePercent { get; set; } = 1d;
     public double AirdropFraction => (double.IsFinite(AirdropLegendaryChancePercent) ? Math.Clamp(AirdropLegendaryChancePercent, 0d, 100d) : 1d) / 100d;
     public double StatRewardsLegendaryChancePercent { get; set; } = 1d;
@@ -159,6 +160,7 @@ public sealed class RarityConfiguration
                 foreach (var category in Categories)
                     if (rates[category] is null) rates[category] = config.FactionChance(method, name, category);
         if (node["addToNonScavFactions"] is null) node["addToNonScavFactions"] = config.AddToNonScavFactions;
+        if (node["allowFenceToSellEfbItems"] is null) node["allowFenceToSellEfbItems"] = config.AllowFenceToSellEfbItems;
         node["airdropLegendaryChancePercent"] = config.AirdropFraction * 100d;
         node["statRewardsLegendaryChancePercent"] = config.StatRewardsFraction * 100d;
         foreach (var key in LegacyScalars) node.Remove(key);

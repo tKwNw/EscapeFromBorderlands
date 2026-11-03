@@ -10,6 +10,7 @@ using SPTarkov.Server.Core.Models.Spt.Mod;
 using SPTarkov.Common.Models.Logging;
 using SPTarkov.Server.Core.Models.Spt.Tables;
 using SPTarkov.Server.Core.Services;
+using SPTarkov.Server.Core.Services.Commerce;
 using SPTarkov.Server.Core.Services.Locales;
 using SPTarkov.Server.Core.Services.Modding.Custom;
 using SPTarkov.Server.Core.Servers;
@@ -30,6 +31,8 @@ public sealed class RarityMod(
     LocaleTable localeTable,
     ICloner cloner,
     RagfairConfig ragfairConfig,
+    TraderConfig traderConfig,
+    FenceService fenceService,
     SaveServer saveServer) : IOnLoad
 {
     private const int MaximumReportedErrors = 25;
@@ -201,6 +204,10 @@ public sealed class RarityMod(
         }
 
         EarpieceCompatibility.Apply(catalog.Variants, templateTable.Items);
+        FenceTrading.Install(catalog, config, traderConfig, tradersTable, fenceService);
+        logger.Info(config.AllowFenceToSellEfbItems
+            ? "[Escape From Borderlands] Fence stock: active EFB items are permitted under normal stocking rules. Retired aliases and mystery purchase previews remain excluded."
+            : "[Escape From Borderlands] Fence stock: EFB offers are blocked in normal, discount and resale stock. Players can still sell EFB items to Fence normally.");
         _spawnVariants = spawnVariants;
         LegendaryQuestItems.Install(catalog.Variants.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))),
             catalog.LegacyAliases.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))));

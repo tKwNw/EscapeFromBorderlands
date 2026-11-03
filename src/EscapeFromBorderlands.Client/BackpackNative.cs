@@ -31,7 +31,15 @@ internal static class BackpackNative
         public Player Player = null!; public Item Item = null!; public BackpackRuntime.State State = null!; public Vector3 Position; public float Expires;
     }
     internal static readonly List<Drop> Drops = new();
-    internal static void Reset() { Uses.Clear(); ItemUses.Clear(); BackpackMedicalRestoration.Reset(); BackpackLootTransfers.Reset(); Drops.Clear(); BackpackTripwire.Recover.Clear(); BackpackAudio.Reset(); BackpackPresentation.Reset(); BackpackGrenadeAction.Reset(); }
+    internal static void Reset()
+    {
+        Uses.Clear(); ItemUses.Clear(); Drops.Clear(); BackpackTripwire.Recover.Clear();
+        SessionCleanup.Run(nameof(BackpackMedicalRestoration), BackpackMedicalRestoration.Reset);
+        SessionCleanup.Run(nameof(BackpackLootTransfers), BackpackLootTransfers.Reset);
+        SessionCleanup.Run(nameof(BackpackAudio), BackpackAudio.Reset);
+        SessionCleanup.Run(nameof(BackpackPresentation), BackpackPresentation.Reset);
+        SessionCleanup.Run(nameof(BackpackGrenadeAction), BackpackGrenadeAction.Reset);
+    }
     internal static bool InBag(Item? item, Item bag) => item is not null && bag.GetAllItems().Any(i => i.Id == item.Id);
     internal static Player? ItemOwner(Item item) => Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => p.InventoryController.Inventory.Equipment.GetAllItems().Any(i => i.Id == item.Id));
     internal static Player? WeaponOwner(Weapon weapon) => Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => p.HandsController?.Item?.Id == weapon.Id);
