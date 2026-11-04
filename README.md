@@ -10,7 +10,7 @@ Choose the download that matches your installed SPT version.
 
 | SPT version | EFB version | Download | Release notes |
 | --- | --- | --- | --- |
-| 4.0.13 | 0.31.5 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.5-spt-4.0.13/EscapeFromBorderlands_0.31.5_SPT-4.0.13.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.5-spt-4.0.13/EscapeFromBorderlands_0.31.5_SPT-4.0.13_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.5-spt-4.0.13) |
+| 4.0.13 | 0.31.7 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.7-spt-4.0.13/EscapeFromBorderlands_0.31.7_SPT-4.0.13.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.7-spt-4.0.13/EscapeFromBorderlands_0.31.7_SPT-4.0.13_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.7-spt-4.0.13) |
 | 4.1.6 | 0.31.6 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.6-spt-4.1.6/EscapeFromBorderlands_0.31.6_SPT-4.1.6.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.6-spt-4.1.6/EscapeFromBorderlands_0.31.6_SPT-4.1.6_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.6-spt-4.1.6) |
 
 Source branches: [SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) · [SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6). Each includes its build instructions.
@@ -21,9 +21,9 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 ## Latest changes
 
-- Improved equipment effect updates and cleanup between raids to avoid repeated player-state errors.
-- Added `allowFenceToSellEfbItems`, default **false**. Fence excludes EFB stock by default; players can still sell EFB items to him. Enable it to permit eligible EFB offers under his normal stocking rules.
-- Fixed a text-material error that could stop the effect status display. The display now waits for usable text assets and retries after a display failure.
+- Extended `otherNonScavs` spawning to eligible custom factions registered through MoreBotsAPI, using the existing equipment-category chances with or without APBS.
+- Reduced weapon-granted impact-explosion damage by **60 percentage points**, to a minimum of **10%**. RShG-2 effects and the Pocket Rocket rig ability are unchanged.
+- Reduced repeated grenade, headset, audio and projectile maintenance, improved stale-player cleanup and made raid resets more resilient.
 
 ## Legendary equipment
 
@@ -53,10 +53,11 @@ Legendary equipment counts as its vanilla base for objectives such as weapon kil
 
 Use the [configuration guide](docs/configuration.md) to adjust Legendary spawn chances, flea availability, prices, Fence stock, grenade recharge times, draw-sound volume and the status display.
 
-Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. These mods are optional and are not bundled with EFB. Both releases also support optional **Stat Rewards** integration with a separate Legendary reward chance.
+Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. Eligible custom factions can use EFB spawning through optional **MoreBotsAPI** metadata. These mods are optional and are not bundled with EFB. Both releases also support optional **Stat Rewards** integration with a separate Legendary reward chance.
 
 ## Help and credits
 
 Report problems through [GitHub Issues](https://github.com/tKwNw/EscapeFromBorderlands/issues). Include your SPT version, EFB version, installed mods and steps to reproduce the issue.
 
 EFB source code uses the [MIT license](LICENSE.txt). See [third-party notices](THIRD_PARTY_NOTICES.md) for the separately licensed audio. Escape From Borderlands is a community-made SPT mod and is not affiliated with Battlestate Games or Gearbox Software.
+
