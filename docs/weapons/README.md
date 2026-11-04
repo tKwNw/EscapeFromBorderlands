@@ -28,12 +28,12 @@
 | Legendary name | Signature effect |
 | --- | --- |
 | Budget King | Ammunition with 17 penetration power or less: every 3rd flesh-damaging hit causes a heavy bleed. Armor-only hits do not advance the counter. Resets on reload. |
-| Clockwork Firecracker | Every 4th shot: impact explosion dealing 75% of shot damage within 2.3 meters. |
+| Clockwork Firecracker | Every 4th shot: impact explosion dealing 15% of shot damage within 2.3 meters. |
 | Correction Triple Stack | 1st shot after a miss: 3-projectile tight spread; every projectile deals 70% damage. |
 | Fourth Companion | Every 4th shot fires a 2nd full-power projectile. |
 | Fresh Stack Meat Grinder | 1st 6 shots after reloading: +50% damage and +35% fragmentation chance. |
 | Hard Lesson Sidecar | 1st shot after an armor hit: fires 2 full-power projectiles at a fixed 0.9° offset. |
-| Last Four Firecracker | Last 4 rounds in the weapon: ×2 damage; impact explosion dealing 75% of shot damage within 2.0 meters. |
+| Last Four Firecracker | Last 4 rounds in the weapon: ×2 damage; impact explosion dealing 15% of shot damage within 2.0 meters. |
 | Last Round: Armor Audit | When 1 round remains: +90% armor damage and +30% penetration. |
 | Last Word Triple Stack | Last chambered round: 3-projectile tight spread; every projectile deals 70% damage. |
 | On a Roll Fivefold | After 3 consecutive hits (a miss resets the count): 5-projectile shallow cone; every projectile deals 70% damage. |
@@ -49,7 +49,7 @@
 | Deep Count Limb Reaper | Every 8th uninterrupted shot: +50% arm and leg damage. |
 | From the Hip Fragment Brake | While hip-firing: −35% recoil and +15% fragmentation chance. |
 | Full Tank Sidecar | While leg stamina is at or above 75%: fires 2 full-power projectiles at a fixed 0.9° offset. |
-| Low Profile Firecracker | While crouched and moving no faster than a slow walk: impact explosion dealing 100% of shot damage within 1.5 meters. |
+| Low Profile Firecracker | While crouched and moving no faster than a slow walk: impact explosion dealing 40% of shot damage within 1.5 meters. |
 | Marching Orders Triple Stack | While moving at walking speed: 3-projectile tight spread; every projectile deals 70% damage. |
 | Rooted Fivefold | After remaining stationary for 4 seconds: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Second Wind Switchback | While leg stamina is at or below 35%: alternates between +45% velocity and +55% damage. |
@@ -92,7 +92,7 @@
 | Compound Interest | Confirmed body hits add +10% damage to the next shot, stacking 15 times; a miss or non-body impact resets the stacks. |
 | Counter Terrorists Win | Suppressed rounds gain +45% damage and +25% penetration. |
 | Executive Order | After aiming down sights for 3 seconds: +40% velocity, +20% penetration, and +50% damage. |
-| Fifth Amendment | Every 5th shot gains +10% direct damage and explodes on impact for 75% of the shot's damage within 2 meters. |
+| Fifth Amendment | Every 5th shot gains +10% direct damage and explodes on impact for 15% of the shot's damage within 2 meters. |
 | Full Send | Uninterrupted fire stacks +5% fire rate and −5% recoil up to 6 times; releasing the trigger clears the stacks. |
 | Mood Swing | Odd-numbered shots gain +60% damage and +25% penetration; even-numbered shots gain +50% natural ricochet chance and +50% fragmentation chance. Alternation resets after reloading. |
 | Opening Statement | The 1st 4 shots after a magazine change deal ×2 damage and receive +25% penetration. |
@@ -127,8 +127,8 @@
 | Pressure Switch | Semi-automatic shots receive +60% armor penetration. Full-auto shots receive +35% damage and -30% recoil. |
 | Rolling Start Sidecar | After 5 uninterrupted shots: fires 2 full-power projectiles at a fixed 0.9° offset. Bonus is lost on releasing the trigger. |
 | Sightline Fivefold | While aiming down sights: 5-projectile shallow cone; every projectile deals 70% damage. |
-| Two-Faced Firecracker | Odd-numbered shots: impact explosion dealing 80% of shot damage within 2.2 meters. Even-numbered shots: 3-projectile horizontal fan; every projectile deals 70% damage. Alternation resets after reloading. |
-| Two-Faced Fragment Brake | Odd-numbered shots: −35% recoil and +15% fragmentation chance. Even-numbered shots: impact explosion dealing 85% of shot damage within 1.9 meters. Alternation resets after reloading. |
+| Two-Faced Firecracker | Odd-numbered shots: impact explosion dealing 20% of shot damage within 2.2 meters. Even-numbered shots: 3-projectile horizontal fan; every projectile deals 70% damage. Alternation resets after reloading. |
+| Two-Faced Fragment Brake | Odd-numbered shots: −35% recoil and +15% fragmentation chance. Even-numbered shots: impact explosion dealing 25% of shot damage within 1.9 meters. Alternation resets after reloading. |
 | Two-Faced Trident | Odd-numbered shots: 3-projectile horizontal fan; every projectile deals 70% damage. Even-numbered shots: 5-projectile shallow cone; every projectile deals 70% damage. Alternation resets after reloading. |
 
 ### DS Arms SA58 7.62x51 assault rifle
@@ -137,7 +137,7 @@
 | --- | --- |
 | Debt Collector | 4 consecutive hits against the same target grant +35% damage for the remainder of the magazine. Missing or changing targets resets the hit counter. |
 | Loud and Clear Lockjaw | While no suppressor is installed: −30% recoil and +10% penetration. |
-| Mach Line Firecracker | When the loaded cartridge is faster than 842 m/s (the 7.62×51mm NATO average): impact explosion dealing 80% of shot damage within 2.0 meters. |
+| Mach Line Firecracker | When the loaded cartridge is faster than 842 m/s (the 7.62×51mm NATO average): impact explosion dealing 20% of shot damage within 2.0 meters. |
 | Sight Picture: Plate Invoice | While aiming down sights: +50% penetration and +85% armor damage. |
 | Sighted Burst Hammer Line | After 10 uninterrupted shots while aiming down sights: −45% dispersion, −25% recoil, and +10% damage until releasing the trigger. |
 | Sighted Burst Laser Line | After 10 uninterrupted shots while aiming down sights: −50% dispersion, −25% recoil, and +10% velocity until releasing the trigger. |
@@ -169,7 +169,7 @@
 | Hit Parade: Hot Track | After 6 consecutive hits: +50% projectile velocity and +30% penetration. |
 | Last Four Switchback | Last 4 rounds in the weapon: ×2 damage; alternates between +40% velocity and +50% damage. |
 | On a Roll Jet Brake | After 5 consecutive hits (a miss resets the count): −30% recoil and +20% projectile velocity. |
-| One in Reserve Firecracker | 1st 2 shots after checking the magazine: impact explosion dealing 100% of shot damage within 1.8 meters. |
+| One in Reserve Firecracker | 1st 2 shots after checking the magazine: impact explosion dealing 40% of shot damage within 1.8 meters. |
 | Rolling Start Twin Line | After 5 uninterrupted shots: 2-projectile tight spread; both projectiles deal 100% damage. Bonus is lost on releasing the trigger. |
 | Two-Faced Fivefold | Odd-numbered shots: 5-projectile shallow cone; every projectile deals 70% damage. Even-numbered shots: 3-projectile tight spread; every projectile deals 70% damage. Alternation resets after reloading. |
 
@@ -178,7 +178,7 @@
 | Legendary name | Signature effect |
 | --- | --- |
 | Clockwork Ammo Savant | Every 6th shot: ammunition below 40 penetration gains +55% damage; ammunition with 40 or more penetration gains −30% recoil. |
-| Fresh Stack Firecracker | 1st 5 shots after reloading: impact explosion dealing 75% of shot damage within 1.5 meters. |
+| Fresh Stack Firecracker | 1st 5 shots after reloading: impact explosion dealing 15% of shot damage within 1.5 meters. |
 | Last Four Laser Line | Last 4 rounds in the weapon: ×2 damage; −50% dispersion, −25% recoil, and +10% velocity. |
 | On a Roll Laser Line | After 6 consecutive hits (a miss resets the count): −60% dispersion, −35% recoil, and +10% velocity. |
 | Rolling Start Hammer Line | After 5 uninterrupted shots: −45% dispersion, −30% recoil, and +10% damage. Bonus is lost on releasing the trigger. |
@@ -241,7 +241,7 @@
 | Mach Line Overclock | When the loaded cartridge is faster than 871 m/s (the 5.56×45mm NATO average): +35% fire rate. |
 | Sighted Burst Counterweight | After 5 uninterrupted shots while aiming down sights: −35% recoil and +10% damage until releasing the trigger. |
 | Sighted Burst Lockjaw | After 5 uninterrupted shots while aiming down sights: −25% recoil and +10% penetration until releasing the trigger. |
-| Top Shelf Firecracker | While at or above 75% ammunition capacity: impact explosion dealing 85% of shot damage within 2.3 meters. |
+| Top Shelf Firecracker | While at or above 75% ammunition capacity: impact explosion dealing 25% of shot damage within 2.3 meters. |
 | Top Shelf Fivefold | While at or above 75% ammunition capacity: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Top Shelf Sidecar | While at or above 75% ammunition capacity: fires 2 full-power projectiles at a fixed 1.2° offset. |
 | Top Shelf Triple Stack | While at or above 75% ammunition capacity: 3-projectile tight spread; every projectile deals 70% damage. |
@@ -253,7 +253,7 @@
 | --- | --- |
 | 4 Round Burst | In burst mode, each 2-shot burst fires 2 overlapping full-power projectiles per discharge, for 4 projectiles total. |
 | Belly Down Overclock | While prone: +25% fire rate. |
-| Confirmed Hit Firecracker | After a confirmed body hit: impact explosion dealing 85% of shot damage within 2.0 meters. |
+| Confirmed Hit Firecracker | After a confirmed body hit: impact explosion dealing 25% of shot damage within 2.0 meters. |
 | Deep Count Fivefold | Every 9th uninterrupted shot: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Deep Count Trident | Every 10th uninterrupted shot: 3-projectile horizontal fan; every projectile deals 70% damage. |
 | Full Tank Meat Grinder | While leg stamina is at or above 75%: +55% damage and +40% fragmentation chance. |
@@ -268,10 +268,10 @@
 | --- | --- |
 | Clockwork Fivefold | Every 8th shot: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Clockwork Triple Stack | Every 6th shot: 3-projectile tight spread; every projectile deals 70% damage. |
-| Counted Out Firecracker | Every 4th shot in the current magazine: impact explosion dealing 85% of shot damage within 1.5 meters. |
+| Counted Out Firecracker | Every 4th shot in the current magazine: impact explosion dealing 25% of shot damage within 1.5 meters. |
 | Frankenstein | With a suppressor installed: −30% recoil and +25% fire rate. Without a suppressor: +30% damage and +30% armor penetration. |
 | Inspection: Hot Track | After inspecting the weapon: until the next reload, +50% projectile velocity and +30% penetration. |
-| On a Roll Firecracker | After 4 consecutive hits (a miss resets the count): impact explosion dealing 90% of shot damage within 1.5 meters. |
+| On a Roll Firecracker | After 4 consecutive hits (a miss resets the count): impact explosion dealing 30% of shot damage within 1.5 meters. |
 | Rolling Start Trident | After 5 uninterrupted shots: 3-projectile horizontal fan; every projectile deals 70% damage. Bonus is lost on releasing the trigger. |
 | Sightline Trident | While aiming down sights: 3-projectile horizontal fan; every projectile deals 70% damage. |
 | Two-Faced Hot Load | Odd-numbered shots: +35% projectile velocity and +15% penetration. Even-numbered shots: +55% damage and +25% fragmentation chance. Alternation resets after reloading. |
@@ -330,7 +330,7 @@
 | Legendary name | Signature effect |
 | --- | --- |
 | Deep Count Ammo Savant | Every 10th shot: ammunition below 40 penetration gains +45% damage; ammunition with 40 or more penetration gains −40% recoil. |
-| Deep Count Firecracker | Every 10th shot: impact explosion dealing 95% of shot damage within 2 meters. |
+| Deep Count Firecracker | Every 10th shot: impact explosion dealing 35% of shot damage within 2 meters. |
 | From The Hip | While not aiming down sights: −80% shot dispersion and −40% recoil. |
 | Full Tank Limb Reaper | While leg stamina is at or above 75%: +40% arm and leg damage. |
 | Long Cycle: Soft Landing | Every 10th shot: −40% recoil and +40% projectile velocity. |
@@ -492,7 +492,7 @@
 
 | Legendary name | Signature effect |
 | --- | --- |
-| Belly Down Firecracker | While prone: impact explosion dealing 70% of shot damage within 1.7 meters. |
+| Belly Down Firecracker | While prone: impact explosion dealing 10% of shot damage within 1.7 meters. |
 | Deep Count Hammer Line | Every 7th uninterrupted shot: −50% dispersion, −30% recoil, and +10% damage. |
 | Deep Count Laser Line | Every 7th uninterrupted shot: −60% dispersion, −30% recoil, and +10% velocity. |
 | From the Hip Lockjaw | While hip-firing: −35% recoil and +10% penetration. |
@@ -610,7 +610,7 @@
 | Mach Line Hammer Line | When the loaded cartridge is faster than 664 m/s (the .300 Blackout average): −45% dispersion, −20% recoil, and +10% damage. |
 | Quiet Work Heavy Hand | While a suppressor is installed: +40% damage and −20% recoil. |
 | Quiet Work Triple Stack | While a suppressor is installed: 3-projectile tight spread; every projectile deals 70% damage. |
-| Sighted Burst Firecracker | After 10 uninterrupted shots while aiming down sights: impact explosion dealing 80% of shot damage within 1.8 meters until releasing the trigger. |
+| Sighted Burst Firecracker | After 10 uninterrupted shots while aiming down sights: impact explosion dealing 20% of shot damage within 1.8 meters until releasing the trigger. |
 | Sighted Burst Fragment Brake | While aiming down sights: −25% recoil and +15% fragmentation chance; ends when lowering the sights. |
 | Sighted Burst Overpressure | After 6 uninterrupted shots while aiming down sights: +35% projectile velocity, +20% penetration, and +10% armor damage until releasing the trigger. |
 | Switch Up | Without a suppressor: −50% fire rate, +50% damage, and +50% projectile velocity. |
@@ -814,7 +814,7 @@
 | Inspection: Armor Rattle | After inspecting the weapon: until the next reload, +50% armor damage. |
 | Plate Tax Meat Grinder | After 5 armor hits (the counter then resets): +55% damage and +40% fragmentation chance. |
 | Plate Tax Plate Breaker | After 5 armor hits (the counter then resets): +35% penetration and +55% armor damage. |
-| Quiet Work Firecracker | While a suppressor is installed: impact explosion dealing 80% of shot damage within 1.8 meters. |
+| Quiet Work Firecracker | While a suppressor is installed: impact explosion dealing 20% of shot damage within 1.8 meters. |
 | Second Wind Splinter Cell | While leg stamina is at or below 35%: +65% damage and +25% fragmentation chance. |
 
 ### Knight's Armament Company SR-25 7.62x51 marksman rifle
@@ -881,7 +881,7 @@
 | Fresh Stack Switchback | 1st 2 shots after reloading: alternates between +35% velocity and +65% damage. |
 | Last Four Plate Tamer | Last 4 rounds in the weapon: ×2 damage; −35% recoil and +20% armor damage. |
 | Last Word Twin Line | Last chambered round: 2-projectile tight spread; both projectiles deal 100% damage. |
-| Odin's Son | +200% projectile velocity. The final 3 rounds in the weapon create impact explosions dealing 100% of shot damage within 2 meters. |
+| Odin's Son | +200% projectile velocity. The final 3 rounds in the weapon create impact explosions dealing 40% of shot damage within 2 meters. |
 | On a Roll Crossfire | After 5 consecutive hits (a miss resets the count): fires 2 additional projectiles in a narrow forward spread; every projectile deals 70% damage. |
 | One in Reserve Trident | 1st 4 shots after checking the magazine: 3-projectile horizontal fan; every projectile deals 70% damage. |
 | Sight Picture: Fragmented Argument | While aiming down sights: +70% damage and +45% fragmentation chance. |
@@ -908,7 +908,7 @@
 | --- | --- |
 | Belly Down Fivefold | While prone: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Double Select: Big Mistake | When the fire selector is changed 2 times: until the next reload, +80% damage. |
-| From the Hip Firecracker | While hip-firing: impact explosion dealing 85% of shot damage within 1.6 meters. |
+| From the Hip Firecracker | While hip-firing: impact explosion dealing 25% of shot damage within 1.6 meters. |
 | Full Tank Switchback | While leg stamina is at or above 75%: alternates between +45% velocity and +60% damage. |
 | Low Profile Trident | While crouched and moving no faster than a slow walk: 3-projectile horizontal fan; every projectile deals 70% damage. |
 | Marching Orders Sidecar | While moving at walking speed: fires 2 full-power projectiles at a fixed 0.8° offset. |
@@ -926,7 +926,7 @@
 | --- | --- |
 | Confirmed Hit Overpressure | After a confirmed body hit: +35% projectile velocity, +20% penetration, and +10% armor damage. |
 | Follow-Up Crossfire | 1st shot after an arm or leg hit: fires 2 additional projectiles in a narrow forward spread; every projectile deals 70% damage. |
-| God Ain't Lookin | After checking the chamber: the next shot causes an impact explosion dealing 80% of shot damage within 2 meters. |
+| God Ain't Lookin | After checking the chamber: the next shot causes an impact explosion dealing 20% of shot damage within 2 meters. |
 | KennyS | +100% projectile velocity, +50% damage, and +50% penetration. |
 | Loud and Clear Can Opener | While no suppressor is installed: +55% armor damage and +25% penetration. |
 | Mach Line Hollow Argument | When the loaded cartridge is faster than 870 m/s (the .338 Lapua Magnum average): +55% damage, +30% fragmentation chance, and +20% armor damage. |
@@ -942,7 +942,7 @@
 | Brass Check Splinter Cell | After checking the chamber: +40% damage and +30% fragmentation chance until the next reload. |
 | Held Breath | Remaining stationary while aiming for 4 seconds arms the next shot with +100% damage and +75% armor penetration. Moving or leaving ADS cancels the charge. |
 | Hit Parade: Armor Audit | After 6 consecutive hits: +90% armor damage and +30% penetration. |
-| Last Reserve Firecracker | While at or below 25% ammunition capacity: impact explosion dealing 65% of shot damage within 1.9 meters. |
+| Last Reserve Firecracker | While at or below 25% ammunition capacity: impact explosion dealing 10% of shot damage within 1.9 meters. |
 | Last Reserve Trident | While at or below 25% ammunition capacity: 3-projectile horizontal fan; every projectile deals 70% damage. |
 | One in Reserve Plate Breaker | 1st 2 shots after checking the magazine: +25% penetration and +60% armor damage. |
 | Ready Check Hot Load | After checking the chamber: +40% projectile velocity and +20% penetration until the next reload. |
@@ -953,8 +953,8 @@
 | --- | --- |
 | Belly Down Meat Grinder | While prone: +40% damage and +35% fragmentation chance. |
 | Confirmed Hit Triple Stack | After a confirmed body hit: the next shot fires a 3-projectile vertical spread; every projectile deals 70% damage. |
-| Marching Orders Firecracker | While moving at walking speed: impact explosion dealing 65% of shot damage within 1.7 meters. |
-| Quick Change Firecracker | 1st shot after changing stance: impact explosion dealing 60% of shot damage within 2 meters. |
+| Marching Orders Firecracker | While moving at walking speed: impact explosion dealing 10% of shot damage within 1.7 meters. |
+| Quick Change Firecracker | 1st shot after changing stance: impact explosion dealing 10% of shot damage within 2 meters. |
 | Reload Shuffle: Heavy Receipt | After an emergency weapon reload: until the next reload, +70% damage. |
 
 ### Mosin 7.62x54R bolt-action rifle (Infantry)
@@ -963,7 +963,7 @@
 | --- | --- |
 | Afterimage Breach Load | 1st shot fired within 1 second of lowering the sights: +60% damage and +40% armor damage. |
 | Belly Down Limb Reaper | While prone: +40% arm and leg damage. |
-| Boris' Legacy | After remaining stationary for 3 seconds: the next shot causes an impact explosion dealing 100% of shot damage within 4 meters. |
+| Boris' Legacy | After remaining stationary for 3 seconds: the next shot causes an impact explosion dealing 40% of shot damage within 4 meters. |
 | Dead Hold Breach Load | After remaining aimed down sights for 6 seconds: +55% damage and +50% armor damage. |
 | From the Hip Hollow Argument | While hip-firing: +50% damage, +35% fragmentation chance, and +20% armor damage. |
 | Full Tank Heavy Verdict | While leg stamina is at or above 75%: +45% damage and +20% penetration. |
@@ -1000,7 +1000,7 @@
 
 | Legendary name | Signature effect |
 | --- | --- |
-| Brass Check Firecracker | After checking the chamber: impact explosion dealing 70% of shot damage within 1.9 meters until the next reload. |
+| Brass Check Firecracker | After checking the chamber: impact explosion dealing 10% of shot damage within 1.9 meters until the next reload. |
 | Correction Twin Line | 1st shot after a miss: 2-projectile tight spread; both projectiles deal 100% damage. |
 | Hard Lesson Twin Line | 1st shot after an armor hit: 2-projectile tight spread; both projectiles deal 100% damage. |
 | Second Opinion | A successful hit arms the next shot to fire 2 overlapping, full-power projectiles. The charge is consumed by the next shot regardless of whether it hits. |
@@ -1084,7 +1084,7 @@
 
 | Legendary name | Signature effect |
 | --- | --- |
-| Fast Three | In 3-round burst mode, the 3rd cartridge creates an impact explosion dealing 50% of its damage within 1.25 meters. Burst mode fires at 1,200 RPM. |
+| Fast Three | In 3-round burst mode, the 3rd cartridge creates an impact explosion dealing 10% of its damage within 1.25 meters. Burst mode fires at 1,200 RPM. |
 | Fresh Stack Fivefold | 1st 5 shots after reloading: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Fresh Stack Laser Line | 1st 2 shots after reloading: −40% dispersion, −35% recoil, and +10% velocity. |
 | Last Four Can Opener | Last 4 rounds in the weapon: ×2 damage; +50% armor damage and +25% penetration. |
@@ -1187,7 +1187,7 @@
 
 | Legendary name | Signature effect |
 | --- | --- |
-| Loud and Clear Firecracker | While no suppressor is installed: impact explosion dealing 95% of shot damage within 1.5 meters. |
+| Loud and Clear Firecracker | While no suppressor is installed: impact explosion dealing 35% of shot damage within 1.5 meters. |
 | Reload Shuffle: Fast Lane | After an emergency weapon reload: until the next reload, +50% projectile velocity. |
 
 ### PP-19-01 Vityaz 9x19 submachine gun
@@ -1267,7 +1267,7 @@
 | Long Count: Hot Track | On every 8th shot fired: +50% projectile velocity and +30% penetration. |
 | One in Reserve Fivefold | 1st 3 shots after checking the magazine: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Sightline Counterweight | While aiming down sights: −35% recoil and +10% damage. |
-| Sightline Firecracker | While aiming down sights: impact explosion dealing 85% of shot damage within 1.5 meters. |
+| Sightline Firecracker | While aiming down sights: impact explosion dealing 25% of shot damage within 1.5 meters. |
 | Sightline Fragment Brake | While aiming down sights: −20% recoil and +15% fragmentation chance. |
 | Sightline Heavy Hand | While aiming down sights: +60% damage and −20% recoil. |
 | Sightline Lockjaw | While aiming down sights: −35% recoil and +10% penetration. |
@@ -1280,7 +1280,7 @@
 | Correction Needlepoint | 1st shot after a miss: −40% shot dispersion. |
 | Correction Overclock | 1st shot after a miss: +35% fire rate. |
 | Correction Soft Shoulder | 1st shot after a miss: −30% recoil. |
-| Dead Hold Firecracker | After remaining aimed down sights for 5 seconds: impact explosion dealing 100% of shot damage within 1.7 meters. |
+| Dead Hold Firecracker | After remaining aimed down sights for 5 seconds: impact explosion dealing 40% of shot damage within 1.7 meters. |
 | Fresh Stack Can Opener | 1st 5 shots after reloading: +80% armor damage and +25% penetration. |
 | Hard Lesson Plate Tamer | 1st shot after an armor hit: −35% recoil and +20% armor damage. |
 | Inspection: Quick Switch | After inspecting the weapon: until the next reload, +40% fire rate and +45% projectile velocity. |
@@ -1339,7 +1339,7 @@
 | Counted Out Meat Grinder | Every 5th shot in the current magazine: +60% damage and +25% fragmentation chance. |
 | Deep Count Counterweight | Every 10th uninterrupted shot: −30% recoil and +10% damage. |
 | Last Four Counterweight | Last 4 rounds in the weapon: ×2 damage; −35% recoil and +10% damage. |
-| Last Word Firecracker | Last chambered round: ×2.5 damage and +40% penetration; impact explosion dealing 90% of shot damage within 1.8 meters. |
+| Last Word Firecracker | Last chambered round: ×2.5 damage and +40% penetration; impact explosion dealing 30% of shot damage within 1.8 meters. |
 | Long Burst: Plate Invoice | After 20 uninterrupted shots: +50% penetration and +85% armor damage. |
 | On a Roll Plate Breaker | After 3 consecutive hits (a miss resets the count): +25% penetration and +50% armor damage. |
 | Rolling Start Heavy Hand | After 5 uninterrupted shots: +55% damage and −25% recoil. Bonus is lost on releasing the trigger. |
@@ -1376,7 +1376,7 @@
 | --- | --- |
 | Clockwork Overclock | Every shot adds +1% fire rate until releasing the trigger, up to +100%. |
 | Deep Count Plate Breaker | Every 10th uninterrupted shot: +25% penetration and +55% armor damage. |
-| Kaban's Kabab | +50% fire rate and −50% recoil. Every 10th shot creates an impact explosion dealing 70% of that shot's damage within 1.5 meters. Resets on reload. |
+| Kaban's Kabab | +50% fire rate and −50% recoil. Every 10th shot creates an impact explosion dealing 10% of that shot's damage within 1.5 meters. Resets on reload. |
 | Last Four Meat Grinder | Last 4 rounds in the weapon: ×2 damage; +45% damage and +40% fragmentation chance. |
 | Last Four Plate Breaker | Last 4 rounds in the weapon: ×2 damage; +35% penetration and +45% armor damage. |
 | Last Word Meat Grinder | Last chambered round: ×2.5 damage and +40% penetration; +50% damage and +25% fragmentation chance. |
@@ -1476,9 +1476,9 @@
 | Correction Overpressure | 1st shot after a miss: +30% projectile velocity, +15% penetration, and +10% armor damage. |
 | Intermission Braced Bite | 1st shot after pausing for 1 second: −20% recoil and +15% penetration. |
 | Last Round: Fast Lane | When 1 round remains: +50% projectile velocity. |
-| Out With A Bang | Replaces the 2-shot firing mode with Final Stand mode. Fires both barrels with +300% recoil and +90% dispersion. Every pellet creates a small impact explosion dealing 15% of that pellet's damage within 1.25 meters. |
+| Out With A Bang | Replaces the 2-shot firing mode with Final Stand mode. Fires both barrels with +300% recoil and +90% dispersion. Every pellet creates a small impact explosion dealing 10% of that pellet's damage within 1.25 meters. |
 | Wake-Up Call Counterweight | 1st shot after 2 seconds without firing: −30% recoil and +10% damage. |
-| Wake-Up Call Firecracker | 1st shot after 2 seconds without firing: impact explosion dealing 100% of shot damage within 1.8 meters. |
+| Wake-Up Call Firecracker | 1st shot after 2 seconds without firing: impact explosion dealing 40% of shot damage within 1.8 meters. |
 | Wake-Up Call Fivefold | 1st shot after 3 seconds without firing: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Wake-Up Call Fragment Brake | 1st shot after 3 seconds without firing: −25% recoil and +15% fragmentation chance. |
 | Wake-Up Call Trident | 1st shot after 4 seconds without firing: 3-projectile horizontal fan; every projectile deals 70% damage. |
@@ -1488,7 +1488,7 @@
 | Legendary name | Signature effect |
 | --- | --- |
 | Buccaneer | Replaces the 2-shot firing mode with Buck-and-Ball mode. Multi-pellet shells fire their normal load plus 1 centered projectile with +50% damage and +100% armor penetration. Slugs and other 1-projectile shells behave normally. Fires 1 shell per trigger pull; both barrels can be fired separately. |
-| Correction Firecracker | 1st shot after a miss: impact explosion dealing 90% of shot damage within 2.0 meters. |
+| Correction Firecracker | 1st shot after a miss: impact explosion dealing 30% of shot damage within 2.0 meters. |
 | Correction Fivefold | 1st shot after a miss: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Correction Fragment Brake | 1st shot after a miss: −25% recoil and +15% fragmentation chance. |
 | Correction Sidecar | 1st shot after a miss: fires 2 full-power projectiles at a fixed 1.0° offset. |
@@ -1575,7 +1575,7 @@
 | Afterimage Heavy Hand | 1st shot fired within 1 second of lowering the sights: +60% damage and −30% recoil. |
 | Afterimage Meat Grinder | 1st shot fired within 1 second of lowering the sights: +45% damage and +40% fragmentation chance. |
 | Belly Down Crossfire | While prone: fires 2 additional projectiles in a narrow forward spread; every projectile deals 70% damage. |
-| Five-Chamber Forecast | Successive cylinder shots receive +25%, +50%, +75%, +100%, and +125% damage. The 5th shot also creates an impact explosion dealing 50% of its damage within 1.5 meters. The sequence then restarts. |
+| Five-Chamber Forecast | Successive cylinder shots receive +25%, +50%, +75%, +100%, and +125% damage. The 5th shot also creates an impact explosion dealing 10% of its damage within 1.5 meters. The sequence then restarts. |
 | Hard Lesson Soft Shoulder | 1st shot after an armor hit: −35% recoil. |
 | Low Rider: Deep Cut | While crouched: +45% penetration. |
 
@@ -1602,7 +1602,7 @@
 | Loud and Clear Overclock | While no suppressor is installed: +20% fire rate. |
 | Loud and Clear Twin Line | While no suppressor is installed: 2-projectile tight spread; both projectiles deal 100% damage. |
 | Mach Line Jet Brake | When the loaded cartridge is faster than 415 m/s (the 12 gauge average): −30% recoil and +20% projectile velocity. |
-| Rooted Firecracker | After remaining stationary for 9 seconds: impact explosion dealing 95% of shot damage within 1.5 meters. |
+| Rooted Firecracker | After remaining stationary for 9 seconds: impact explosion dealing 35% of shot damage within 1.5 meters. |
 | Rooted Fragment Brake | After remaining stationary for 6 seconds: −35% recoil and +15% fragmentation chance. |
 | Rooted Laser Line | After remaining stationary for 9 seconds: −50% dispersion, −20% recoil, and +10% velocity. |
 | Rooted Overclock | After remaining stationary for 5 seconds: +30% fire rate. |
@@ -1641,7 +1641,7 @@
 
 | Legendary name | Signature effect |
 | --- | --- |
-| Afterimage Firecracker | 1st shot fired within 1 second of lowering the sights: impact explosion dealing 90% of shot damage within 1.9 meters. |
+| Afterimage Firecracker | 1st shot fired within 1 second of lowering the sights: impact explosion dealing 30% of shot damage within 1.9 meters. |
 | Afterimage Fivefold | 1st shot fired within 1 second of lowering the sights: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Afterimage Trident | 1st shot fired within 1 second of lowering the sights: 3-projectile horizontal fan; every projectile deals 70% damage. |
 | Correction Can Opener | 1st shot after a miss: +65% armor damage and +20% penetration. |
@@ -1821,7 +1821,7 @@
 
 | Legendary name | Signature effect |
 | --- | --- |
-| Follow-Up Firecracker | 1st shot after an arm or leg hit: impact explosion dealing 70% of shot damage within 1.9 meters. |
+| Follow-Up Firecracker | 1st shot after an arm or leg hit: impact explosion dealing 10% of shot damage within 1.9 meters. |
 | Follow-Up Fivefold | 1st shot after an arm or leg hit: 5-projectile shallow cone; every projectile deals 70% damage. |
 | Follow-Up Fragment Brake | 1st shot after an arm or leg hit: −35% recoil and +15% fragmentation chance. |
 | Follow-Up Lockjaw | 1st shot after an arm or leg hit: −30% recoil and +10% penetration. |
@@ -1837,7 +1837,7 @@
 | Legendary name | Signature effect |
 | --- | --- |
 | Hard Lesson Counterweight | 1st shot after an armor hit: −30% recoil and +10% damage. |
-| Hard Lesson Firecracker | 1st shot after an armor hit: impact explosion dealing 85% of shot damage within 2.3 meters. |
+| Hard Lesson Firecracker | 1st shot after an armor hit: impact explosion dealing 25% of shot damage within 2.3 meters. |
 | Hard Lesson Fragment Brake | 1st shot after an armor hit: −20% recoil and +15% fragmentation chance. |
 | Hard Lesson Lockjaw | 1st shot after an armor hit: −35% recoil and +10% penetration. |
 | Last Round: Deep Cut | When 1 round remains: +45% penetration. |

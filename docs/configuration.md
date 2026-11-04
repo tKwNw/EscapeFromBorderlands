@@ -26,6 +26,10 @@ Close the server before editing `config.json`, save your changes, then restart i
 
 Bot spawn percentages accept **0–99**. Each category has its own value: `guns`, `melee`, `backpacks`, `chestRigs`, `grenades` and `earpieces`. A value of 0 disables Legendary selection for that category. These settings affect supported equipment; they do not give every bot a fixed number of Legendary items. Ordinary Scavs are excluded.
 
+`factionSpawnChances.otherNonScavs` also covers eligible custom factions registered through MoreBotsAPI, including supported ISB and Black Division roles. Recognized bosses retain the boss settings. Ordinary/sniper Scavs and custom roles classified as Scavs or infected remain excluded. Custom roles without enough faction metadata are left unchanged.
+
+For those custom roles, EFB applies the chance after their loadout is assembled. Only supported vanilla item bases can become Legendary; mod-added item bases remain unchanged. Attachments, ammunition, item identities and container contents are preserved. A signature is skipped if it would invalidate the generated firing mode or storage layout. Each generated inventory is evaluated once, so cached bots do not receive extra rolls. These chances work with or without APBS.
+
 The airdrop percentage is a chance for each eligible item, rather than a chance for the entire crate. At 0%, airdrop Legendary conversions are disabled. At 100%, every eligible supported item is converted; unrelated loot remains available.
 
 Stat Rewards integration is optional in both supported SPT versions. Its reward chance is separate from bot, airdrop and flea settings.
@@ -47,3 +51,4 @@ EFB creates `BepInEx/config/com.tKwNw.escapefromborderlands.cfg`. Edit it with t
 The status display shows triggered and conditional effects while active, including conditions such as aiming or going prone. Permanent effects do not need an active-status entry. Recharge timers can appear while grenades are unequipped; unequipped charge counts appear only between empty and full, such as **1/3** or **2/3**.
 
 [← EFB home](../README.md) · [Legendary item catalog](README.md)
+

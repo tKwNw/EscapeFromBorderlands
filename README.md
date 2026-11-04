@@ -11,7 +11,7 @@ Choose the download that matches your installed SPT version.
 | SPT version | EFB version | Download | Release notes |
 | --- | --- | --- | --- |
 | 4.0.13 | 0.31.7 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.7-spt-4.0.13/EscapeFromBorderlands_0.31.7_SPT-4.0.13.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.7-spt-4.0.13/EscapeFromBorderlands_0.31.7_SPT-4.0.13_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.7-spt-4.0.13) |
-| 4.1.6 | 0.31.6 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.6-spt-4.1.6/EscapeFromBorderlands_0.31.6_SPT-4.1.6.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.6-spt-4.1.6/EscapeFromBorderlands_0.31.6_SPT-4.1.6_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.6-spt-4.1.6) |
+| 4.1.6 | 0.31.8 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.8-spt-4.1.6/EscapeFromBorderlands_0.31.8_SPT-4.1.6.zip) · [Upgrade](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.8-spt-4.1.6/EscapeFromBorderlands_0.31.8_SPT-4.1.6_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.8-spt-4.1.6) |
 
 Source branches: [SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) · [SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6). Each includes its build instructions.
 
