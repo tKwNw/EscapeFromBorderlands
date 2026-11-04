@@ -15,7 +15,7 @@ namespace EscapeFromBorderlands.Client;
 internal static class PlayerRefresh
 {
     [Flags]
-    private enum Work { None = 0, Weight = 1, Equipment = 2 }
+    private enum Work { None = 0, Weight = 1, Equipment = 2, Firearm = 4 }
     private sealed class Pending
     {
         internal Work Work;
@@ -63,6 +63,7 @@ internal static class PlayerRefresh
 
     internal static void Weight(Player player, string site) => Request(player, Work.Weight, site);
     internal static void Equipment(Player player) => Request(player, Work.Equipment | Work.Weight, "chest-rig equipment");
+    internal static void Firearm(Player player, string site) => Request(player, Work.Firearm, site);
     private static void Request(Player player, Work work, string site)
     {
         if (!CanObserve(player)) return;
@@ -115,6 +116,14 @@ internal static class PlayerRefresh
                     }
                 }
                 if ((work & Work.Weight) != 0) player.Physical.OnWeightUpdated();
+                if ((work & Work.Firearm) != 0 && player.HandsController is Player.FirearmController current)
+                {
+                    EarpieceAimWalkingPatch.Refresh(player);
+                    current.SetAnimatorAndProceduralValues();
+                    player.ProceduralWeaponAnimation!.UpdateWeaponVariables();
+                    current.UpdateHipInaccuracy();
+                    WeaponCombatState.Refresh(current);
+                }
                 if (pending.Failures > 0) Plugin.LogSource?.LogInfo("EFB deferred player refresh recovered after " + pending.Failures + " failure(s).");
                 pending.Failures = 0;
                 pending.NextAttempt = 0f;

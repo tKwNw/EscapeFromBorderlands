@@ -41,8 +41,21 @@ internal static class BackpackNative
         SessionCleanup.Run(nameof(BackpackGrenadeAction), BackpackGrenadeAction.Reset);
     }
     internal static bool InBag(Item? item, Item bag) => item is not null && bag.GetAllItems().Any(i => i.Id == item.Id);
-    internal static Player? ItemOwner(Item item) => Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => p.InventoryController.Inventory.Equipment.GetAllItems().Any(i => i.Id == item.Id));
-    internal static Player? WeaponOwner(Weapon weapon) => Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => p.HandsController?.Item?.Id == weapon.Id);
+    internal static Player? ItemOwner(Item item)
+    {
+        var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
+        if (world is null || item.Owner is not { } owner) return null;
+        // Native ownership follows the current address, so transfers invalidate
+        // naturally. Never walk every player's inventory or retain an owner cache.
+        return world.RegisteredPlayers.OfType<Player>().FirstOrDefault(p =>
+            PlayerRefresh.CanObserve(p) && (ReferenceEquals(p.InventoryController, owner) ||
+            ReferenceEquals(p.InventoryController.Inventory.Equipment.Owner, owner)));
+    }
+    internal static Player? WeaponOwner(Weapon weapon)
+    {
+        var owner = ItemOwner(weapon);
+        return owner?.HandsController?.Item?.Id == weapon.Id ? owner : null;
+    }
     internal static float ErgonomicsFactor(BackpackRuntime.State? s) => s is null ? 1f : s.Roll.Backpack.Ergonomics * BackpackRules.Ergonomics(s.Key, s.Key == "BP24-1" && BackpackRuntime.Daytime(), s.Key == "BP31-2" && BackpackRuntime.Milestone(s));
     internal static void Maintain(BackpackRuntime.State s, float dt)
     {

@@ -1,10 +1,10 @@
 # Escape From Borderlands — SPT 4.0.13
 
-**EFB 0.31.5 · Borderlands-inspired Legendary equipment for SPT.**
+**EFB 0.31.7 · Borderlands-inspired Legendary equipment for SPT.**
 
 ## Download and install
 
-[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.5-spt-4.0.13/EscapeFromBorderlands_0.31.5_SPT-4.0.13.zip) · [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.5-spt-4.0.13/EscapeFromBorderlands_0.31.5_SPT-4.0.13_Upgrade.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.5-spt-4.0.13)
+[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.7-spt-4.0.13/EscapeFromBorderlands_0.31.7_SPT-4.0.13.zip) · [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.7-spt-4.0.13/EscapeFromBorderlands_0.31.7_SPT-4.0.13_Upgrade.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.7-spt-4.0.13)
 
 For a fresh installation, close the game, launcher and server, then extract the installation ZIP into your **SPT game root**. The package installs:
 
@@ -15,9 +15,9 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 ## Latest changes
 
-- Improved equipment effect updates and cleanup between raids to avoid repeated player-state errors.
-- Added `allowFenceToSellEfbItems`, default **false**. Fence excludes EFB stock by default; players can still sell EFB items to him. Enable it to permit eligible EFB offers under his normal stocking rules.
-- Fixed a text-material error that could stop the effect status display. The display now waits for usable text assets and retries after a display failure.
+- Extended `otherNonScavs` spawning to eligible custom factions registered through MoreBotsAPI, using the existing equipment-category chances with or without APBS.
+- Reduced weapon-granted impact-explosion damage by **60 percentage points**, to a minimum of **10%**. RShG-2 effects and the Pocket Rocket rig ability are unchanged.
+- Reduced repeated grenade, headset, audio and projectile maintenance, improved stale-player cleanup and made raid resets more resilient.
 
 ## Legendary equipment
 
@@ -47,7 +47,7 @@ Legendary equipment counts as its vanilla base for objectives such as weapon kil
 
 The [configuration guide](docs/configuration.md) covers spawn chances, flea availability, prices, Fence stock, grenade recharge times, draw-sound volume and the status display.
 
-Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. These mods are optional and are not bundled with EFB. The SPT 4.0.13 release also supports optional **Stat Rewards** integration with a separate Legendary reward chance.
+Both SPT versions include compatibility for **Acid's Progressive Bot System (APBS)**, **Use Items Anywhere** and **HollywoodFX**. Eligible custom factions can use EFB spawning through optional **MoreBotsAPI** metadata. These mods are optional and are not bundled with EFB. Both releases also support optional **Stat Rewards** integration with a separate Legendary reward chance.
 
 ## Building from source
 

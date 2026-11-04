@@ -31,7 +31,14 @@ internal static class ReusableGrenadeRuntime
     }
     internal static void Reset()
     {
-        Charges.Reset(); LegendaryGrenadeEffects.Reset(); GrenadeBuffs.Reset(); GrenadePackingSpeed.Reset(); Controllers = new();
+        try
+        {
+            SessionCleanup.Run("grenade charges", Charges.Reset);
+            SessionCleanup.Run(nameof(LegendaryGrenadeEffects), LegendaryGrenadeEffects.Reset);
+            SessionCleanup.Run(nameof(GrenadeBuffs), GrenadeBuffs.Reset);
+            SessionCleanup.Run(nameof(GrenadePackingSpeed), GrenadePackingSpeed.Reset);
+        }
+        finally { Controllers = new(); }
     }
     internal static void Maintain() { LegendaryGrenadeEffects.Maintain(); GrenadeBuffs.Maintain(); }
     internal static void Select(InventoryController inventory, IList<ThrowWeapItemClass> available)

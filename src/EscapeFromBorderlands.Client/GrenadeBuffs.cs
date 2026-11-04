@@ -19,30 +19,51 @@ internal static class GrenadeBuffs
     private static readonly Dictionary<(string Owner, string Target), float> Marked = new();
     private static readonly Dictionary<string, string> MarkNames = new(StringComparer.Ordinal);
     private static readonly Dictionary<Player, (Player.FirearmController Hands, float Reload, float Hip, float Recoil)> Inputs = new();
+    private static float NextTick;
     private static State Get(Player p)
     { if (!States.TryGetValue(p.ProfileId, out var s)) States[p.ProfileId] = s = new(); return s; }
-    internal static void Reset() { States.Clear(); Marked.Clear(); MarkNames.Clear(); Inputs.Clear(); }
-    internal static bool HasState(Player? p) => p is not null && States.ContainsKey(p.ProfileId);
+    internal static void Reset() { States.Clear(); Marked.Clear(); MarkNames.Clear(); Inputs.Clear(); NextTick = 0f; }
+    internal static bool HasState(Player? p) => PlayerRefresh.CanObserve(p) &&
+        (States.ContainsKey(p.ProfileId) || Smoke(p, "GR58"));
     internal static void Maintain()
     {
-        foreach (var key in Marked.Where(kv => kv.Value <= Time.time).Select(kv => kv.Key).ToArray()) Marked.Remove(key);
+        if (Time.time < NextTick) return;
+        NextTick = Time.time + .05f;
+        var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
+        if (world is null) { Reset(); return; }
+        if (States.Count == 0 && Inputs.Count == 0 && Marked.Count == 0 && !LegendaryGrenadeEffects.HasRecoilSmoke) return;
+        var players = world.RegisteredPlayers.OfType<Player>().Where(PlayerRefresh.CanObserve).ToArray();
+        var live = players.Select(p => p.ProfileId).ToHashSet(StringComparer.Ordinal);
+        foreach (var key in Marked.Where(kv => kv.Value <= Time.time || !live.Contains(kv.Key.Owner) || !live.Contains(kv.Key.Target)).Select(kv => kv.Key).ToArray()) Marked.Remove(key);
+        foreach (var id in MarkNames.Keys.Where(id => !Marked.Keys.Any(k => k.Owner == id)).ToArray()) MarkNames.Remove(id);
         foreach (var id in States.Keys.ToArray())
         {
-            if (Find(id) is not { } player || player.HandsController is not Player.FirearmController hands) continue;
+            if (!live.Contains(id)) { States.Remove(id); continue; }
+            var state = States[id];
+            foreach (var key in state.Timers.Where(kv => kv.Value.Until <= Time.time).Select(kv => kv.Key).ToArray()) state.Timers.Remove(key);
+            if (state.Timers.Count == 0 && !state.Draw) States.Remove(id);
+        }
+        foreach (var player in Inputs.Keys.Where(p => !live.Contains(p.ProfileId) || !PlayerRefresh.CanObserve(p)).ToArray()) Inputs.Remove(player);
+        var smoke = LegendaryGrenadeEffects.HasRecoilSmoke;
+        foreach (var player in players)
+        {
+            if (!States.ContainsKey(player.ProfileId) && !Inputs.ContainsKey(player) && !smoke) continue;
+            if (player.HandsController is not Player.FirearmController hands) { Inputs.Remove(player); continue; }
             var input = (hands, Reload(player), Hip(player), Recoil(player));
-            if (!Inputs.TryGetValue(player, out var old) || old != input)
+            var known = Inputs.TryGetValue(player, out var old);
+            var modified = input.Item2 != 1f || input.Item3 != 1f || input.Item4 != 1f;
+            if ((known && old != input) || (!known && modified))
             {
-                Inputs[player] = input;
-                hands.SetAnimatorAndProceduralValues(); hands.UpdateHipInaccuracy();
-                player.ProceduralWeaponAnimation.UpdateWeaponVariables();
+                PlayerRefresh.Firearm(player, "grenade buffs");
             }
+            if (modified) Inputs[player] = input;
+            else Inputs.Remove(player);
         }
     }
     private static bool Active(Player p, string key) => States.TryGetValue(p.ProfileId, out var s) && s.Timers.TryGetValue(key, out var t) && t.Until > Time.time;
     private static void Arm(Player p, string kind, string name, float seconds) => Get(p).Timers[kind] = (Time.time + seconds, name);
     internal static void Thrown(Player p, VariantDefinition d)
     {
-        _ = Get(p);
         switch (d.RuntimeKey)
         {
             case "GR03": Arm(p, "reload", d.ShortName, 5f); break;
@@ -57,7 +78,7 @@ internal static class GrenadeBuffs
     {
         if (target.ProfileId == payload.Owner || target.HealthController?.IsAlive != true) return;
         if (payload.Key == "GR50") { Marked[(payload.Owner, target.ProfileId)] = Time.time + 8f; MarkNames[payload.Owner] = payload.Roll.Definition.ShortName; }
-        if (payload.Key == "GR54" && Find(payload.Owner) is { } owner) Arm(owner, "recoil", payload.Roll.Definition.ShortName, 8f);
+        if (payload.Key == "GR54" && Find(payload.Owner) is { } owner && PlayerRefresh.CanObserve(owner)) Arm(owner, "recoil", payload.Roll.Definition.ShortName, 8f);
     }
     internal static Player? Find(string id) => Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => p.ProfileId == id);
     internal static bool MarkedBy(Player target, Player shooter) => Marked.TryGetValue((shooter.ProfileId, target.ProfileId), out var end) && end > Time.time;

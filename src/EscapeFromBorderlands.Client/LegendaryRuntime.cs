@@ -13,6 +13,7 @@ internal static partial class LegendaryRuntime
 {
     private static readonly object Sync = new();
     private static readonly Dictionary<string, WeaponState> States = new(StringComparer.Ordinal);
+    private static readonly HashSet<WeaponState> ActiveVolleyStates = new();
     private static readonly Dictionary<EftBulletClass, EffectApplication> ShotApplications = new();
     private static readonly Dictionary<string, EffectApplication> ShotApplicationsByKey = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, string> HeldWeaponsByPlayer = new(StringComparer.Ordinal);
@@ -61,7 +62,7 @@ internal static partial class LegendaryRuntime
         lock (Sync)
         {
             ElephantGunRules.Reset();
-            States.Clear(); ShotApplications.Clear(); ShotApplicationsByKey.Clear(); HeldWeaponsByPlayer.Clear();
+            States.Clear(); ActiveVolleyStates.Clear(); ShotApplications.Clear(); ShotApplicationsByKey.Clear(); HeldWeaponsByPlayer.Clear();
             _shotScope = null; _scopeIndex = 0;
         }
     }
@@ -215,8 +216,11 @@ internal static partial class LegendaryRuntime
             ShotApplications[shot] = stored;
             if (shot.Weapon is Weapon trackedWeapon)
             {
-                var volley = BeginVolleyOutcome(GetState(trackedWeapon.Id), shot.FireIndex);
+                var state = GetState(trackedWeapon.Id);
+                var volley = BeginVolleyOutcome(state, shot.FireIndex);
                 volley.Pending.Add(shot); volley.Finalized = false; volley.CompletedTime = -1f;
+                state.PendingVolleys[shot.FireIndex] = volley;
+                ActiveVolleyStates.Add(state);
             }
             if (!bonusProjectile && shot.Weapon is Weapon weapon)
             {
@@ -240,8 +244,7 @@ internal static partial class LegendaryRuntime
             ShotApplications.Remove(shot);
             if (shot.Weapon is Weapon weapon && States.TryGetValue(weapon.Id, out var state) && state.Volleys.TryGetValue(shot.FireIndex, out var volley))
             {
-                volley.Pending.Remove(shot);
-                if (volley.Pending.Count == 0) volley.CompletedTime = Time.time;
+                if (volley.Pending.Remove(shot) && volley.Pending.Count == 0 && !volley.Finalized) volley.CompletedTime = Time.time;
             }
         }
     }
@@ -288,7 +291,8 @@ internal static partial class LegendaryRuntime
         if (shot.Weapon is not Weapon weapon || !RarityResolver.TryGetDefinition(weapon, out _)) return;
         lock (Sync)
         {
-            BeginVolleyOutcome(GetState(weapon.Id), shot.FireIndex);
+            var volley = BeginVolleyOutcome(GetState(weapon.Id), shot.FireIndex);
+            if (volley.Pending.Count == 0 && volley.CompletedTime < 0f) volley.CompletedTime = Time.time;
             // Pending siblings must finish before a cartridge can be a miss.
             AdvancedLegendaryActions.DeferMissResolution(weapon.Id, shot.FireIndex);
         }
@@ -314,9 +318,9 @@ internal static partial class LegendaryRuntime
     {
         lock (Sync)
         {
-            foreach (var state in States.Values)
+            foreach (var state in ActiveVolleyStates.ToArray())
             {
-                foreach (var pair in state.Volleys.ToArray())
+                foreach (var pair in state.PendingVolleys.ToArray())
                 {
                     var volley = pair.Value;
                     if (Time.time - volley.CreatedTime > 60f)
@@ -330,11 +334,13 @@ internal static partial class LegendaryRuntime
                         volley.Finalized = true;
                         ResolveDeferredMiss(state.WeaponId, pair.Key);
                         CleanupShotApplication(state.WeaponId, pair.Key);
+                        state.PendingVolleys.Remove(pair.Key);
                     }
                 }
+                if (state.PendingVolleys.Count == 0) ActiveVolleyStates.Remove(state);
                 // Keep a bounded outcome history, not references to finished bullets.
                 if (state.Volleys.Count > 1024)
-                    foreach (var pair in state.Volleys.Where(p => p.Value.Pending.Count == 0).OrderBy(p => p.Value.Sequence).Take(state.Volleys.Count - 1024).ToArray())
+                    foreach (var pair in state.Volleys.Where(p => p.Value.Finalized).OrderBy(p => p.Value.Sequence).Take(state.Volleys.Count - 1024).ToArray())
                         state.Volleys.Remove(pair.Key);
             }
         }
@@ -747,7 +753,7 @@ internal static partial class LegendaryRuntime
                 application.StatModifiers = new StatModifiers(recoilDelta: -0.50f, fireRateMultiplier: 1.50f);
                 if (state.ShotsInMagazine % 10 == 0)
                 {
-                    application.ExplosionDamageFactor = 0.70f;
+                    application.ExplosionDamageFactor = 0.10f;
                     application.ExplosionRadius = 1.5f;
                 }
                 break;
@@ -772,7 +778,7 @@ internal static partial class LegendaryRuntime
                 break;
             case "fifth_amendment" when state.TotalShots % 5 == 0:
                 application.DamageMultiplier = 1.10f;
-                application.ExplosionDamageFactor = 0.75f;
+                application.ExplosionDamageFactor = 0.15f;
                 application.ExplosionRadius = 2f;
                 break;
             case "opening_statement" when state.ShotsInMagazine <= 4:
@@ -839,7 +845,7 @@ internal static partial class LegendaryRuntime
                 application.VelocityMultiplier = 1.60f;
                 break;
             case "ak102_tenth_explosion" when state.TotalShots % 10 == 0:
-                application.ExplosionDamageFactor = 0.95f;
+                application.ExplosionDamageFactor = 0.35f;
                 application.ExplosionRadius = 2f;
                 break;
             case "ak102_tenth_ammo_savant" when state.TotalShots % 10 == 0:
@@ -951,7 +957,7 @@ internal static partial class LegendaryRuntime
                 application.StatModifiers = new StatModifiers(accuracyDelta: 0.60f);
                 break;
             case "wave015_out_with_a_bang" when IsFireMode(context, "doublet"):
-                application.ExplosionDamageFactor = 0.15f;
+                application.ExplosionDamageFactor = 0.10f;
                 application.ExplosionRadius = 1.25f;
                 application.StatModifiers = new StatModifiers(recoilDelta: 3f, accuracyDelta: 0.90f);
                 break;
@@ -1001,7 +1007,7 @@ internal static partial class LegendaryRuntime
                 application.StatModifiers = new StatModifiers(fireRateMultiplier: 4f / 3f);
                 if (state.ShotsInCurrentFireMode % 3 == 0)
                 {
-                    application.ExplosionDamageFactor = 0.50f;
+                    application.ExplosionDamageFactor = 0.10f;
                     application.ExplosionRadius = 1.25f;
                 }
                 break;
@@ -1071,7 +1077,7 @@ internal static partial class LegendaryRuntime
                 application.DamageMultiplier = 1f + chamberStep * 0.25f;
                 if (chamberStep == 5)
                 {
-                    application.ExplosionDamageFactor = 0.50f;
+                    application.ExplosionDamageFactor = 0.10f;
                     application.ExplosionRadius = 1.5f;
                 }
                 break;
@@ -1205,7 +1211,7 @@ internal static partial class LegendaryRuntime
             case 11: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 22, 35)); a.DamageMultiplier = 1.10f; break;
             case 12: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 22, 35)); a.PenetrationMultiplier = 1.10f; break;
             case 13: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "f", 20, 35)); a.FragmentationChanceBonus = 0.15f; break;
-            case 14: a.ExplosionDamageFactor = Percent(k, 65, 100); a.ExplosionRadius = d.Decimal(k + "r", 15, 23); break;
+            case 14: a.ExplosionDamageFactor = Math.Max(.10f, Percent(k, 65, 100) - .60f); a.ExplosionRadius = d.Decimal(k + "r", 15, 23); break;
             case 15: a.ProjectileCount = 3; a.ProjectileDamageMultiplier = 0.70f; a.ProjectileSpreadDegrees = 1.25f; break;
             case 16: a.ProjectileCount = 5; a.ProjectileDamageMultiplier = 0.70f; a.ProjectileSpreadDegrees = 2.25f; a.ProjectilePattern = "random_cone"; break;
             case 17: a.ProjectileCount = 3; a.ProjectileDamageMultiplier = 0.70f; a.ProjectileSpreadDegrees = 0.75f; break;
@@ -1446,6 +1452,8 @@ internal static partial class LegendaryRuntime
         {
             volley = new VolleyOutcome { Sequence = state.TotalShots, Generation = state.ReloadGeneration, CreatedTime = Time.time };
             state.Volleys[fireIndex] = volley;
+            state.PendingVolleys[fireIndex] = volley;
+            ActiveVolleyStates.Add(state);
         }
         return volley;
     }
@@ -1623,6 +1631,7 @@ internal static partial class LegendaryRuntime
         public bool LastMovingInput { get; set; }
         public int ReloadGeneration { get; set; }
         public Dictionary<int, VolleyOutcome> Volleys { get; } = new();
+        public Dictionary<int, VolleyOutcome> PendingVolleys { get; } = new();
         public int TriggerHeldShots { get; set; }
         public int MovingShotsInMagazine { get; set; }
         public int FleshHitsInMagazine { get; set; }

@@ -1,6 +1,6 @@
 # Legendary grenades — Escape From Borderlands
 
-**SPT 4.0.13 · EFB 0.31.5**
+**SPT 4.0.13 · EFB 0.31.7**
 
 **37 reusable Legendary grenade designs.** Each copy has separate charges, random bonuses and a recharge timer. The table shows default charges and seconds to restore 1 charge; recharge times can be changed in the [settings](../configuration.md).
 

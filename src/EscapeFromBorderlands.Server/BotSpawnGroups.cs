@@ -5,11 +5,15 @@ namespace EscapeFromBorderlands.Server;
 // from that side or a caller's isPmc flag, which would admit ordinary Scavs.
 internal static class BotSpawnGroups
 {
+    private static IReadOnlyDictionary<string, bool> CustomRoles = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+    internal static void SetCustomRoles(IReadOnlyDictionary<string, bool> roles) => CustomRoles = roles;
+    internal static bool IsClassifiedNonScav(string? role) => role is not null && CustomRoles.TryGetValue(role, out var scav) && !scav;
     internal static readonly string[] Expanded = ["raiders", "rogues", "followers", "cultists", "arenaFighters", "otherNonScavs"];
 
     internal static string? Group(string? role)
     {
         var name = role?.ToLowerInvariant() ?? "";
+        if (CustomRoles.TryGetValue(name, out var customScav) && customScav) return null;
         if (name is "" or "assault" or "marksman" or "cursedassault" or "assaultgroup" or "crazyassaultevent" or "gifter" or "shooterbtr" or "test" or "bosstest" or "followertest" || name.StartsWith("infected", StringComparison.Ordinal)) return null;
         if (name is "usec" or "pmcusec") return "pmcUsec";
         if (name is "bear" or "pmcbear") return "pmcBear";
@@ -20,6 +24,6 @@ internal static class BotSpawnGroups
         if (name.StartsWith("sectant", StringComparison.Ordinal) || name == "sectactpriestevent") return "cultists";
         if (name is "arenafighter" or "arenafighterevent") return "arenaFighters";
         if (name is "peacemaker" or "skier" or "spiritwinter" or "spiritspring") return "otherNonScavs";
-        return null;
+        return IsClassifiedNonScav(name) ? "otherNonScavs" : null;
     }
 }

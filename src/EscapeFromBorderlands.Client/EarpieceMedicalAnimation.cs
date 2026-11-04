@@ -20,8 +20,8 @@ internal static class EarpieceMedicalAnimation
         foreach (var pair in Entries.ToArray())
         {
             var e = pair.Value;
-            if (e.Player.HealthController?.IsAlive != true || !ReferenceEquals(e.Player.HandsAnimator, pair.Key))
-            { Entries.Remove(pair.Key); continue; }
+            if (!PlayerRefresh.CanObserve(e.Player) || pair.Key == null || !ReferenceEquals(e.Player.HandsAnimator, pair.Key))
+            { Entries.Remove(pair.Key!); continue; }
             if (ServiceWindow.MedicalController(e.Player, pair.Key) is null) continue;
             var factor = Factor(e.Player, pair.Key);
             if (e.Factor == factor) continue;
