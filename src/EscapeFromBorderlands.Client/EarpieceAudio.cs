@@ -15,10 +15,11 @@ internal static class EarpieceAudio
 {
     internal sealed class Source
     {
-        internal Player Owner = null!;
+        internal Player? Owner;
         internal string Kind = "";
         internal float RawRange, AppliedRange, VolumeFactor = 1f, RangeFactor = 1f, BakedLocalVolume = 1f;
-        internal bool HasRange, CachedLocalInput;
+        internal bool HasRange, CachedLocalInput, Retired;
+        internal float RetryAt, ReportAt;
     }
     internal readonly struct Scope
     {
@@ -80,14 +81,14 @@ internal static class EarpieceAudio
         Sources[source] = new Source { Owner = owner, Kind = kind };
         if (source.MaxDistance > 0f) source.SetRolloff(source.MaxDistance);
     }
-    internal static float Hearing(Player owner, string kind)
+    internal static float Hearing(Player? owner, string kind)
     {
         var listener = EarpieceRuntime.Listener;
         if (listener is null || owner == listener.Player) return 1f;
         var map = Native.Get(Singleton<GameWorld>.Instance, "LocationId")?.ToString()?.ToLowerInvariant();
         return EarpieceEffectRules.Hearing(listener.Key, listener.Roll.Earpiece.Hearing, listener.Effect.Hearing, false, kind, map);
     }
-    internal static float Volume(Player owner, string kind)
+    internal static float Volume(Player? owner, string kind)
     {
         var s = EarpieceRuntime.Listener;
         var emitted = kind == "step" ? EarpieceRuntime.EmittedStep(owner) : 1f;
@@ -152,18 +153,32 @@ internal static class EarpieceAudio
     internal static void Forget(BetterSource source, bool restore)
     {
         if (!Sources.TryGetValue(source, out var s)) return;
+        // Drop the lease first, even if a native restoration fails. Reused pool
+        // sources must not inherit ownership from a previous actor or raid.
+        Sources.Remove(source!);
         if (restore && source != null && s.CachedLocalInput && s.BakedLocalVolume != 1f)
         {
             // A native looping/stereo source stores its input volume in these
             // caches. Remove only our baked factor before forgetting the lease.
-            Native.Set(source, "PreOcclusionVolume", Native.Number(source, "PreOcclusionVolume") / s.BakedLocalVolume);
-            if (Native.Get(source, "_secondPreEffectsVolume") is float second) Native.Set(source, "_secondPreEffectsVolume", second / s.BakedLocalVolume);
+            Cleanup("input volume", () => Native.Set(source, "PreOcclusionVolume", Native.Number(source, "PreOcclusionVolume") / s.BakedLocalVolume));
+            Cleanup("stereo volume", () => { if (Native.Get(source, "_secondPreEffectsVolume") is float second) Native.Set(source, "_secondPreEffectsVolume", second / s.BakedLocalVolume); });
         }
-        Sources.Remove(source!);
         if (!restore || source == null) return;
         var old = Current; Current = default;
-        try { RefreshOutput(source); if (s.HasRange) source.SetRolloff(s.RawRange); }
+        try
+        {
+            Cleanup("output volume", () => RefreshOutput(source));
+            if (s.HasRange) Cleanup("source range", () => source.SetRolloff(s.RawRange));
+        }
         finally { Current = old; }
+    }
+    private static void Cleanup(string stage, Action action)
+    {
+        try { action(); }
+        catch (Exception error)
+        {
+            if (Reports.Add("cleanup:" + stage)) Plugin.LogSource?.LogWarning($"EFB audio {stage} restoration failed; remaining cleanup continues. {error}");
+        }
     }
     internal static void RegisterQueue(SuperBetterAudioQueue queue)
     {
@@ -173,21 +188,38 @@ internal static class EarpieceAudio
     }
     internal static void Maintain()
     {
-        var world = Singleton<GameWorld>.Instance;
+        var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
+        var live = world?.RegisteredPlayers.OfType<Player>().Where(PlayerRefresh.CanObserve).ToHashSet() ?? new HashSet<Player>();
         if (world is not null)
-            foreach (var p in world.RegisteredPlayers.OfType<Player>())
+            foreach (var p in live)
             {
                 Register(p.SpeechSource, p, "voice");
                 Register(Native.Get(p, "_gearSource") as BetterSource, p, "item");
                 Register(Native.Get(p, "_searchSource") as BetterSource, p, "item");
                 Register(Native.Get(p, "NestedStepSoundSource") as BetterSource, p, "step");
             }
+        foreach (var queue in Queues.Where(pair => !live.Contains(pair.Value)).Select(pair => pair.Key).ToArray()) Queues.Remove(queue);
         foreach (var pair in Sources.ToArray())
         {
             if (pair.Key == null) { Sources.Remove(pair.Key!); continue; }
             var s = pair.Value;
-            if (s.VolumeFactor != TargetVolume(s)) RefreshOutput(pair.Key);
-            if (s.HasRange && s.RangeFactor != Hearing(s.Owner, s.Kind)) pair.Key.SetRolloff(s.RawRange);
+            // Keep playing death sounds/tails and corpse-looting audio. Their
+            // source lease can outlive the actor without retaining that actor.
+            if (s.Owner is not null && !live.Contains(s.Owner)) { s.Owner = null; s.Retired = true; }
+            if (s.Retired && pair.Key.PlayBackState != BetterSource.EPlayBackState.Playing)
+            { Forget(pair.Key, true); continue; }
+            if (UnityEngine.Time.unscaledTime < s.RetryAt) continue;
+            try
+            {
+                if (s.VolumeFactor != TargetVolume(s)) RefreshOutput(pair.Key);
+                if (s.HasRange && s.RangeFactor != Hearing(s.Owner, s.Kind)) pair.Key.SetRolloff(s.RawRange);
+            }
+            catch (Exception error)
+            {
+                s.RetryAt = UnityEngine.Time.unscaledTime + 5f;
+                if (UnityEngine.Time.unscaledTime >= s.ReportAt)
+                { s.ReportAt = UnityEngine.Time.unscaledTime + 30f; Plugin.LogSource?.LogWarning($"EFB audio refresh failed; retrying with backoff. {error}"); }
+            }
         }
         var ambient = Ambient;
         if (ambient != LastAmbient && MonoBehaviourSingleton<BetterAudio>.Instantiated)
@@ -196,10 +228,13 @@ internal static class EarpieceAudio
     internal static void Reset()
     {
         Current = default;
-        foreach (var source in Sources.Keys.ToArray()) Forget(source, true);
-        Sources.Clear(); Queues.Clear(); Reports.Clear();
-        if (LastAmbient != 1f && MonoBehaviourSingleton<BetterAudio>.Instantiated) RefreshHeadphones();
-        LastAmbient = 1f;
+        try
+        {
+            foreach (var source in Sources.Keys.ToArray()) Cleanup("source lease", () => Forget(source, true));
+            if (LastAmbient != 1f && MonoBehaviourSingleton<BetterAudio>.Instantiated && MonoBehaviourSingleton<BetterAudio>.Instance != null)
+                Cleanup("ambient volume", RefreshHeadphones);
+        }
+        finally { Sources.Clear(); Queues.Clear(); Reports.Clear(); Current = default; LastAmbient = 1f; }
     }
 }
 

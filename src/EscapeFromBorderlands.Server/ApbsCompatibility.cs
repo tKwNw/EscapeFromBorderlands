@@ -53,6 +53,7 @@ public sealed class ApbsCompatibility(
         }
 
         rarityMod.FinalizeMeleeLooting();
+        rarityMod.ConfigureCustomBotSpawning(config, serviceProvider);
 
         if (!config.AutoDetectApbs)
         {

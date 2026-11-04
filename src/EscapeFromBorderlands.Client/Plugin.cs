@@ -16,7 +16,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.tKwNw.escapefromborderlands";
     public const string PluginName = "tKwNw-EscapeFromBorderlands";
-    public const string PluginVersion = "0.31.6";
+    public const string PluginVersion = "0.31.8";
 
     internal static ManualLogSource LogSource { get; private set; } = null!;
     internal static Plugin Instance { get; private set; } = null!;
@@ -108,6 +108,7 @@ public sealed class Plugin : BaseUnityPlugin
         PlayerRefresh.Resetting = true;
         try
         {
+            SessionCleanup.Begin();
             PlayerRefresh.Reset();
             SessionCleanup.Run(nameof(ServiceWindowPlayback), ServiceWindowPlayback.Reset);
             SessionCleanup.Run("earpiece suspend", EarpieceRuntime.Suspend);

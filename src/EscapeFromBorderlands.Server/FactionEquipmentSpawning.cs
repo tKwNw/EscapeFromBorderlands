@@ -68,7 +68,7 @@ internal static class FactionEquipmentSpawning
             var category = RarityConfiguration.Category(slotName);
             var before = Entries(pool).ToArray();
             foreach (var entry in before) if (AllIds.Contains(entry.Key.ToString() ?? "")) pool.Remove(entry.Key);
-            var fraction = eligibleSlot ? Config.BotFraction("apbs", role, category) : 0d;
+            var fraction = eligibleSlot && !CustomBotSpawning.UsesPostGeneration(role) ? Config.BotFraction("apbs", role, category) : 0d;
             if (fraction <= 0d || pool.Count == 0) continue;
             var allowed = Imported.GetValueOrDefault((tier, category));
             var variants = Active.Where(v => Category(v) == category && (category == "melee" || allowed?.Contains(v.TemplateId) == true)).ToArray();

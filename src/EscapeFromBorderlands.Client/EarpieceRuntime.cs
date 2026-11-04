@@ -29,14 +29,18 @@ internal static class EarpieceRuntime
     internal static readonly Dictionary<Player, State> States = new();
     private static readonly Dictionary<string, Dictionary<string, float>> Cooldowns = new(StringComparer.Ordinal);
     private static readonly HashSet<Player> Changed = new();
-    private static readonly HashSet<Player> Deaths = new();
+    private static readonly HashSet<string> Deaths = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, string> Names = new(StringComparer.Ordinal);
     [ThreadStatic] internal static Shot? CurrentShot;
     private static bool Resetting;
     private static float NextTick;
     internal static State? Get(Player? player)
     {
-        if (Resetting || player?.HealthController?.IsAlive != true) return null;
+        if (Resetting || !PlayerRefresh.CanObserve(player))
+        {
+            if (player is not null) Forget(player);
+            return null;
+        }
         var item = player.InventoryController?.Inventory?.Equipment.GetSlot(EquipmentSlot.Earpiece)?.ContainedItem;
         if (States.TryGetValue(player, out var old) && item?.Id == old.Item.Id) return old;
         if (old is not null) { States.Remove(player); Changed.Add(player); }
@@ -53,19 +57,38 @@ internal static class EarpieceRuntime
     internal static bool Moving(Player p) => p.InputDirection.sqrMagnitude > .0001f;
     private static string Kind(Item? item) => item is Weapon ? "firearm" : item is Knife ? "melee" : "other";
     internal static void Suspend() => Resetting = true;
+    private static void Forget(Player player)
+    {
+        States.Remove(player);
+        Changed.Remove(player);
+        Cooldowns.Remove(player.ProfileId);
+    }
     internal static void Reset()
     {
         Resetting = true;
-        EarpieceAudio.Reset();
-        States.Clear(); Changed.Clear(); Deaths.Clear(); Cooldowns.Clear(); Names.Clear(); CurrentShot = null; NextTick = 0f;
-        EarpieceFoodUse.Reset(); EarpieceSwitching.Reset(); EarpieceAimWalkingPatch.Reset(); EarpieceMedicalAnimation.Reset();
-        Resetting = false;
+        try
+        {
+            SessionCleanup.Run(nameof(EarpieceAudio), EarpieceAudio.Reset);
+            SessionCleanup.Run(nameof(EarpieceFoodUse), EarpieceFoodUse.Reset);
+            SessionCleanup.Run(nameof(EarpieceSwitching), EarpieceSwitching.Reset);
+            SessionCleanup.Run(nameof(EarpieceAimWalkingPatch), EarpieceAimWalkingPatch.Reset);
+            SessionCleanup.Run(nameof(EarpieceMedicalAnimation), EarpieceMedicalAnimation.Reset);
+        }
+        finally
+        {
+            States.Clear(); Changed.Clear(); Deaths.Clear(); Cooldowns.Clear(); Names.Clear();
+            CurrentShot = null; NextTick = 0f; Resetting = false;
+        }
     }
     internal static void Maintain(GameWorld? world)
     {
-        if (world is null || Time.time < NextTick) return;
+        if (PlayerRefresh.ActiveWorld(world) is null || Time.time < NextTick) return;
         NextTick = Time.time + .05f;
-        foreach (var p in world.RegisteredPlayers.OfType<Player>().ToArray())
+        var live = world!.RegisteredPlayers.OfType<Player>().Where(PlayerRefresh.CanObserve).ToHashSet();
+        foreach (var p in States.Keys.Concat(Changed).Distinct().Where(p => !live.Contains(p)).ToArray()) Forget(p);
+        var liveIds = live.Select(p => p.ProfileId).ToHashSet(StringComparer.Ordinal);
+        foreach (var id in Cooldowns.Keys.Where(id => !liveIds.Contains(id)).ToArray()) Cooldowns.Remove(id);
+        foreach (var p in live)
         {
             var s = Get(p);
             var changed = Changed.Remove(p);
@@ -81,7 +104,7 @@ internal static class EarpieceRuntime
                 if (restore.Arms > 0f) { ChestRigRuntime.RestoreArms(p, restore.Arms); s.StatusNoticeUntil = Time.time + 2f; s.StatusNotice = "Triggered · Arm Stamina recovery"; }
                 var held = p.HandsController?.Item; var id = held?.Id ?? "";
                 if (id != s.HeldId)
-                { s.HeldId = id; s.PreviousKind = Kind(held); }
+                { s.HeldId = id; s.PreviousKind = Kind(held); changed = true; }
                 if (held is Weapon weapon)
                 {
                     var aim = Aim(p); var reload = Reload(p); var recoil = Recoil(p); var accuracy = Accuracy(p); var rate = FireRate(p);
@@ -89,8 +112,7 @@ internal static class EarpieceRuntime
                     s.LastAim = aim; s.LastReload = reload; s.LastRecoil = recoil; s.LastAccuracy = accuracy; s.LastRate = rate;
                 }
             }
-            if (changed && p.HealthController?.IsAlive == true && p.HandsController is Player.FirearmController f)
-            { EarpieceAimWalkingPatch.Refresh(p); f.SetAnimatorAndProceduralValues(); p.ProceduralWeaponAnimation.UpdateWeaponVariables(); WeaponCombatState.Refresh(f); }
+            if (changed) PlayerRefresh.Firearm(p, "headset conditions");
         }
         EarpieceAudio.Maintain(); EarpieceMedicalAnimation.Maintain();
     }
@@ -103,7 +125,7 @@ internal static class EarpieceRuntime
     internal static void End(Shot? shot) { if (shot is not null && ReferenceEquals(CurrentShot, shot)) CurrentShot = shot.Previous; }
     internal static void Killed(Player victim)
     {
-        if (!Deaths.Add(victim)) return;
+        if (!Deaths.Add(victim.ProfileId)) return;
         if (Native.Get(victim, "LastAggressor") is not Player killer || !AdvancedMeleeRuntime.Enemy(killer, victim) || Get(killer) is not { } s) return;
         if (Native.Get(victim, "LastDamageInfo") is not DamageInfo info) return;
         var firearm = info.DamageType == EDamageType.Bullet && info.Weapon is Weapon;

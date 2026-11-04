@@ -10,7 +10,7 @@ public record ModMetadata : IModMetadata
     public string Name { get; init; } = "EscapeFromBorderlands";
     public string Author { get; init; } = "tKwNw";
     public List<string>? Contributors { get; init; } = ["OpenAI Codex"];
-    public SemVersion Version { get; init; } = new("0.31.6", false);
+    public SemVersion Version { get; init; } = new("0.31.8", false);
     public SemRange SptVersion { get; init; } = new("~4.1.6", false);
     public bool HasPrepatcher { get; init; } = false;
     public List<string>? Incompatibilities { get; init; } = [];

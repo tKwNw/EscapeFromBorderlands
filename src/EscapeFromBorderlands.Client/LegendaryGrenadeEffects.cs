@@ -53,12 +53,23 @@ internal static class LegendaryGrenadeEffects
     private static readonly MethodInfo Clone = AccessTools.Method(typeof(object), "MemberwiseClone");
     [ThreadStatic] internal static Payload? CurrentExplosion;
     internal static bool Try(Item? item, out Payload p) => Payloads.TryGetValue(item?.Id ?? "", out p!);
+    internal static bool HasRecoilSmoke => Payloads.Values.Any(p => p.Key == "GR58" && !p.SmokeEnded && p.Expires > Time.time);
     internal static void Reset()
     {
         Generation++;
-        foreach (var p in Payloads.Values) if (p.Emission != null) p.Emission.StopEmission(p.Grenade!);
-        foreach (var emission in Emissions.Keys.ToArray()) RestoreEmission(emission);
-        Payloads.Clear(); World = null; Assets = null; RetryAssetsAt = 0f; CurrentExplosion = null;
+        try
+        {
+            foreach (var p in Payloads.Values.ToArray())
+                if (p.Emission != null && p.Grenade != null)
+                    SessionCleanup.Run("grenade smoke stop", () => p.Emission.StopEmission(p.Grenade));
+            foreach (var emission in Emissions.Keys.ToArray())
+                SessionCleanup.Run("grenade smoke restoration", () => RestoreEmission(emission));
+        }
+        finally
+        {
+            Payloads.Clear(); Emissions.Clear(); World = null; Assets = null;
+            RetryAssetsAt = 0f; CurrentExplosion = null;
+        }
     }
     internal static void Maintain()
     {
@@ -403,9 +414,11 @@ internal static class LegendaryGrenadeEffects
         if (s.ProjectileId.Length > 0 && Payloads.TryGetValue(s.ProjectileId, out var p) && p.Emission == emission)
         { p.Emission = null; p.SmokeEnded = true; }
         if (emission == null) return;
-        foreach (var particle in s.Particles) particle.Restore();
-        emission.transform.localScale = s.Scale; Native.Set(emission, "_defaultStartFillDelay", s.Delay);
-        Native.Set(emission, "_startFillSize", s.Size); Native.Set(emission, "_startFillDistance", s.Distance);
+        foreach (var particle in s.Particles) SessionCleanup.Run("smoke particle restoration", particle.Restore);
+        SessionCleanup.Run("smoke scale restoration", () => emission.transform.localScale = s.Scale);
+        SessionCleanup.Run("smoke delay restoration", () => Native.Set(emission, "_defaultStartFillDelay", s.Delay));
+        SessionCleanup.Run("smoke size restoration", () => Native.Set(emission, "_startFillSize", s.Size));
+        SessionCleanup.Run("smoke distance restoration", () => Native.Set(emission, "_startFillDistance", s.Distance));
     }
 }
 

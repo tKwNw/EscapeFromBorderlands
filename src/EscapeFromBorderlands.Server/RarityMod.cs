@@ -242,6 +242,13 @@ public sealed class RarityMod(
         return Task.CompletedTask;
     }
 
+    public void ConfigureCustomBotSpawning(RarityConfiguration config, IServiceProvider services)
+    {
+        var definitions = LegendaryCatalog.Load().Variants.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId)));
+        CustomBotSpawning.Install(definitions, config, templateTable.Items, services,
+            message => logger.Info(message), message => logger.Warning(message));
+    }
+
     public void ApplyStandalonePmcSpawning(RarityConfiguration config)
     {
         if (_spawnRegistrationFinalized)
@@ -298,7 +305,7 @@ public sealed class RarityMod(
                 if (!bot.BotInventory.Equipment.TryGetValue(slot, out var pool)) continue;
                 foreach (var id in allEfb) pool.Remove(id);
                 var category = RarityConfiguration.Category(slot.ToString());
-                var fraction = config.BotFraction(method, role, category);
+                var fraction = CustomBotSpawning.UsesPostGeneration(role) ? 0d : config.BotFraction(method, role, category);
                 if (fraction <= 0d) continue;
                 var sources = _spawnVariants.Where(v => v.EquipmentSlots.Contains(slot))
                     .GroupBy(v => v.Variant.SourceTemplateId)

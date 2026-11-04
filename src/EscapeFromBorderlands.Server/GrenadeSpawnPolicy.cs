@@ -20,7 +20,7 @@ internal sealed class GrenadeSpawnPolicy
         // Never modify the native/APBS cache or unrelated item weights. A source
         // removed by its loot filters cannot produce a legendary replacement.
         var result = original.Where(p => !AllIds.Contains(p.Key)).ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal);
-        var fraction = config.BotFraction(pmcMethod, role, "grenades");
+        var fraction = CustomBotSpawning.UsesPostGeneration(role) ? 0d : config.BotFraction(pmcMethod, role, "grenades");
         foreach (var pair in CategorySpawnPolicy.Weights(result, BySource, fraction, VariantWeights)) result[pair.Key] = pair.Value;
         return result;
     }
