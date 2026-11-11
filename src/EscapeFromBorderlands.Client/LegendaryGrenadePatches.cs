@@ -40,7 +40,7 @@ internal static class LegendaryGrenadeSignaturePatch
 [HarmonyPatch(typeof(Grenade), nameof(Grenade.OnCollisionEnter))]
 internal static class LegendaryGrenadeContactPatch
 {
-    private static bool Prefix(Grenade __instance, object __0) => LegendaryGrenadeEffects.Collision(__instance, __0);
+    private static bool Prefix(Grenade __instance, Collision __0) => LegendaryGrenadeEffects.Collision(__instance, __0);
 }
 [HarmonyPatch(typeof(Grenade), nameof(Grenade.LateUpdate))]
 internal static class LegendaryGrenadeAnchorPatch
@@ -95,10 +95,10 @@ internal static class LegendaryGrenadeFalloffPatch
 internal static class LegendaryGrenadeDamagePatch
 {
     [ThreadStatic] private static int Depth;
-    internal sealed class Hit { internal int Depth; internal float Before; internal bool Bleed; }
+    internal struct Hit { internal int Depth; internal float Before; internal bool Bleed; }
     private static void Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, DamageInfo damageInfo, out Hit __state)
     {
-        __state = new Hit { Depth = Depth++, Before = __instance.GetBodyPartHealth(bodyPart, false).Current };
+        __state = new Hit { Depth = Depth++ };
         if (__state.Depth != 0) return;
         var target = __instance.Player;
         if (damageInfo.DamageType == EDamageType.Bullet && damageInfo.Weapon is Weapon && damageInfo.Player?.iPlayer is Player shooter && GrenadeBuffs.MarkedBy(target, shooter)) damage *= 1.3f;
@@ -112,6 +112,7 @@ internal static class LegendaryGrenadeDamagePatch
         if (blast) damage *= GrenadeEffectRules.BlastMultiplier(p.Key, Vector3.Distance(target.Position, damageInfo.MasterOrigin),
             bodyPart is EBodyPart.LeftLeg or EBodyPart.RightLeg, target.ProfileId == p.DirectTarget, p.PistolOnly);
         __state.Bleed = !blast && p.Key == "GR07" && !damageInfo.Blunt && damage > 0f;
+        if (__state.Bleed) __state.Before = __instance.GetBodyPartHealth(bodyPart, false).Current;
     }
     private static void Postfix(ActiveHealthController __instance, EBodyPart bodyPart, Hit __state)
     {
@@ -122,20 +123,28 @@ internal static class LegendaryGrenadeDamagePatch
 [HarmonyPatch(typeof(FirearmControllerSharedMethods), nameof(FirearmControllerSharedMethods.ApplyLightAndSoundHealthEffects))]
 internal static class LegendaryGrenadeFlashPatch
 {
-    private static readonly MethodInfo Linecast = AccessTools.Method(AccessTools.TypeByName("UnityEngine.Physics"), "Linecast", new[] { typeof(Vector3), typeof(Vector3), typeof(int) });
     private static bool Prefix(List<IObserverToPlayerBridge> players, Dictionary<IObserverToPlayerBridge, PlayerEmitterCache> playerEmitterCaches, Vector3 emitterPosition, Vector3 blindnessSettings, Vector3 contusionSettings)
     {
         var payload = LegendaryGrenadeEffects.CurrentExplosion;
         if (payload == null) return true;
+        using var timing = GrenadeSpikeTrace.Measure(payload, "flash target processing");
+        var world = Singleton<GameWorld>.Instance;
+        var immuneOwner = payload.Key == "GR47" ? payload.Owner : null;
+        var radius = payload.Roll.GrenadeFlashRadiusMultiplier;
         foreach (var bridge in players)
         {
-            var target = GrenadeBuffs.Find(bridge.iPlayer.ProfileId);
-            if (target?.ActiveHealthController is not { } health || !health.IsAlive || payload.Key == "GR47" && target.ProfileId == payload.Owner) continue;
             var cache = playerEmitterCaches[bridge];
             if (!cache.TryToApplyStun && !cache.TryToApplyBurnEyes && !cache.TryToApplyContusion) continue;
-            if ((bool)Linecast.Invoke(null, new object[] { emitterPosition, target.PlayerBones.Head.position, (int)LayersMaskController.GrenadeObstaclesColliderMask })!) continue;
-            var facing = Mathf.Clamp01(Vector3.Dot(cache.DirectionToEmitter, bridge.iPlayer.LookDirection));
-            var radius = payload.Roll.GrenadeFlashRadiusMultiplier;
+            var player = bridge.iPlayer;
+            var profile = player.ProfileId;
+            if (immuneOwner is not null && profile == immuneOwner) continue;
+            // Use the same alive-player index as the native flash routine.
+            // A modded roster can omit the index entry, so keep the roster fallback.
+            var target = world?.GetAlivePlayerByProfileID(profile);
+            if (target == null) target = GrenadeBuffs.Find(world, profile);
+            if (target?.ActiveHealthController is not { } health || !health.IsAlive) continue;
+            if (Physics.Linecast(emitterPosition, target.PlayerBones.Head.position, (int)LayersMaskController.GrenadeObstaclesColliderMask)) continue;
+            var facing = Mathf.Clamp01(Vector3.Dot(cache.DirectionToEmitter, player.LookDirection));
             var sound = Mathf.InverseLerp(blindnessSettings.y / radius, blindnessSettings.x / radius, cache.Distance);
             var visual = Mathf.InverseLerp(blindnessSettings.y, blindnessSettings.x, cache.Distance) * facing;
             if (bridge.IsAI && target.AIData?.BotOwner is { } bot && bot.BotState == EBotState.Active)

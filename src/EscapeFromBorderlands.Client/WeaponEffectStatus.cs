@@ -12,12 +12,12 @@ internal static partial class LegendaryRuntime
         if (player.HandsController?.Item != weapon || player.HealthController?.IsAlive != true ||
             !RarityResolver.TryGetDefinition(weapon, out var definition) || definition.MeleeEffect is not null || definition.BackpackEffect is not null) return null;
         if (PermanentStatus(definition)) return null;
-        UpdateLiveState(player, weapon);
+        UpdateLiveState(player, weapon, definition);
         lock (Sync)
         {
             // This is the same non-consuming next-shot evaluation used by live
             // weapon stats. Never reuse LastApplication from a previous bullet.
-            var application = GetLiveApplication(weapon);
+            var application = EvaluateLiveData(weapon);
             var state = GetState(weapon.Id);
             if (RemainingAmmo(weapon) <= 0 && application.ReloadSpeedMultiplier == 1f)
             {

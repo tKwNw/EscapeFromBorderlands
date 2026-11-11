@@ -14,46 +14,46 @@ namespace EscapeFromBorderlands.Server;
 // then roll once on each successfully generated supported reward root.
 internal sealed class StatRewardsLegendaryRolls
 {
-    private readonly HashSet<string> Known;
-    private readonly Dictionary<string, VariantDefinition[]> Variants;
+    private readonly HashSet<MongoId> Known;
+    private readonly Dictionary<MongoId, WeightedSpawnChoices> Variants;
     internal StatRewardsLegendaryRolls(IEnumerable<VariantDefinition> definitions,
         IEnumerable<LegacyAliasDefinition> aliases, IReadOnlySet<string> registered)
     {
         var all = definitions.ToArray();
-        Known = all.Select(v => v.TemplateId).Concat(aliases.Select(v => v.TemplateId)).ToHashSet(StringComparer.Ordinal);
+        Known = all.Select(v => new MongoId(v.TemplateId)).Concat(aliases.Select(v => new MongoId(v.TemplateId))).ToHashSet();
         Variants = all.Where(v => registered.Contains(v.TemplateId) && v.SpawnEnabled && !v.IsMysteryFleaOffer &&
                 double.IsFinite(v.SpawnWeight) && v.SpawnWeight > 0 &&
                 v.WeaponClass is not "grenadeLauncher" and not "specialWeapon")
-            .DistinctBy(v => v.TemplateId).GroupBy(v => v.SourceTemplateId)
-            .ToDictionary(g => g.Key, g => g.OrderBy(v => v.TemplateId, StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
+            .DistinctBy(v => v.TemplateId).GroupBy(v => new MongoId(v.SourceTemplateId))
+            .ToDictionary(g => g.Key, g => new WeightedSpawnChoices(g.OrderBy(v => v.TemplateId, StringComparer.Ordinal).ToArray()));
     }
     internal List<MongoId> Filter(string category, List<MongoId> pool) => category is "gear" or "_weapons_with_presets" &&
-        pool.Any(id => Known.Contains(id.ToString())) ? pool.Where(id => !Known.Contains(id.ToString())).ToList() : pool;
+        pool.Exists(Known.Contains) ? pool.FindAll(id => !Known.Contains(id)) : pool;
 
     internal void Convert(List<Item> items, int before, RarityConfiguration config, Func<double> randomUnit)
     {
-        if (!config.Enabled || config.StatRewardsFraction <= 0 || before < 0 || before >= items.Count) return;
-        var added = items.Skip(before).ToArray();
-        var ids = added.Select(i => i.Id.ToString()).ToHashSet(StringComparer.Ordinal);
-        var roots = added.Where(i => i.ParentId is null || !ids.Contains(i.ParentId)).ToArray();
-        if (roots.Length != 1) return;
-        var root = roots[0];
-        if ((root.Upd?.StackObjectsCount ?? 1d) != 1d || !Variants.TryGetValue(root.Template.ToString(), out var variants)) return;
-        if (config.StatRewardsFraction < 1d && randomUnit() >= config.StatRewardsFraction) return;
-        var pick = Math.Clamp(randomUnit(), 0d, 1d) * variants.Sum(v => v.SpawnWeight);
-        var selected = variants[^1];
-        foreach (var variant in variants)
+        var fraction = config.StatRewardsFraction;
+        if (!config.Enabled || fraction <= 0 || before < 0 || before >= items.Count) return;
+        var ids = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = before; i < items.Count; i++) ids.Add(items[i].Id.ToString());
+        Item? root = null;
+        for (var i = before; i < items.Count; i++)
         {
-            pick -= variant.SpawnWeight;
-            if (pick < 0d) { selected = variant; break; }
+            var item = items[i];
+            if (item.ParentId is { } parent && ids.Contains(parent)) continue;
+            if (root is not null) return;
+            root = item;
         }
+        if (root is null || (root.Upd?.StackObjectsCount ?? 1d) != 1d || !Variants.TryGetValue(root.Template, out var variants)) return;
+        if (fraction < 1d && randomUnit() >= fraction) return;
+        var (selected, id) = variants.Pick(Math.Clamp(randomUnit(), 0d, 1d));
         // Change only the root template and an incompatible saved fire mode.
         // Native IDs, attachments, armor inserts, durability and FIR stay intact.
         var state = root.Upd;
         if (selected.FireModes.Count > 0 && state is { FireMode: { } mode } &&
             !selected.FireModes.Contains(mode.FireMode ?? "", StringComparer.OrdinalIgnoreCase))
             state = state with { FireMode = mode with { FireMode = selected.FireModes[0] } };
-        root.Template = new MongoId(selected.TemplateId);
+        root.Template = id;
         root.Upd = state;
     }
 }
@@ -61,6 +61,8 @@ internal sealed class StatRewardsLegendaryRolls
 [Injectable(InjectionType.Singleton, int.MaxValue)]
 public sealed class StatRewardsCompatibility(ISptLogger<StatRewardsCompatibility> logger, TemplateTable templates) : IOnLoad
 {
+    private readonly ReleaseLog releaseLog = new(logger);
+
     public Task OnLoadAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -70,9 +72,9 @@ public sealed class StatRewardsCompatibility(ISptLogger<StatRewardsCompatibility
         if (type is null) return Task.CompletedTask;
         var catalog = LegendaryCatalog.Load();
         var registered = templates.Items.Keys.Select(id => id.ToString()).ToHashSet(StringComparer.Ordinal);
-        StatRewardsIntegration.Configure(catalog, registered, config, message => logger.Warning(message));
+        StatRewardsIntegration.Configure(catalog, registered, config, message => releaseLog.Warning(message));
         if (StatRewardsIntegration.Install(type))
-            logger.Info($"[Escape From Borderlands] Stat Rewards compatibility enabled: {config.StatRewardsFraction * 100d:0.###}% per supported random equipment reward.");
+            releaseLog.Info($"[Escape From Borderlands] Stat Rewards compatibility enabled: {config.StatRewardsFraction * 100d:0.###}% per supported random equipment reward.");
         return Task.CompletedTask;
     }
 }

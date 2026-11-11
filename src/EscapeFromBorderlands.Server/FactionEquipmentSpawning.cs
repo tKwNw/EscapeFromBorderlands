@@ -24,9 +24,11 @@ internal static class FactionEquipmentSpawning
         var all = definitions.ToArray();
         Config = config;
         AllIds = all.Select(v => v.TemplateId).Concat(aliases).ToHashSet(StringComparer.Ordinal);
-        Active = all.Where(v => v.SpawnEnabled && v.GrenadeChargesPerRaid == 0 && v.WeaponClass is not "grenadeLauncher" and not "specialWeapon").ToArray();
+        Active = all.Where(v => v.SpawnEnabled && !v.IsHeadwear && v.GrenadeChargesPerRaid == 0 && v.WeaponClass is not "grenadeLauncher" and not "specialWeapon").ToArray();
         Imported.Clear();
     }
+
+    internal static void ResetImported() => Imported.Clear();
 
     internal static void RememberImported(int tier, string category, IEnumerable<string> ids)
     {
@@ -57,32 +59,23 @@ internal static class FactionEquipmentSpawning
         Apply(__result, botRole, tierNumber);
     }
 
+    // Clean every returned slot, including APBS range weapons and ArmouredRig.
+    // Final inventory conversion owns the only roll; imported eligibility is irrelevant.
     internal static void Apply(object equipment, string role, int tier)
     {
-        if (equipment is not IDictionary slots || BotSpawnGroups.Group(role) is "pmcUsec" or "pmcBear") return;
+        if (equipment is not IDictionary slots) return;
         foreach (DictionaryEntry slot in slots)
         {
             if (slot.Value is not IDictionary pool) continue;
-            var slotName = slot.Key.ToString() ?? "";
-            var eligibleSlot = slotName is "FirstPrimaryWeapon" or "SecondPrimaryWeapon" or "Holster" or "Scabbard" or "Backpack" or "TacticalVest" or "ArmorVest" or "Earpiece";
-            var category = RarityConfiguration.Category(slotName);
-            var before = Entries(pool).ToArray();
-            foreach (var entry in before) if (AllIds.Contains(entry.Key.ToString() ?? "")) pool.Remove(entry.Key);
-            var fraction = eligibleSlot && !CustomBotSpawning.UsesPostGeneration(role) ? Config.BotFraction("apbs", role, category) : 0d;
-            if (fraction <= 0d || pool.Count == 0) continue;
-            var allowed = Imported.GetValueOrDefault((tier, category));
-            var variants = Active.Where(v => Category(v) == category && (category == "melee" || allowed?.Contains(v.TemplateId) == true)).ToArray();
-            var sources = variants.GroupBy(v => v.SourceTemplateId).ToDictionary(g => g.Key, g => g.Select(v => v.TemplateId).ToArray(), StringComparer.Ordinal);
-            var originals = Entries(pool).ToDictionary(e => e.Key.ToString()!, e => Convert.ToDouble(e.Value, CultureInfo.InvariantCulture), StringComparer.Ordinal);
-            var weights = CategorySpawnPolicy.Weights(originals, sources, fraction, variants.ToDictionary(v => v.TemplateId, v => v.SpawnWeight));
-            var example = pool.Keys.Cast<object>().First();
-            foreach (var pair in weights)
-            {
-                var key = example is string ? pair.Key : Activator.CreateInstance(example.GetType(), new object[] { pair.Key });
-                if (key is not null) pool[key] = pair.Value;
-            }
+            foreach (var entry in Entries(pool).ToArray())
+                if (AllIds.Contains(entry.Key.ToString() ?? "")) pool.Remove(entry.Key);
         }
     }
+    internal static bool IsEquipmentSlot(string slot) => slot is
+        "FirstPrimaryWeapon" or "SecondPrimaryWeapon" or
+        "FirstPrimaryWeapon_LongRange" or "FirstPrimaryWeapon_ShortRange" or
+        "SecondPrimaryWeapon_LongRange" or "SecondPrimaryWeapon_ShortRange" or
+        "Holster" or "Scabbard" or "Backpack" or "TacticalVest" or "ArmorVest" or "Earpiece";
 
     private static string Category(VariantDefinition v) => v.IsEarpiece ? "earpieces" : v.MeleeEffect is not null ? "melee" : v.BackpackEffect is not null ? "backpacks" : v.ChestRigEffect is not null ? "chestRigs" : "guns";
 

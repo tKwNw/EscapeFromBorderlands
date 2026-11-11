@@ -11,16 +11,32 @@ internal static class RarityResolver
     private static readonly LegendaryCatalog Catalog = LegendaryCatalog.Load();
     private static readonly Dictionary<string, VariantDefinition> Definitions = Catalog.Variants
         .ToDictionary(definition => definition.TemplateId, StringComparer.Ordinal);
-    private static readonly Dictionary<string, ShotRoll> RollsByInstance = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, string> MasterySources = Catalog.Variants
+        .Where(definition => !definition.IsMysteryFleaOffer)
+        .Concat(Catalog.LegacyAliases)
+        .ToDictionary(definition => definition.TemplateId, definition => definition.SourceTemplateId, StringComparer.Ordinal);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, ShotRoll> RollsByInstance = new(StringComparer.Ordinal);
+    private static readonly List<(string Id, ShotRoll Roll)> PendingRollLogs = new(32);
     private static readonly HashSet<string> LoggedInstances = new(StringComparer.Ordinal);
 
     public static int DefinitionCount => Definitions.Values.Select(d => !string.IsNullOrEmpty(d.FleaRevealTemplateId)
         ? d.FleaRevealTemplateId : string.IsNullOrEmpty(d.StorageFamilyId) ? d.TemplateId : d.StorageFamilyId).Distinct(StringComparer.Ordinal).Count();
     public static int CatalogRevision => Catalog.CatalogRevision;
 
+    internal static string SourceTemplateForMastery(string templateId) =>
+        MasterySources.TryGetValue(templateId, out var sourceId) ? sourceId : templateId;
+
     public static void ResetSession()
     {
-        lock (Sync) { RollsByInstance.Clear(); LoggedInstances.Clear(); }
+        lock (Sync)
+        {
+            try
+            {
+                foreach (var log in PendingRollLogs)
+                    Plugin.LogSource.LogInfo($"{log.Roll.Tier} roll for {log.Id}: {string.Join(", ", log.Roll.AffixDescriptions)}");
+            }
+            finally { RollsByInstance.Clear(); LoggedInstances.Clear(); PendingRollLogs.Clear(); }
+        }
     }
 
     public static ShotRoll? Resolve(Item? weapon)
@@ -29,7 +45,12 @@ internal static class RarityResolver
         {
             return null;
         }
+        return Resolve(weapon, definition);
+    }
 
+    internal static ShotRoll Resolve(Item weapon, VariantDefinition definition)
+    {
+        if (RollsByInstance.TryGetValue(weapon.Id, out var existing)) return existing;
         lock (Sync)
         {
             if (RollsByInstance.TryGetValue(weapon.Id, out var cached))
@@ -62,13 +83,8 @@ internal static class RarityResolver
     {
         lock (Sync)
         {
-            if (!LoggedInstances.Add(weapon.Id))
-            {
-                return;
-            }
+            if (PendingRollLogs.Count < 32 && LoggedInstances.Add(weapon.Id)) PendingRollLogs.Add((weapon.Id, roll));
         }
-
-        Plugin.LogSource.LogInfo($"{roll.Tier} roll for {weapon.Id}: {string.Join(", ", roll.AffixDescriptions)}");
     }
 
     private static ShotRoll RollProcedural(string instanceId, VariantDefinition definition)
@@ -83,6 +99,7 @@ internal static class RarityResolver
         var rng = new StableRandom(Fnv1a(instanceId + ":" + definition.TemplateId));
         if (definition.GrenadeChargesPerRaid > 0) return RollGrenade(rng, definition);
         if (definition.IsEarpiece) return RollEarpiece(rng, definition);
+        if (definition.IsHeadwear) return RollHeadwear(rng, definition);
         if (definition.ChestRigEffect is not null) return RollChestRig(rng, definition);
         if (definition.BackpackEffect is not null) return RollBackpack(rng, definition);
         if (definition.MeleeEffect is not null) return RollMelee(rng, definition);
@@ -279,6 +296,32 @@ internal static class RarityResolver
         return roll;
     }
 
+    private static ShotRoll RollHeadwear(StableRandom rng, VariantDefinition definition)
+    {
+        var roll = new ShotRoll(definition, $"Legendary — {definition.DisplayName}", "#FF9D28");
+        var choices = Enumerable.Range(0, definition.WeaponClass == "armoredHeadwear" ? 9 : 6).ToList();
+        var bonus = new HeadwearRoll();
+        float Pick(int min, int max) => (min + rng.Next((max - min) / 5 + 1) * 5) / 100f;
+        for (var i = 0; i < 4; ++i)
+        {
+            var index = rng.Next(choices.Count); var kind = choices[index]; choices.RemoveAt(index);
+            switch (kind)
+            {
+                case 0: bonus.Camera = Pick(20, 35); roll.AffixDescriptions.Add($"Braced Neck −{bonus.Camera:P0} damage camera kick"); break;
+                case 1: bonus.Freelook = .20f; roll.AffixDescriptions.Add("Peripheral Vision +20% freelook angle"); break;
+                case 2: bonus.Search = Pick(20, 40); roll.AffixDescriptions.Add($"Quick Study +{bonus.Search:P0} search speed"); break;
+                case 3: bonus.Lean = Pick(15, 25); roll.AffixDescriptions.Add($"Quick Lean +{bonus.Lean:P0} lean speed"); break;
+                case 4: bonus.Stance = Pick(15, 25); roll.AffixDescriptions.Add($"Quick Duck +{bonus.Stance:P0} stance transition speed"); break;
+                case 5: bonus.Sprint = Pick(15, 25); roll.AffixDescriptions.Add($"Snap Ready +{bonus.Sprint:P0} sprint-to-ready speed"); break;
+                case 6: bonus.Blunt = Pick(10, 20); roll.AffixDescriptions.Add($"Impact Liner −{bonus.Blunt:P0} blunt HP damage from bullets stopped by this helmet"); break;
+                case 7: bonus.Durability = Pick(15, 30); roll.AffixDescriptions.Add($"Reinforced Shell −{bonus.Durability:P0} helmet durability loss from impacts"); break;
+                case 8: bonus.Ricochet = Pick(5, 15); roll.AffixDescriptions.Add($"Glancing Blow +{bonus.Ricochet:P0} to this helmet’s existing ricochet chance"); break;
+            }
+        }
+        roll.Headwear = bonus;
+        return roll;
+    }
+
     private static ShotRoll RollMelee(StableRandom rng, VariantDefinition definition)
     {
         var roll = new ShotRoll(definition, $"Legendary — {definition.DisplayName}", "#FF9D28");
@@ -407,6 +450,7 @@ internal static class RarityResolver
         public BackpackBoons Backpack { get; } = new();
         public ChestRigBoons ChestRig { get; } = new();
         public EarpieceBoons Earpiece { get; } = new();
+        internal HeadwearRoll Headwear { get; set; }
         public float GrenadeDamageMultiplier { get; set; } = 1f;
         public float GrenadeRadiusMultiplier { get; set; } = 1f;
         public float GrenadeFragmentMultiplier { get; set; } = 1f;
@@ -438,10 +482,14 @@ internal static class RarityResolver
         public List<string> AffixDescriptions { get; } = new();
         internal ShotRoll GrenadeSnapshot() => (ShotRoll)MemberwiseClone();
 
+        private string? _descriptionBlock;
+        private string? _headwearBinding;
         public string BuildDescriptionBlock()
         {
-            return $"<b><color={ColorHex}>{Tier.ToUpperInvariant()}</color></b>\n" +
-                "• " + string.Join("\n• ", AffixDescriptions.Select(line => line == Definition.EffectText ? "<color=#66D9EF>" + line + "</color>" : "<color=#E6E6E6>" + line + "</color>")) +
+            if (Definition.IsHeadwear && _headwearBinding != HeadwearSettings.Label)
+            { _headwearBinding = HeadwearSettings.Label; _descriptionBlock = null; }
+            return _descriptionBlock ??= $"<b><color={ColorHex}>{Tier.ToUpperInvariant()}</color></b>\n" +
+                "• " + string.Join("\n• ", AffixDescriptions.Select(line => line == Definition.EffectText ? "<color=#66D9EF>" + (Definition.IsHeadwear ? HeadwearSettings.Describe(line) : line) + "</color>" : "<color=#E6E6E6>" + line + "</color>")) +
                 (Definition.IsMysteryFleaOffer ? "\n4 random bonuses are revealed when purchased." : string.Empty);
         }
 

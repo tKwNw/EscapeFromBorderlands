@@ -18,7 +18,12 @@ internal sealed class LegendaryCatalog
     public List<VariantDefinition> Variants { get; set; } = new();
     public List<VariantDefinition> LegacyAliases { get; set; } = new();
 
-    public static LegendaryCatalog Load()
+    // The resource and its expanded definitions are read-only after load.
+    // Share them with compatibility hooks instead of parsing per consumer.
+    private static readonly Lazy<LegendaryCatalog> Shared = new(Read);
+    public static LegendaryCatalog Load() => Shared.Value;
+
+    private static LegendaryCatalog Read()
     {
         var assembly = Assembly.GetExecutingAssembly();
         var resourceName = assembly.GetManifestResourceNames().Single(name =>
@@ -36,7 +41,7 @@ internal sealed class LegendaryCatalog
 
 internal sealed class VariantDefinition
 {
-    public bool IsEarpiece { get; set; }
+    public bool IsEarpiece { get; set; } public bool IsHeadwear => WeaponClass is "armoredHeadwear" or "unarmoredHeadwear";
     public bool SpawnEnabled { get; set; } = true;
     public bool IsMysteryFleaOffer { get; set; }
     public string FleaRevealTemplateId { get; set; } = string.Empty;
@@ -47,7 +52,20 @@ internal sealed class VariantDefinition
     public int BackpackBaseColumns { get; set; }
     public string StorageFamilyId { get; set; } = string.Empty;
     internal VariantDefinition Copy() => (VariantDefinition)MemberwiseClone();
-    public string SourceTemplateId { get; set; } = string.Empty;
+    private const uint FnvOffset = 2166136261, FnvPrime = 16777619;
+    private string _sourceTemplateId = string.Empty, _runtimeKey = string.Empty;
+    private uint _sourceHash = unchecked((FnvOffset ^ ':') * FnvPrime);
+    private uint _runtimeHash = unchecked((FnvOffset ^ ':') * FnvPrime);
+    public string SourceTemplateId
+    {
+        get => _sourceTemplateId;
+        set
+        {
+            _sourceTemplateId = value;
+            _sourceHash = unchecked((Hash(value, FnvOffset) ^ ':') * FnvPrime);
+            _runtimeHash = Hash(_runtimeKey, _sourceHash);
+        }
+    }
     public string SourceShortName { get; set; } = string.Empty;
     public string SourceFullName { get; set; } = string.Empty;
     public string WeaponClass { get; set; } = string.Empty;
@@ -68,7 +86,11 @@ internal sealed class VariantDefinition
     public string Description { get; set; } = string.Empty;
     public string EffectKind { get; set; } = string.Empty;
     public string EffectText { get; set; } = string.Empty;
-    public string RuntimeKey { get; set; } = string.Empty;
+    public string RuntimeKey
+    {
+        get => _runtimeKey;
+        set { _runtimeKey = value; _runtimeHash = Hash(value, _sourceHash); }
+    }
     public int TriggerIndex { get; set; } = -1;
     public int PayoffIndex { get; set; } = -1;
     public int SecondaryPayoffIndex { get; set; } = -1;
@@ -91,7 +113,7 @@ internal sealed class VariantDefinition
             return minimum;
         }
 
-        return minimum + (int)(Fnv1a(SourceTemplateId + ":" + key) % (uint)(maximum - minimum + 1));
+        return minimum + (int)(SignatureHash(key) % (uint)(maximum - minimum + 1));
     }
 
     public float Decimal(string key, int minimum, int maximum) => Number(key, minimum, maximum) / 10f;
@@ -106,21 +128,20 @@ internal sealed class VariantDefinition
         }
 
         var count = (last - first) / step + 1;
-        return first + (int)(Fnv1a(SourceTemplateId + ":" + key) % (uint)count) * step;
+        return first + (int)(SignatureHash(key) % (uint)count) * step;
     }
 
-    private static uint Fnv1a(string value)
+    private uint SignatureHash(string key)
     {
-        const uint offset = 2166136261;
-        const uint prime = 16777619;
-        var hash = offset;
-        foreach (var character in value)
-        {
-            hash ^= character;
-            hash *= prime;
-        }
+        var hash = ReferenceEquals(key, _runtimeKey) ? _runtimeHash : Hash(key, _sourceHash);
+        return hash == 0 ? FnvOffset : hash;
+    }
 
-        return hash == 0 ? offset : hash;
+    private static uint Hash(string? value, uint hash)
+    {
+        if (value is null) return hash; // String concatenation treated null as empty.
+        foreach (var character in value) hash = unchecked((hash ^ character) * FnvPrime);
+        return hash;
     }
 }
 

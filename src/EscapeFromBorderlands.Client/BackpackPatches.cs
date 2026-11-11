@@ -19,7 +19,11 @@ internal static class BackpackCachedValuePatch
         AccessTools.PropertyGetter(typeof(Deferred<float>), "Value") };
     private static void Postfix(Compute<float> __instance, ref float __result)
     {
-        if (BackpackRuntime.Values.TryGetValue(__instance, out var value)) __result *= BackpackRuntime.Value(value.Player, value.Kind) * ChestRigRuntime.Value(value.Player, value.Kind) * GrenadeBuffs.Recovery(value.Player, value.Kind) * EarpieceRuntime.Value(value.Player, value.Kind);
+        if (!BackpackRuntime.Values.TryGetValue(__instance, out var value)) return;
+        var (player, kind) = value;
+        var observed = PlayerRefresh.CanObserve(player);
+        __result *= BackpackRuntime.Value(player, kind, observed) * ChestRigRuntime.Value(player, kind, observed) *
+            GrenadeBuffs.Recovery(player, kind) * EarpieceRuntime.Value(player, kind, observed) * Headwear.Recovery(player, kind);
     }
 }
 internal static class BackpackWeightScope
@@ -29,31 +33,6 @@ internal static class BackpackWeightScope
 [HarmonyPatch(typeof(Physical), nameof(Physical.OnWeightUpdated))]
 internal static class BackpackPhysicalWeightPatch
 {
-    private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        var field = AccessTools.Field(typeof(PhysicalBase), "WalkSpeedLimit");
-        var count = 0;
-        foreach (var instruction in instructions)
-        {
-            if (instruction.opcode == System.Reflection.Emit.OpCodes.Stfld && Equals(instruction.operand, field))
-            {
-                // Correct only the native weight limit, before native movement
-                // combines it with aiming, terrain and all other restrictions.
-                var opcode = instruction.opcode; var operand = instruction.operand;
-                instruction.opcode = System.Reflection.Emit.OpCodes.Ldarg_0; instruction.operand = null;
-                yield return instruction;
-                yield return new CodeInstruction(System.Reflection.Emit.OpCodes.Call, AccessTools.Method(typeof(BackpackPhysicalWeightPatch), nameof(WalkLimit)));
-                yield return new CodeInstruction(opcode, operand);
-                count++;
-                continue;
-            }
-            yield return instruction;
-        }
-        if (count != 1) throw new InvalidOperationException($"Expected one native walking weight limit assignment; found {count}.");
-    }
-    // Feather Light removes only its own template penalties and empty weight.
-    // Contents and all other carried gear still incur their ordinary weight penalties.
-    internal static float WalkLimit(float value, Physical physical) => value;
     internal sealed class Snapshot
     {
         public Player? Previous;
@@ -80,10 +59,20 @@ internal static class BackpackWeightValuePatch
     private static void Postfix(Deferred<float> __instance, ref float __result)
     {
         var p = BackpackWeightScope.Player;
-        if (p is null) return;
-        var inv = p.InventoryController.Inventory;
-        if (ReferenceEquals(MeleeWeightScope.Inventory, inv)) return; // The shared EFB pass composes bag and melee discounts in order.
-        if (ReferenceEquals(__instance, inv.TotalWeight) || ReferenceEquals(__instance, inv.TotalWeightEliteSkill)) __result = BackpackRuntime.Weight(p, __result);
+        var melee = MeleeWeightScope.Inventory;
+        if (p is not null)
+        {
+            var inv = p.InventoryController.Inventory;
+            if (!ReferenceEquals(melee, inv) &&
+                (ReferenceEquals(__instance, inv.TotalWeight) || ReferenceEquals(__instance, inv.TotalWeightEliteSkill)))
+                __result = BackpackRuntime.Weight(p, __result);
+        }
+        if (melee is not null &&
+            (ReferenceEquals(__instance, melee.TotalWeight) || ReferenceEquals(__instance, melee.TotalWeightEliteSkill)))
+        {
+            if (p is not null) __result = BackpackRuntime.Weight(p, __result);
+            __result *= MeleeWeightScope.Multiplier;
+        }
     }
 }
 [HarmonyPatch(typeof(MovementContext), nameof(MovementContext.OnJump))]

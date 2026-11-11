@@ -24,14 +24,26 @@ internal sealed class GrenadeChargeLedger
     {
         if (string.IsNullOrEmpty(itemId) || capacity < 1) throw new ArgumentException("A reusable grenade needs an item ID and positive capacity.");
         if (!Items.TryGetValue(itemId, out var entry)) Items[itemId] = entry = new Entry { Capacity = capacity };
-        entry.Interval = double.IsNaN(interval) || double.IsInfinity(interval) ? 180 : Math.Max(1, interval);
-        Advance(entry);
+        Update(entry, interval);
         return entry;
     }
+    private void Update(Entry entry, double interval)
+    {
+        SetInterval(entry, interval);
+        Advance(entry);
+    }
+    private static void SetInterval(Entry entry, double interval) =>
+        entry.Interval = double.IsNaN(interval) || double.IsInfinity(interval) ? 180 : Math.Max(1, interval);
+
     private void Advance(Entry e)
     {
-        if (e.Spent == 0 || e.NextCharge <= 0 || Clock() < e.NextCharge) return;
-        var restored = (int)Math.Min(e.Spent, 1 + Math.Floor((Clock() - e.NextCharge) / e.Interval));
+        if (e.Spent == 0 || e.NextCharge <= 0) return;
+        Advance(e, Clock());
+    }
+    private static void Advance(Entry e, double now)
+    {
+        if (e.Spent == 0 || e.NextCharge <= 0 || now < e.NextCharge) return;
+        var restored = (int)Math.Min(e.Spent, 1 + Math.Floor((now - e.NextCharge) / e.Interval));
         e.Spent -= restored;
         e.NextCharge = e.Spent == 0 ? 0 : e.NextCharge + restored * e.Interval;
     }
@@ -39,6 +51,39 @@ internal sealed class GrenadeChargeLedger
     { lock (Sync) { var e = Get(itemId, capacity, interval); return Math.Max(0, e.Capacity - e.Spent); } }
     internal double SecondsUntil(string itemId, int capacity, double interval = 180)
     { lock (Sync) { var e = Get(itemId, capacity, interval); return e.Spent == 0 ? 0 : Math.Max(0, e.NextCharge - Clock()); } }
+    internal (int Remaining, double Seconds) Display(string itemId, int capacity, double interval)
+    {
+        lock (Sync)
+        {
+            if (!Items.TryGetValue(itemId, out var entry)) return (capacity, 0d);
+            Update(entry, interval);
+            return (Math.Max(0, entry.Capacity - entry.Spent),
+                entry.Spent == 0 ? 0d : Math.Max(0d, entry.NextCharge - Clock()));
+        }
+    }
+    internal readonly struct DisplayQuery
+    {
+        internal readonly string Id;
+        internal readonly int Capacity;
+        internal readonly double Interval;
+        internal DisplayQuery(string id, int capacity, double interval) { Id = id; Capacity = capacity; Interval = interval; }
+    }
+    internal void DisplayBatch(List<DisplayQuery> queries, List<(int Remaining, double Seconds)> output)
+    {
+        output.Clear();
+        lock (Sync)
+        {
+            var now = Clock();
+            foreach (var q in queries)
+            {
+                if (!Items.TryGetValue(q.Id, out var entry)) { output.Add((q.Capacity, 0d)); continue; }
+                SetInterval(entry, q.Interval);
+                Advance(entry, now);
+                output.Add((Math.Max(0, entry.Capacity - entry.Spent),
+                    entry.Spent == 0 ? 0d : Math.Max(0d, entry.NextCharge - now)));
+            }
+        }
+    }
     internal bool Reserve(string itemId, int capacity, string token, double interval = 180)
     {
         if (string.IsNullOrEmpty(token)) throw new ArgumentException("A throw needs a reservation token.");

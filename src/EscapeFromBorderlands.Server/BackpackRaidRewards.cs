@@ -58,14 +58,13 @@ internal static class BackpackRaidRewards
         // Normalize a successful run-through before SPT calculates survival,
         // found-in-raid retention and post-raid rewards. Deaths and transfers
         // keep their original result.
-        if (request.Results?.Result == ExitStatus.RUNNER && Bag(request) is { } pass &&
-            _bags.TryGetValue(pass, out var passEffect) && passEffect == "BP25-2")
+        if (request.Results?.Result is not (ExitStatus.SURVIVED or ExitStatus.RUNNER)) return;
+        using var timing = ServerPerformanceTrace.Measure("raid end gear rewards");
+        if (Bag(request) is not { } bag || !_bags.TryGetValue(bag, out var key)) return;
+        if (request.Results.Result == ExitStatus.RUNNER && key == "BP25-2")
             request.Results.Result = ExitStatus.SURVIVED;
-        if (request.Results?.Result is ExitStatus.SURVIVED or ExitStatus.RUNNER &&
-            Bag(request) is { } worn && _bags.TryGetValue(worn, out var effect) && effect == "BP36-2")
-            PendingHealing[sessionId] = IsPmc(request);
-        if (request.Results?.Result != ExitStatus.SURVIVED || Bag(request) is not { } bag ||
-            !_bags.TryGetValue(bag, out var key) || key != "BP26-1" ||
+        if (key == "BP36-2") PendingHealing[sessionId] = IsPmc(request);
+        if (request.Results.Result != ExitStatus.SURVIVED || key != "BP26-1" ||
             request.ExtensionData?.TryGetValue("efbBackpack", out var raw) != true || raw is null) return;
         var report = raw is JsonElement element ? element : JsonSerializer.SerializeToElement(raw);
         if (!report.TryGetProperty("templateId", out var template) || template.GetString() != bag ||

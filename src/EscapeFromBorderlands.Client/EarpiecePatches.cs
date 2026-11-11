@@ -35,12 +35,12 @@ internal static class EarpieceKillPatch
 [HarmonyPatch(typeof(Weapon), "get_RecoilDelta")]
 internal static class EarpieceRecoilPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result) => __result = (1f + __result) * EarpieceRuntime.Recoil(BackpackNative.WeaponOwner(__instance)) - 1f;
+    private static void Postfix(Weapon __instance, ref float __result) => __result = (1f + __result) * EarpieceRuntime.StatRecoil(__instance) * Headwear.Factor(Headwear.Owner(__instance), HatStat.Recoil) - 1f;
 }
 [HarmonyPatch(typeof(Weapon), "get_CenterOfImpactDelta")]
 internal static class EarpieceAccuracyPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result) => __result = (1f + __result) * EarpieceRuntime.Accuracy(BackpackNative.WeaponOwner(__instance)) - 1f;
+    private static void Postfix(Weapon __instance, ref float __result) => __result = (1f + __result) * EarpieceRuntime.StatAccuracy(__instance) * Headwear.Factor(Headwear.Owner(__instance), HatStat.Dispersion) - 1f;
 }
 [HarmonyPatch(typeof(Weapon), "get_VelocityDelta")]
 internal static class EarpieceVelocityPatch
@@ -51,7 +51,7 @@ internal static class EarpieceVelocityPatch
 internal static class EarpieceFireRatePatch
 {
     private static IEnumerable<MethodBase> TargetMethods() => new[] { AccessTools.PropertyGetter(typeof(Weapon), "FireRate"), AccessTools.PropertyGetter(typeof(Weapon), "SingleFireRate") };
-    private static void Postfix(Weapon __instance, ref int __result) => __result = Math.Max(1, (int)Math.Round(__result * EarpieceRuntime.FireRate(BackpackNative.WeaponOwner(__instance))));
+    private static void Postfix(Weapon __instance, ref int __result) => __result = Math.Max(1, (int)Math.Round(__result * EarpieceRuntime.FireRate(Headwear.Owner(__instance)) * Headwear.Factor(Headwear.Owner(__instance), HatStat.FireRate)));
 }
 [HarmonyPatch(typeof(Player.FirearmController), nameof(Player.FirearmController.GetWeaponDrawSpeedMultiplier))]
 internal static class EarpieceDrawPatch
@@ -65,7 +65,7 @@ internal static class EarpieceAimPatch
     private static void Postfix(ProceduralWeaponAnimation __instance)
     {
         var player = Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => ReferenceEquals(p.ProceduralWeaponAnimation, __instance));
-        var factor = EarpieceRuntime.Aim(player); if (factor == 1f) return;
+        var factor = EarpieceRuntime.Aim(player) * Headwear.Factor(Headwear.Get(__instance), HatStat.Aim); if (factor == 1f) return;
         var speed = (float)Speed.GetValue(__instance)! * factor; Speed.SetValue(__instance, speed);
         if (Native.Get(__instance, "_aimSwayBlender") is Player.ValueBlender blend) blend.Speed = __instance.SwayFalloff / speed;
     }
@@ -166,14 +166,14 @@ internal static class EarpieceTinnitusPatch
 internal static class EarpieceEmittedStepPatch
 {
     private static void Prefix(object person, AISoundType type, ref float power)
-    { if (type == AISoundType.step) power *= EarpieceRuntime.EmittedStep(person as Player); }
+    { if (type == AISoundType.step) power *= EarpieceRuntime.EmittedStep(person as Player) * Headwear.Factor(person as Player, HatStat.Noise); else if (type is AISoundType.gun or AISoundType.silencedGun) power *= Headwear.Factor(person as Player, HatStat.Gunshot); }
 }
 [HarmonyPatch(typeof(BreachDoorState), nameof(BreachDoorState.ExecuteDoorInteraction))]
 internal static class EarpieceBreachPatch
 {
     private static void Prefix(WorldInteractiveObject interactive, out bool __state) => __state = (interactive as Door)?.IsBroken == true;
     private static void Postfix(WorldInteractiveObject interactive, InteractionResult interactionResult, Player user, bool __state)
-    { if (!__state && interactionResult.InteractionType == EInteractionType.Breach && interactive is Door { IsBroken: true }) EarpieceRuntime.Get(user)?.Effect.Breached(); }
+    { if (!__state && interactionResult.InteractionType == EInteractionType.Breach && interactive is Door { IsBroken: true }) { EarpieceRuntime.Get(user)?.Effect.Breached(); Headwear.Breach(user); } }
 }
 
 internal static class EarpieceFoodUse
@@ -198,12 +198,13 @@ internal static class EarpieceFoodStartPatch
 {
     private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController.MedEffect), "Started");
     private static void Prefix(object __instance) => EarpieceFoodUse.Begin(__instance);
+    private static void Postfix(object __instance) => HatMedical.Start(__instance);
 }
 [HarmonyPatch]
 internal static class EarpieceFoodEndPatch
 {
     private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController.MedEffect), "Residue");
-    private static void Postfix(object __instance) => EarpieceFoodUse.End(__instance);
+    private static void Postfix(object __instance) { EarpieceFoodUse.End(__instance); HatMedical.End(__instance); }
 }
 
 [HarmonyPatch(typeof(FirearmControllerSharedMethods), nameof(FirearmControllerSharedMethods.ApplyLightAndSoundHealthEffects))]

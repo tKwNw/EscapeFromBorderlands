@@ -41,12 +41,17 @@ internal static class BallisticEffectPatch
             __result.FragmentationChance = Clamp01(__result.FragmentationChance + application.FragmentationChanceBonus);
         }
         ChestRigBallistics.Apply(__result,ammo,player,ref application);
+        if (HatCartridge.Current is { } hat && weapon == hat.Gun) __result.PenetrationPower *= hat.Penetration;
         if (EarpieceRuntime.CurrentShot is { } earpiece && weapon == earpiece.Weapon) __result.Damage *= earpiece.Damage;
         LegendaryGrenadeEffects.Fragment(__result, weapon);
         if(application.Active && application.ProjectileCount>1)
         {
             __result.Damage *= application.ProjectileDamageMultiplier;
-            if(fragmentIndex==0)ProjectileEffectSpawner.Spawn(__instance,__result,application);
+            if (fragmentIndex == 0)
+            {
+                using var timing = GrenadeSpikeTrace.MeasureWeapon(application.Definition, "extra projectiles");
+                ProjectileEffectSpawner.Spawn(__instance, __result, application);
+            }
         }
         LegendaryRuntime.Associate(__result,application);
         if(roll is not null)RarityResolver.LogRollOnce(weapon,roll);

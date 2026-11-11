@@ -17,7 +17,9 @@ internal static class MeleeRuntime
     private static readonly FieldInfo HandsPlayer = AccessTools.Field(typeof(Player.ItemHandsController), "_player");
     private static readonly FieldInfo MovementPlayer = AccessTools.Field(typeof(MovementContext), "_player");
     private static readonly Dictionary<Player, HeldState> States = new();
-    private static readonly Dictionary<Stamina, Player> LegStaminaOwners = new();
+    private static System.Runtime.CompilerServices.ConditionalWeakTable<Stamina, Player> LegStaminaOwners = new();
+    private static readonly List<Player> Stale = new();
+    private static readonly EquipmentSlot[] PrimarySlots = { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon };
     private static readonly EBodyPart[] Parts =
     {
         EBodyPart.Head, EBodyPart.Chest, EBodyPart.Stomach, EBodyPart.LeftArm,
@@ -26,23 +28,52 @@ internal static class MeleeRuntime
 
     public static Player? Owner(Player.ItemHandsController controller) => HandsPlayer.GetValue(controller) as Player;
     public static Player? Owner(MovementContext context) => MovementPlayer.GetValue(context) as Player;
-    public static Player? Owner(Stamina stamina) => LegStaminaOwners.TryGetValue(stamina, out var player) ? player : null;
+    public static Player? Owner(Stamina stamina)
+    {
+        if (BackpackRuntime.StaminaOwners.TryGetValue(stamina, out var owner) &&
+            owner != null && !owner.Destroyed && ReferenceEquals(stamina, owner.Physical?.Stamina)) return owner;
+        return LegStaminaOwners.TryGetValue(stamina, out var player) &&
+            player != null && !player.Destroyed && ReferenceEquals(stamina, player.Physical?.Stamina) ? player : null;
+    }
+
+    private static void ObserveEndpoint(Player player, Stamina stamina)
+    {
+        if (BackpackRuntime.StaminaOwners.TryGetValue(stamina, out var shared) && ReferenceEquals(shared, player)) return;
+        if (LegStaminaOwners.TryGetValue(stamina, out var old))
+        {
+            if (ReferenceEquals(old, player)) return;
+            LegStaminaOwners.Remove(stamina);
+        }
+        LegStaminaOwners.Add(stamina, player);
+    }
 
     public static void Maintain(GameWorld? world)
     {
         if (world is null) return;
         foreach (var player in world.AllAlivePlayersList)
         {
-            if (player?.Physical?.Stamina is Stamina stamina) LegStaminaOwners[stamina] = player;
-            Held(player);
+            if (player == null) continue;
+            // Keep the first-frame stamina fallback before the 20 Hz
+            // equipment registry has bound a newly spawned actor.
+            if (player.Physical?.Stamina is Stamina stamina) ObserveEndpoint(player, stamina);
+            var holdsKnife = player.HandsController is Player.BaseKnifeController;
+            if (!holdsKnife && !States.ContainsKey(player) && !AdvancedMeleeRuntime.HasPendingHoldWork(player)) continue;
+            if (!PlayerRefresh.CanObserve(player)) { Forget(player); continue; }
+            AdvancedMeleeRuntime.MaintainPlayer(player, HeldLive(player));
         }
-        foreach (var player in States.Keys.Where(player => player == null || player.HealthController?.IsAlive != true).ToArray())
-            Forget(player);
+        try
+        {
+            foreach (var player in States.Keys)
+                if (player == null || player.Destroyed || player.HealthController?.IsAlive != true) Stale.Add(player!);
+            foreach (var player in Stale) Forget(player);
+        }
+        finally { Stale.Clear(); }
+        AdvancedMeleeRuntime.MaintainExpired();
     }
 
     public static void Reset()
     {
-        States.Clear(); LegStaminaOwners.Clear();
+        States.Clear(); Stale.Clear(); LegStaminaOwners = new();
         SessionCleanup.Run(nameof(MeleeWeaponSwitch), MeleeWeaponSwitch.Reset);
         SessionCleanup.Run(nameof(AdvancedMeleeRuntime), AdvancedMeleeRuntime.Reset);
     }
@@ -50,19 +81,26 @@ internal static class MeleeRuntime
 
     public static HeldState? Held(Player? player)
     {
+        if (player == null || player.Destroyed || player.HandsController is not Player.BaseKnifeController && !States.ContainsKey(player)) return null;
         if (!PlayerRefresh.CanObserve(player)) { Forget(player); return null; }
-        if (player.HealthController?.IsAlive != true || player.HandsController is not Player.BaseKnifeController controller ||
-            controller.Destroyed || RarityResolver.Resolve(controller.Item) is not { } roll || roll.Definition.MeleeEffect is null)
+        return HeldLive(player);
+    }
+    private static HeldState? HeldLive(Player player)
+    {
+        if (player.HandsController is not Player.BaseKnifeController controller || controller.Destroyed)
         {
             Forget(player);
             return null;
         }
-        if (States.TryGetValue(player, out var held) && held.Controller == controller && held.Item.Id == controller.Item.Id)
-            return held;
+        var item = controller.Item;
+        States.TryGetValue(player, out var held);
+        if (held is not null && held.Controller == controller && ReferenceEquals(held.Item, item)) return held;
+        if (RarityResolver.Resolve(item) is not { } roll || roll.Definition.MeleeEffect is null) { Forget(player); return null; }
+        if (held is not null && held.Controller == controller && held.Item.Id == item.Id) return held;
         if (held != null) AdvancedMeleeRuntime.EndHold(held);
         held = new HeldState(player, controller, roll);
         States[player] = held;
-        if (player.Physical?.Stamina is Stamina stamina) LegStaminaOwners[stamina] = player;
+        if (player.Physical?.Stamina is Stamina stamina) ObserveEndpoint(player, stamina);
         return held;
     }
 
@@ -70,7 +108,7 @@ internal static class MeleeRuntime
     {
         var equipment = player?.InventoryController?.Inventory?.Equipment;
         if (equipment is null) return false;
-        foreach (var slot in new[] { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon })
+        foreach (var slot in PrimarySlots)
         {
             var item = equipment.GetSlot(slot)?.ContainedItem;
             var id = RarityResolver.TryGetDefinition(item, out var definition) ? definition.SourceTemplateId : item?.StringTemplateId;
@@ -133,7 +171,7 @@ internal static class MeleeRuntime
             bleeding = target.ActiveHealthController?.GetAllEffects().OfType<ActiveHealthController.Bleeding>()
                 .Any(effect => effect.Existing) == true;
         }
-        return random * AdvancedMeleeRuntime.Damage(held, stab, target, part) * MeleeRules.Damage(held.Effect, stab, held.AttackNumber, held.AttackBuildup,
+        return random * (Headwear.Amplifies(held) && held.Item.StringTemplateId == "3ef13605279d6076cc9d9433" ? 1.66f / 1.33f : 1f) * AdvancedMeleeRuntime.Damage(held, stab, target, part) * MeleeRules.Damage(held.Effect, stab, held.AttackNumber, held.AttackBuildup,
             behind, bleeding, held.Player.InputDirection.sqrMagnitude > 0.0001f,
             part is EBodyPart.LeftLeg or EBodyPart.RightLeg);
     }
@@ -209,7 +247,7 @@ internal static class MeleeRuntime
             if (effect.KillLegStaminaFraction > 0f)
             {
                 var stamina = attacker.Physical.Stamina;
-                var restored = MeleeRules.RestoreStamina(stamina.Current, stamina.TotalCapacity, effect.KillLegStaminaFraction);
+                var restored = MeleeRules.RestoreStamina(stamina.Current, stamina.TotalCapacity, effect.KillLegStaminaFraction * (Headwear.Amplifies(held) ? 2f : 1f));
                 if (Math.Abs(restored - stamina.Current) >= 1f) stamina.UpdateStamina(restored);
                 else { stamina.Current = restored; stamina.InvokeChangedAction(); }
             }

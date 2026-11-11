@@ -1,16 +1,14 @@
 {
   "enabled": true,
   "addToPmcWeapons": true,
+  "addToBossWeapons": true,
+  "addToNonScavFactions": true,
   "createDefaultPresets": true,
+  "autoDetectApbs": true,
   "allowFleaMarketTrading": false,
   "allowFenceToSellEfbItems": false,
   "airdropLegendaryChancePercent": 1,
   "statRewardsLegendaryChancePercent": 1,
-  "priceMultipliers": {
-    "Legendary": 10.0
-  },
-  "addToBossWeapons": true,
-  "autoDetectApbs": true,
   "spawnChances": {
     "pmcs": {
       "guns": 1,
@@ -18,7 +16,9 @@
       "backpacks": 1,
       "chestRigs": 1,
       "grenades": 1,
-      "earpieces": 1
+      "earpieces": 1,
+      "armoredHeadwear": 1,
+      "unarmoredHeadwear": 1
     },
     "bosses": {
       "guns": 10,
@@ -26,10 +26,21 @@
       "backpacks": 10,
       "chestRigs": 10,
       "grenades": 10,
-      "earpieces": 10
+      "earpieces": 10,
+      "armoredHeadwear": 10,
+      "unarmoredHeadwear": 10
+    },
+    "scavs": {
+      "guns": 0,
+      "melee": 0,
+      "backpacks": 0,
+      "chestRigs": 0,
+      "grenades": 0,
+      "earpieces": 0,
+      "armoredHeadwear": 0,
+      "unarmoredHeadwear": 1
     }
   },
-  "addToNonScavFactions": true,
   "factionSpawnChances": {
     "raiders": {
       "guns": 1,
@@ -37,7 +48,9 @@
       "backpacks": 1,
       "chestRigs": 1,
       "grenades": 1,
-      "earpieces": 1
+      "earpieces": 1,
+      "armoredHeadwear": 1,
+      "unarmoredHeadwear": 1
     },
     "rogues": {
       "guns": 1,
@@ -45,7 +58,9 @@
       "backpacks": 1,
       "chestRigs": 1,
       "grenades": 1,
-      "earpieces": 1
+      "earpieces": 1,
+      "armoredHeadwear": 1,
+      "unarmoredHeadwear": 1
     },
     "followers": {
       "guns": 1,
@@ -53,7 +68,9 @@
       "backpacks": 1,
       "chestRigs": 1,
       "grenades": 1,
-      "earpieces": 1
+      "earpieces": 1,
+      "armoredHeadwear": 1,
+      "unarmoredHeadwear": 1
     },
     "cultists": {
       "guns": 1,
@@ -61,7 +78,9 @@
       "backpacks": 1,
       "chestRigs": 1,
       "grenades": 1,
-      "earpieces": 1
+      "earpieces": 1,
+      "armoredHeadwear": 1,
+      "unarmoredHeadwear": 1
     },
     "arenaFighters": {
       "guns": 1,
@@ -69,7 +88,9 @@
       "backpacks": 1,
       "chestRigs": 1,
       "grenades": 1,
-      "earpieces": 1
+      "earpieces": 1,
+      "armoredHeadwear": 1,
+      "unarmoredHeadwear": 1
     },
     "otherNonScavs": {
       "guns": 1,
@@ -77,7 +98,22 @@
       "backpacks": 1,
       "chestRigs": 1,
       "grenades": 1,
-      "earpieces": 1
+      "earpieces": 1,
+      "armoredHeadwear": 1,
+      "unarmoredHeadwear": 1
     }
+  },
+  "lootContainerSpawnChances": {
+    "guns": 1,
+    "melee": 1,
+    "backpacks": 1,
+    "chestRigs": 1,
+    "grenades": 1,
+    "earpieces": 1,
+    "armoredHeadwear": 1,
+    "unarmoredHeadwear": 1
+  },
+  "priceMultipliers": {
+    "Legendary": 10.0
   }
 }

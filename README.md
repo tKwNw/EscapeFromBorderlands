@@ -1,10 +1,10 @@
 # Escape From Borderlands — SPT 4.1.6
 
-**EFB 0.31.8 · Borderlands-inspired Legendary equipment for SPT.**
+**EFB 0.40.1 · Borderlands-inspired Legendary equipment for SPT.**
 
 ## Download and install
 
-[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.8-spt-4.1.6/EscapeFromBorderlands_0.31.8_SPT-4.1.6.zip) · [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.31.8-spt-4.1.6/EscapeFromBorderlands_0.31.8_SPT-4.1.6_Upgrade.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.31.8-spt-4.1.6)
+[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.1-spt-4.1.6/EscapeFromBorderlands_0.40.1_SPT-4.1.6.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.1-spt-4.1.6)
 
 For a fresh installation, close the game, launcher and server, then extract the installation ZIP into your **SPT game root**. The package installs:
 
@@ -15,9 +15,10 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 ## Latest changes
 
-- Extended `otherNonScavs` spawning to eligible custom factions registered through MoreBotsAPI, using the existing equipment-category chances with or without APBS.
-- Reduced weapon-granted impact-explosion damage by **60 percentage points**, to a minimum of **10%**. RShG-2 effects and the Pocket Rocket rig ability are unchanged.
-- Reduced repeated grenade, headset, audio and projectile maintenance, improved stale-player cleanup and made raid resets more resilient.
+- Added **106 Legendary headwear designs**, bringing the collection to **1,614** designs, with configurable abilities and headwear status visibility.
+- Fixed headwear inventory freezes, helmet ergonomics penalties and unwanted sprint-recovery status text while retaining the underlying bonuses.
+- Applied configured Legendary chances across supported bot factions and equipment categories, including with APBS modded gear disabled.
+- Reduced repeated equipment, weapon-stat and status-display work, and grouped server configuration toggles at the top.
 
 ## Legendary equipment
 
@@ -25,7 +26,7 @@ Legendary items have a fixed signature ability and 4 compatible random bonuses. 
 
 Generated Legendary flea offers show their signature ability and `????` for each of the 4 random bonuses. Each purchased copy reveals its own bonuses; existing owned items keep their rolls.
 
-Find Legendaries on PMCs, bosses and other non-Scav factions, or among supported airdrop loot. Spawn chances are configurable by faction and equipment category. Flea market availability can also be enabled in the settings.
+Find Legendaries on configured bot factions, including Scavs, and among supported airdrop and container loot. Spawn chances are configurable by faction and equipment category. Flea market availability can also be enabled in the settings.
 
 Legendary grenades are reusable: each copy has its own charges, bonuses and recharge timer. Empty copies stay in your inventory and are skipped by grenade quick select until a charge returns.
 
@@ -39,7 +40,8 @@ Legendary equipment counts as its vanilla base for objectives such as weapon kil
 | Backpacks | 67 | [Browse](docs/backpacks/README.md) |
 | Grenades | 37 | [Browse](docs/grenades/README.md) |
 | Headsets and earpieces | 39 | [Browse](docs/headsets/README.md) |
-| **Total** | **1,508** | |
+| Headwear | 106 | [Browse](docs/headwear/README.md) |
+| **Total** | **1,614** | |
 
 [Browse the complete item catalog](docs/README.md) for the Legendary names and signature effects in this SPT version.
 

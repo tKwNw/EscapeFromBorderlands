@@ -5,6 +5,7 @@ namespace EscapeFromBorderlands.Client;
 internal static class StatusHudSettings
 {
     internal static ConfigEntry<bool> Enabled = null!;
+    internal static ConfigEntry<bool> Headwear = null!;
     internal static ConfigEntry<bool> Guns = null!, Melee = null!, Backpacks = null!, ChestRigs = null!, Grenades = null!, Earpieces = null!;
     internal static ConfigEntry<float> HorizontalOffset = null!, VerticalOffset = null!, Scale = null!;
     internal static void Bind(ConfigFile config)
@@ -18,6 +19,7 @@ internal static class StatusHudSettings
         ChestRigs = config.Bind(section, "Show chest rigs", true, "Show chest-rig status and cooldown text. Gameplay effects continue when hidden.");
         Grenades = config.Bind(section, "Show grenades", true, "Show each reusable grenade's remaining charges. Hiding the display does not reset charges.");
         Earpieces = config.Bind(section, "Show earpieces", true, "Show earpiece bonuses and cooldown timers. Gameplay effects continue when hidden.");
+        Headwear = config.Bind(section, "Show headwear", true, "Show headwear bonuses and cooldown timers. Gameplay effects continue when hidden.");
         HorizontalOffset = config.Bind(section, "Horizontal offset", 0f,
             new ConfigDescription("Move the display horizontally. Positive moves right; negative moves left. Changes apply immediately.", new AcceptableValueRange<float>(-3000f, 3000f)));
         VerticalOffset = config.Bind(section, "Vertical offset", 0f,
@@ -25,6 +27,13 @@ internal static class StatusHudSettings
         Scale = config.Bind(section, "Size", 1f,
             new ConfigDescription("Resize the icons, text and spacing together. 1 is normal size. Changes apply immediately.", new AcceptableValueRange<float>(.5f, 3f)));
     }
-    internal static bool Show(EffectStatusModel.Status status) => StatusVisibility.Allows(status.Key,
-        Guns?.Value != false, Melee?.Value != false, Backpacks?.Value != false, ChestRigs?.Value != false, Grenades?.Value != false, Earpieces?.Value != false);
+    internal readonly struct Visibility
+    {
+        internal readonly bool Guns, Melee, Backpacks, Rigs, Grenades, Earpieces, Headwear;
+        internal Visibility(bool guns, bool melee, bool backpacks, bool rigs, bool grenades, bool earpieces, bool headwear = true)
+        { Guns = guns; Melee = melee; Backpacks = backpacks; Rigs = rigs; Grenades = grenades; Earpieces = earpieces; Headwear = headwear; }
+        internal bool Allows(string key) => StatusVisibility.Allows(key, Guns, Melee, Backpacks, Rigs, Grenades, Earpieces, Headwear);
+    }
+    internal static Visibility ReadVisibility() => new(Guns?.Value != false, Melee?.Value != false,
+        Backpacks?.Value != false, ChestRigs?.Value != false, Grenades?.Value != false, Earpieces?.Value != false, Headwear?.Value != false);
 }

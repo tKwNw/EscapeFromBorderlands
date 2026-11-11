@@ -33,6 +33,7 @@ internal static class LegendaryExplosionFx
     [ThreadStatic] internal static float PlayingScale;
     private static ConditionalWeakTable<Effects.Effect, Scale> Tagged = new();
     private static readonly List<Visual> Visuals = new();
+    private static readonly List<Visual> VisualSnapshot = new();
     private static readonly MethodInfo Clone = AccessTools.Method(typeof(object), "MemberwiseClone");
     private static GameWorld? World;
     private static bool Reported;
@@ -48,12 +49,17 @@ internal static class LegendaryExplosionFx
         var old = Current; Current = default;
         try
         {
+            var hat = grenade.WeaponSource is { } item ? Headwear.BlastRadius(item) : 1f;
             if (LegendaryGrenadeEffects.Try(grenade.WeaponSource, out var payload) && !payload.SmokeChild && payload.Roll.Definition.GrenadeCategory != "smoke")
             {
                 var source = (IExplosiveItem)grenade.WeaponSource;
                 var effective = LegendaryGrenadeEffects.Explosion(source, grenade.WeaponSource);
-                Current = source.MaxExplosionDistance > 0f ? new Request(effective.MaxExplosionDistance, source.MaxExplosionDistance, payload.Roll.Definition.RuntimeKey)
+                Current = source.MaxExplosionDistance > 0f ? new Request(effective.MaxExplosionDistance * hat, source.MaxExplosionDistance, payload.Roll.Definition.RuntimeKey)
                     : new Request(effective.Blindness.y, source.Blindness.y, payload.Roll.Definition.RuntimeKey);
+            }
+            else if (hat > 1f && grenade.WeaponSource is IExplosiveItem blast && blast.MaxExplosionDistance > 0)
+            {
+                Current = new Request(blast.MaxExplosionDistance * hat, blast.MaxExplosionDistance, "HW066-3");
             }
         }
         catch (Exception e) { Report(e); }
@@ -197,21 +203,28 @@ internal static class LegendaryExplosionFx
     internal static void Maintain(GameWorld? world)
     {
         if (world != World) { Reset(); World = world; }
-        foreach (var v in Visuals.ToArray())
+        if (Visuals.Count == 0) return;
+        VisualSnapshot.AddRange(Visuals);
+        var now = Time.time;
+        try
         {
-            try
+            foreach (var v in VisualSnapshot)
             {
-                if (v.Root == null || v.Particle == null) { if (v.Root != null) UnityEngine.Object.Destroy(v.Root); Visuals.Remove(v); continue; }
-                if (v.Active && (Time.time >= v.Until || Native.Call(v.Particle, "IsAlive", true) is false))
-                { Native.Call(v.Particle, "Stop", true); Native.Call(v.Particle, "Clear", true); v.Root.SetActive(false); v.Active = false; v.LastUse = Time.time; }
-                if (!v.Active && Time.time - v.LastUse > 60f) { UnityEngine.Object.Destroy(v.Root); Visuals.Remove(v); }
-            }
-            catch (Exception e)
-            {
-                if (v.Root != null) UnityEngine.Object.Destroy(v.Root);
-                Visuals.Remove(v); Report(e);
+                try
+                {
+                    if (v.Root == null || v.Particle == null) { if (v.Root != null) UnityEngine.Object.Destroy(v.Root); Visuals.Remove(v); continue; }
+                    if (v.Active && (now >= v.Until || Native.Call(v.Particle, "IsAlive", true) is false))
+                    { Native.Call(v.Particle, "Stop", true); Native.Call(v.Particle, "Clear", true); v.Root.SetActive(false); v.Active = false; v.LastUse = now; }
+                    if (!v.Active && now - v.LastUse > 60f) { UnityEngine.Object.Destroy(v.Root); Visuals.Remove(v); }
+                }
+                catch (Exception e)
+                {
+                    if (v.Root != null) UnityEngine.Object.Destroy(v.Root);
+                    Visuals.Remove(v); Report(e);
+                }
             }
         }
+        finally { VisualSnapshot.Clear(); }
     }
     private static void Trace(string key, string message)
     { if (Reports.Add(key)) Plugin.LogSource.LogInfo(message); }

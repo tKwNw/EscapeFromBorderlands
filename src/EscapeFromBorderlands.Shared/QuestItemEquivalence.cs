@@ -15,13 +15,21 @@ internal sealed class QuestItemEquivalence
     internal string Source(string id) => id != null && Sources.TryGetValue(id, out var source) ? source : id!;
     internal bool IsVariant(string id) => id != null && Sources.ContainsKey(id);
     internal bool Matches(string actual, string required) => actual == required || Source(actual) == required;
-    internal bool Contains(IEnumerable<string> required, string actual) => required.Any(id => Matches(actual, id));
+    internal bool Contains(IEnumerable<string> required, string actual)
+    {
+        var source = Source(actual);
+        foreach (var id in required)
+            if (actual == id || source == id) return true;
+        return false;
+    }
     internal List<string> WithSources(IEnumerable<string> actual)
     {
         var values = actual.ToList();
         var known = new HashSet<string>(values, StringComparer.Ordinal);
-        foreach (var id in values.ToArray())
+        var originalCount = values.Count;
+        for (var i = 0; i < originalCount; i++)
         {
+            var id = values[i];
             var source = Source(id);
             if (source != id && known.Add(source)) values.Add(source);
         }

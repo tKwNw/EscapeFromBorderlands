@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using EFT.InventoryLogic;
@@ -13,8 +14,13 @@ internal static class ItemDescriptionPresentation
     {
         internal Item Item = null!;
         internal bool Examined;
+        internal string? Template, Input, Output;
+        internal string BaseText = "", Rendered = "";
+        internal string? AbilityBinding;
     }
     private static readonly ConditionalWeakTable<ItemInfoWindowLabels, Binding> Items = new();
+    private static readonly List<WeakReference<ItemInfoWindowLabels>> OpenLabels = new();
+    private static readonly MethodInfo SetDescription = AccessTools.Method(typeof(ItemInfoWindowLabels), "SetDescriptionText", new[] { typeof(string) });
     private static readonly System.Collections.Generic.HashSet<string> ReportedFailures = new(StringComparer.Ordinal);
 
     internal static void Unbind(ItemInfoWindowLabels labels) => Items.Remove(labels);
@@ -33,13 +39,42 @@ internal static class ItemDescriptionPresentation
 
     internal static void Bind(ItemInfoWindowLabels labels, Item item, bool examined)
     {
+        if (Items.TryGetValue(labels, out var old) && ReferenceEquals(old.Item, item) && old.Examined == examined) return;
+        OpenLabels.RemoveAll(reference => !reference.TryGetTarget(out var target) || (UnityEngine.Object)(object)target == null || ReferenceEquals(target, labels));
+        OpenLabels.Add(new WeakReference<ItemInfoWindowLabels>(labels));
         Items.Remove(labels);
         Items.Add(labels, new Binding { Item = item, Examined = examined });
     }
 
-    internal static string ForLabels(ItemInfoWindowLabels labels, string description) =>
-        Items.TryGetValue(labels, out var binding) && binding.Examined
-            ? Compose(binding.Item, description) : description;
+    internal static string ForLabels(ItemInfoWindowLabels labels, string description)
+    {
+        if (!Items.TryGetValue(labels, out var binding) || !binding.Examined) return description;
+        if (description != binding.Rendered) binding.BaseText = description;
+        description = binding.BaseText;
+        var item = binding.Item;
+        var template = item.StringTemplateId;
+        var abilityBinding = HeadwearSettings.Label;
+        if (binding.Template == template && binding.Input == description && binding.AbilityBinding == abilityBinding && binding.Output is { } output) return output;
+        var composed = Compose(item, description);
+        if (RarityResolver.TryGetDefinition(item, out var definition) && definition.GrenadeChargesPerRaid == 0)
+        {
+            binding.Template = template;
+            binding.Input = description;
+            binding.Output = composed;
+            binding.AbilityBinding = abilityBinding;
+        }
+        return binding.Rendered = composed;
+    }
+
+    internal static void RefreshHeadwear()
+    {
+        OpenLabels.RemoveAll(reference => !reference.TryGetTarget(out var target) || (UnityEngine.Object)(object)target == null);
+        foreach (var reference in OpenLabels)
+            if (reference.TryGetTarget(out var labels) && (UnityEngine.Object)(object)labels != null && Items.TryGetValue(labels, out var binding) && binding.Examined &&
+                RarityResolver.TryGetDefinition(binding.Item, out var definition) && definition.IsHeadwear)
+                try { SetDescription.Invoke(labels, new object[] { binding.BaseText }); }
+                catch (Exception e) { ReportFailure("headwear shortcut refresh", e); }
+    }
 
     internal static string Compose(Item item, string description)
     {
@@ -65,7 +100,7 @@ internal static class ItemDescriptionPresentation
         }
         if (description == block || description.StartsWith(block + "\n\n", StringComparison.Ordinal)) return description;
         // Replace the server's signature fallback with this instance's full roll.
-        if (roll.Definition.IsEarpiece || roll.Definition.BackpackEffect is not null || roll.Definition.ChestRigEffect is not null || roll.Definition.GrenadeChargesPerRaid > 0)
+        if (roll.Definition.IsHeadwear || roll.Definition.IsEarpiece || roll.Definition.BackpackEffect is not null || roll.Definition.ChestRigEffect is not null || roll.Definition.GrenadeChargesPerRaid > 0)
         {
             var signature = roll.Definition.EffectText;
             foreach (var prefix in new[] { signature, "<color=#66D9EF>" + signature + "</color>" })
@@ -93,10 +128,9 @@ internal static class ItemDescriptionPatch
         {
             labels = LabelsField?.GetValue(__instance) as ItemInfoWindowLabels;
             if (labels is null) return;
-            // Windows reuse their labels. Clear the previous item even when
-            // the next item is vanilla, unexamined or no longer available.
-            ItemDescriptionPresentation.Unbind(labels);
-            if (ItemField?.GetValue(__instance) is not Item item || !RarityResolver.TryGetDefinition(item, out _)) return;
+            // A reused window can preserve text only for the same bound item.
+            if (ItemField?.GetValue(__instance) is not Item item || !RarityResolver.TryGetDefinition(item, out _))
+            { ItemDescriptionPresentation.Unbind(labels); return; }
             if (ExaminedProperty is null) throw new MissingMemberException(typeof(ItemSpecificationPanel).FullName, "Examined");
             ItemDescriptionPresentation.Bind(labels, item, ExaminedProperty.GetValue(__instance) is true);
         }

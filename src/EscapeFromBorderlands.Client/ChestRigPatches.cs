@@ -30,19 +30,19 @@ internal static class ChestRigNative
 internal static class ChestRigRecoilPatch
 {
     private static void Postfix(Weapon __instance,ref float __result)
-    {if(ChestRigNative.For(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Recoil-1f;}
+    {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Recoil-1f;}
 }
 [HarmonyPatch(typeof(Weapon),"get_ErgonomicsDelta")]
 internal static class ChestRigErgonomicsPatch
 {
     private static void Postfix(Weapon __instance,ref float __result)
-    {if(ChestRigNative.For(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Ergonomics-1f;}
+    {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Ergonomics-1f;}
 }
 [HarmonyPatch(typeof(Weapon),"get_CenterOfImpactDelta")]
 internal static class ChestRigAccuracyPatch
 {
     private static void Postfix(Weapon __instance,ref float __result)
-    {if(ChestRigNative.For(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Accuracy-1f;}
+    {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Accuracy-1f;}
 }
 [HarmonyPatch(typeof(Weapon),"get_VelocityDelta")]
 internal static class ChestRigVelocityPatch
@@ -161,12 +161,13 @@ internal static class ChestRigMedicalCostPatch
 internal static class ChestRigMedSpeedPatch
 {
     private static void Postfix(HealthEffectsComponent __instance,ref float __result)
-    {if(BackpackNative.ItemOwner(__instance.Item) is { } p)__result/=ChestRigMedical.UseSpeed(p,__instance.Item)*GrenadeBuffs.Medicine(p)*EarpieceRuntime.MedicalSpeed(p,__instance.Item);}
+    {if(BackpackNative.ItemOwner(__instance.Item) is { } p)__result/=ChestRigMedical.UseSpeed(p,__instance.Item)*GrenadeBuffs.Medicine(p)*EarpieceRuntime.MedicalSpeed(p,__instance.Item)*HatMedical.Speed(p,__instance.Item);}
 }
 [HarmonyPatch(typeof(Player.PlayerInventoryController.LoadMagazineProcess),nameof(Player.PlayerInventoryController.LoadMagazineProcess.PlaySound))]
 internal static class ChestRigManualPackingPatch
 {
-    private static void Postfix(Player.PlayerInventoryController.LoadMagazineProcess __instance)=>ChestRigInventory.Packed(__instance._inventoryController);
+    private static void Postfix(Player.PlayerInventoryController.LoadMagazineProcess __instance)
+    { ChestRigInventory.Packed(__instance._inventoryController); Headwear.Packed(BackpackRuntime.Actor(__instance._inventoryController)); }
 }
 
 [HarmonyPatch(typeof(Player.FirearmController),nameof(Player.FirearmController.UpdateHipInaccuracy))]

@@ -16,13 +16,10 @@ internal static class ChestRigCartridgePatch
     [HarmonyPriority(Priority.First)]
     private static void Prefix(Player.FirearmController __instance,Weapon weapon,Ammo ammo,out ChestRigRuntime.ShotScope? __state)
     {
-        int? remaining=null;
-        if(__instance.CurrentOperation is Player.FirearmController.FireOnlyBarrelFireOperation barrels)
-        {
-            var prepared=barrels._singleShotsData.FirstOrDefault(v=>v.AmmoToFire==ammo);
-            if(prepared.AmmoCountInChamberBeforeShot>0)remaining=prepared.AmmoCountInChamberBeforeShot+weapon.GetCurrentMagazineCount();
-        }
-        __state=ChestRigRuntime.Begin(weapon,ammo,BackpackRuntime.Actor(__instance),remaining);
+        __state = null;
+        var rig = ChestRigRuntime.Get(BackpackRuntime.Actor(__instance));
+        if (rig is null) return;
+        __state=ChestRigRuntime.Begin(weapon,ammo,rig,WeaponCombatState.PreparedRemaining(__instance,weapon,ammo));
         if(__state is not null){WeaponCombatState.Refresh(__instance);WeaponCombatState.RefreshPreparedSingleInterval(__instance,weapon);}
     }
     private static Exception? Finalizer(ChestRigRuntime.ShotScope? __state,Exception? __exception){ChestRigRuntime.End(__state);return __exception;}
@@ -54,6 +51,7 @@ internal static class ChestRigBallistics
         foreach(var fragment in shot.Fragments)ChestRigRuntime.AssociateSibling(fragment,shot);
         if(scope.Bonuses.DoubleExplosive&&shot.Parent is null&&shot.Ammo is Ammo ammo&&Singleton<GameWorld>.Instance is { } world)
         {
+            using var timing = GrenadeSpikeTrace.MeasureWeapon(scope.State.Roll.Definition, "rig impact explosion");
             ProjectileImpactExplosion.Trigger(shot,.25f,.5f);
         }
         ChestRigRuntime.BulletFinished(shot);
@@ -69,11 +67,14 @@ internal static class ChestRigFleshHitPatch
     {
         __state=null;
         if(damageInfo.DamageType!=EDamageType.Bullet||damageInfo.Weapon is not Weapon weapon||damageInfo.Damage<=0)return;
-        var target=Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p=>p.ProfileId==__instance.PlayerProfileID);
-        var shooter=BackpackNative.WeaponOwner(weapon);
         if(__instance is ArmorPlateCollider||damageInfo.BlockedBy.HasValue||damageInfo.DeflectedBy.HasValue)return;
         var shot=ChestRigRuntime.FindScope(weapon,damageInfo.FireIndex);
-        if(target is null||shot is null)return;
+        if(shot is null || Singleton<GameWorld>.Instance is not { } world) return;
+        var profile = __instance.PlayerProfileID;
+        Player? target = null;
+        foreach (var candidate in world.RegisteredPlayers)
+            if (candidate is Player player && player.ProfileId == profile) { target = player; break; }
+        if(target is null)return;
         var part=__instance.BodyPartType;
         __state=new Hit{Target=target,Part=part,Before=target.ActiveHealthController.GetBodyPartHealth(part,false).Current,Scope=shot};
     }

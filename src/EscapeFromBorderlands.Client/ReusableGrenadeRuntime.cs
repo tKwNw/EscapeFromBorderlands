@@ -38,9 +38,13 @@ internal static class ReusableGrenadeRuntime
             SessionCleanup.Run(nameof(GrenadeBuffs), GrenadeBuffs.Reset);
             SessionCleanup.Run(nameof(GrenadePackingSpeed), GrenadePackingSpeed.Reset);
         }
-        finally { Controllers = new(); }
+        finally { Controllers = new(); CarriedGrenadeDisplay.Reset(); }
     }
-    internal static void Maintain() { LegendaryGrenadeEffects.Maintain(); GrenadeBuffs.Maintain(); }
+    internal static void Maintain(GameWorld? world, RaidPlayerSnapshot live)
+    {
+        LegendaryGrenadeEffects.Maintain();
+        GrenadeBuffs.Maintain(world, live);
+    }
     internal static void Select(InventoryController inventory, IList<ThrowWeap> available)
     {
         var priority = inventory.Inventory.Equipment.TopPriorityGrenade;
@@ -74,8 +78,8 @@ internal static class ReusableGrenadeRuntime
         state.Handled = true;
         var p = BackpackRuntime.Actor(controller);
         if (!FactoryHookReady || p?.HealthController?.IsAlive != true || source!.CurrentAddress is null ||
-            !p.InventoryController.Inventory.Equipment.GetAllItems().Any(i => i.Id == source.Id) ||
-            !RarityResolver.TryGetDefinition(source, out var definition)) return true;
+            !RarityResolver.TryGetDefinition(source, out var definition) ||
+            !BackpackNative.ContainsId(p.InventoryController.Inventory.Equipment.GetAllItems(), source.Id)) return true;
         var token = Guid.NewGuid().ToString("N");
         if (!Charges.Reserve(source.Id, definition.GrenadeChargesPerRaid, token, LegendaryGrenadeSettings.Interval(definition))) return true;
         var spawned = false;
@@ -104,22 +108,11 @@ internal static class ReusableGrenadeRuntime
         finally { if (!spawned) Charges.Finish(source!.Id, token, false); }
         return true;
     }
-    internal static IEnumerable<EffectStatusModel.Status> Statuses(Player p)
+    internal static void AppendStatuses(Player p, List<EffectStatusModel.Status> statuses, ref RaidUpdateTrace trace)
     {
-        var heldId = (p.HandsController as Player.BaseGrenadeHandsController)?.Item?.Id;
-        foreach (var item in p.InventoryController.Inventory.Equipment.GetAllItems().Where(IsReusable).GroupBy(i => i.Id).Select(g => g.First()))
-        {
-            var d = RarityResolver.Resolve(item)!.Definition;
-            var remaining = Remaining(item);
-            var seconds = Charges.SecondsUntil(item.Id, d.GrenadeChargesPerRaid, LegendaryGrenadeSettings.Interval(d));
-            var held = item.Id == heldId && remaining > 0;
-            var showCharges = GrenadeEffectRules.ShowCharges(remaining, d.GrenadeChargesPerRaid, held);
-            if (!showCharges && seconds <= 0) continue;
-            var detail = GrenadeEffectRules.ChargeText(remaining, d.GrenadeChargesPerRaid, held, seconds);
-            if (!showCharges) detail = "· " + detail;
-            yield return new EffectStatusModel.Status("grenade:" + item.Id, d.ShortName, true, detail: detail);
-        }
-        foreach (var status in GrenadeBuffs.Statuses(p)) yield return status;
+        CarriedGrenadeDisplay.Append(p, statuses, ref trace);
+        GrenadeBuffs.AppendStatuses(p, statuses);
+        trace.Phase("HUD grenade buffs and smoke");
     }
 }
 

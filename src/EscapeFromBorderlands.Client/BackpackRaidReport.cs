@@ -14,9 +14,8 @@ internal static class BackpackRaidReport
     private static string Template = "";
     private static int Loot;
     internal static void BeginRaid() { Token = Guid.NewGuid().ToString("N"); Template = ""; Loot = 0; }
-    internal static void Capture(Player p)
+    internal static void Capture(BackpackRuntime.State? s)
     {
-        var s = BackpackRuntime.Get(p);
         Template = s?.Bag.StringTemplateId ?? "";
         Loot = s?.Record.Templates.Count ?? 0;
     }

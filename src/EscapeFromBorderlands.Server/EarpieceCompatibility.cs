@@ -9,7 +9,7 @@ internal static class EarpieceCompatibility
 {
     internal static void Apply(IEnumerable<VariantDefinition> variants, Dictionary<MongoId, TemplateItem> items)
     {
-        var clones = variants.Where(v => v.IsEarpiece && items.ContainsKey(new MongoId(v.TemplateId)))
+        var clones = variants.Where(v => (v.IsEarpiece || v.IsHeadwear && v.RuntimeKey != "HW084-3") && items.ContainsKey(new MongoId(v.TemplateId)))
             .GroupBy(v => v.SourceTemplateId).ToDictionary(g => g.Key, g => g.Select(v => new MongoId(v.TemplateId)).ToArray());
         foreach (var item in items.Values)
         {

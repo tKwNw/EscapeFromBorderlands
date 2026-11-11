@@ -35,6 +35,8 @@ public sealed class RarityMod(
     FenceService fenceService,
     SaveServer saveServer) : IOnLoad
 {
+    private readonly ReleaseLog releaseLog = new(logger);
+
     private const int MaximumReportedErrors = 25;
     private static readonly MongoId DefaultInventoryTemplateId = new("55d7217a4bdc2d86028b456d");
     private IReadOnlyCollection<SpawnVariant> _spawnVariants = [];
@@ -44,20 +46,23 @@ public sealed class RarityMod(
     {
         cancellationToken.ThrowIfCancellationRequested();
         var config = RarityConfiguration.Load();
+        releaseLog.Info("[Escape From Borderlands] Private Full Performance Test 5 — SPT 4.1.6.");
+        ServerPerformanceTrace.Bind(message => releaseLog.Info(message));
+        using var startup = ServerPerformanceTrace.Measure("startup");
         if (!config.Enabled)
         {
-            logger.Info("[Escape From Borderlands] Disabled in config/config.json.");
+            releaseLog.Info("[Escape From Borderlands] Disabled in config/config.json.");
             return Task.CompletedTask;
         }
 
-        logger.Info(config.LegacySpawnSettingsPending
+        releaseLog.Info(config.LegacySpawnSettingsPending
             ? "[Escape From Borderlands] Legacy spawn settings will be consolidated after final APBS detection."
             : $"[Escape From Borderlands] Shared spawn configuration: PMC ({config.Describe("pmcs")}); bosses ({config.Describe("bosses")}); auto-detect={config.AutoDetectApbs}. Config: SPT_Runtime/user/mods/EscapeFromBorderlands/config/config.json");
 
         var catalog = LegendaryCatalog.Load();
         if (catalog.SchemaVersion != 1 || catalog.Variants.Count == 0)
         {
-            logger.Error($"[Escape From Borderlands] Unsupported or empty catalog schema {catalog.SchemaVersion}.");
+            releaseLog.Error($"[Escape From Borderlands] Unsupported or empty catalog schema {catalog.SchemaVersion}.");
             return Task.CompletedTask;
         }
 
@@ -128,6 +133,8 @@ public sealed class RarityMod(
             }
 
             var priceMultiplier = config.PriceMultiplierFor(variant.Tier, variant.PriceMultiplier);
+            if (variant.IsHeadwear && localeService.GetLocaleDb("en").TryGetValue(variant.SourceTemplateId + " Description", out var description))
+                variant.Description = description;
             var sourceHandbookPrice = Math.Max(1d, source.Handbook.Price.GetValueOrDefault(50_000d));
             var sourceFleaPrice = source.FleaPrice > 0d ? source.FleaPrice : sourceHandbookPrice;
             var handbookPrice = Math.Max(1d, Math.Ceiling(sourceHandbookPrice * priceMultiplier));
@@ -185,6 +192,8 @@ public sealed class RarityMod(
                 rig.Properties = ChestRigStorage.Apply(rig.Properties!, variant.ChestRigEffect, variant.TemplateId);
                 ApplyRigSoftArmor(rig, variant);
             }
+            if (variant.IsHeadwear && templateTable.Items.TryGetValue(new MongoId(variant.TemplateId), out var helmet))
+                HeadwearTemplates.Apply(helmet, variant, templateTable.Items, cloner, CopySectionLocales);
             WhitelistCloneForEquipmentSlots(source.EquipmentSlots, variant.TemplateId);
             // Concrete backpack stock is filtered by the generator hook. Keep
             // owned bags eligible for ordinary resale when trading is enabled.
@@ -192,7 +201,8 @@ public sealed class RarityMod(
             {
                 ragfairConfig.Dynamic.Blacklist.Custom.Add(new MongoId(variant.TemplateId));
             }
-            if (config.CreateDefaultPresets && source.Preset is not null && CreateDefaultPreset(source.Preset, variant))
+            if (config.CreateDefaultPresets && CreateDefaultPreset(source.Preset ??
+                (variant.IsHeadwear ? HeadwearTemplates.FallbackPreset(variant) : null), variant))
             {
                 presetsCreated++;
             }
@@ -204,28 +214,31 @@ public sealed class RarityMod(
         }
 
         EarpieceCompatibility.Apply(catalog.Variants, templateTable.Items);
+        var registeredVariants = catalog.Variants.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))).ToArray();
+        var registeredAliases = catalog.LegacyAliases.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))).ToArray();
+        LootContainerLegendarySpawning.Install(registeredVariants,
+            templateTable.Items, config, message => releaseLog.Warning(message));
         FenceTrading.Install(catalog, config, traderConfig, tradersTable, fenceService);
-        logger.Info(config.AllowFenceToSellEfbItems
+        releaseLog.Info(config.AllowFenceToSellEfbItems
             ? "[Escape From Borderlands] Fence stock: active EFB items are permitted under normal stocking rules. Retired aliases and mystery purchase previews remain excluded."
             : "[Escape From Borderlands] Fence stock: EFB offers are blocked in normal, discount and resale stock. Players can still sell EFB items to Fence normally.");
         _spawnVariants = spawnVariants;
-        LegendaryQuestItems.Install(catalog.Variants.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))),
-            catalog.LegacyAliases.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))));
-        logger.Info("[Escape From Borderlands] Quest compatibility enabled: EFB variants count as their base items for non-consuming objectives and are protected from quest hand-ins and placement.");
-        FactionEquipmentSpawning.Configure(catalog.Variants.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))), catalog.LegacyAliases.Select(v => v.TemplateId), config);
+        LegendaryQuestItems.Install(registeredVariants,
+            registeredAliases);
+        releaseLog.Info("[Escape From Borderlands] Quest compatibility enabled: EFB variants count as their base items for non-consuming objectives and are protected from quest hand-ins and placement.");
+        FactionEquipmentSpawning.Configure(registeredVariants, catalog.LegacyAliases.Select(v => v.TemplateId), config);
         ReusableGrenadeTestOffer.Install(tradersTable, catalog);
-        ReusableGrenadeSpawning.Install(catalog.Variants.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))), config);
-        AirdropLegendarySpawning.Install(catalog.Variants.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))),
-            catalog.LegacyAliases.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))), config,
+        ReusableGrenadeSpawning.Install(registeredVariants, config);
+        AirdropLegendarySpawning.Install(registeredVariants,
+            registeredAliases, config,
             catalog.UnlootableMeleeTemplateIds.ToHashSet(StringComparer.Ordinal));
-        logger.Info($"[Escape From Borderlands] Shared airdrop legendary chance: {config.AirdropFraction * 100d:0.###}% per supported loot item, across all airdrop types.");
+        releaseLog.Info($"[Escape From Borderlands] Shared airdrop legendary chance: {config.AirdropFraction * 100d:0.###}% per supported loot item, across all airdrop types.");
 
-        BackpackFleaMarket.Install(catalog.Variants.Where(v =>
-            templateTable.Items.ContainsKey(new MongoId(v.TemplateId))), config.AllowFleaMarketTrading);
+        BackpackFleaMarket.Install(registeredVariants, config.AllowFleaMarketTrading);
         if (config.AllowFleaMarketTrading)
-            logger.Info("[Escape From Borderlands] All Legendary categories use mystery flea stock. Four random bonuses are revealed separately for each purchased copy; existing owned items retain their rolls.");
+            releaseLog.Info("[Escape From Borderlands] All Legendary categories use mystery flea stock. Four random bonuses are revealed separately for each purchased copy; existing owned items retain their rolls.");
 
-        logger.Success(
+        releaseLog.Success(
             $"[Escape From Borderlands] Catalog revision {catalog.CatalogRevision}: created {created}/{catalog.Variants.Count} additive Legendary templates " +
             $"from {catalog.VanillaWeaponCount} recoverable vanilla weapon roots, {presetsCreated} assembled presets, " +
             $"and {aliasesCreated}/{catalog.LegacyAliases.Count} effect-free retired-item compatibility aliases. " +
@@ -236,7 +249,7 @@ public sealed class RarityMod(
             "Retired-weapon compatibility aliases remain flea-blocked and never enter bot pools. Supported vanilla melee weapons and Legendary melee clones are corpse-lootable; Chained Labrys and Superfors DB 2020 remain unlootable; original firearm statistics, third-party weapons, ammunition, attachments, and the zombie attack item were left untouched.");
         if (errors > MaximumReportedErrors)
         {
-            logger.Warning($"[Escape From Borderlands] {errors - MaximumReportedErrors} additional catalog errors were suppressed.");
+            releaseLog.Warning($"[Escape From Borderlands] {errors - MaximumReportedErrors} additional catalog errors were suppressed.");
         }
 
         return Task.CompletedTask;
@@ -246,7 +259,7 @@ public sealed class RarityMod(
     {
         var definitions = LegendaryCatalog.Load().Variants.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId)));
         CustomBotSpawning.Install(definitions, config, templateTable.Items, services,
-            message => logger.Info(message), message => logger.Warning(message));
+            message => releaseLog.Info(message), message => releaseLog.Warning(message));
     }
 
     public void ApplyStandalonePmcSpawning(RarityConfiguration config)
@@ -259,15 +272,10 @@ public sealed class RarityMod(
         _spawnRegistrationFinalized = true;
         ReusableGrenadeSpawning.SelectMode(config, false);
         FactionEquipmentSpawning.SelectConfiguration(config);
-        if (!config.AddToPmcWeapons && !config.AddToBossWeapons && !config.AddToNonScavFactions)
-        {
-            logger.Info("[Escape From Borderlands] All bot spawning groups are disabled; no standalone bot-pool entries were registered.");
-            return;
-        }
-
-        var entries = ApplyCategoryPools(config);
+        LootContainerLegendarySpawning.SelectConfiguration(config);
+        var entries = ClearNativeBotPools();
         LogFactionRates(config, "standalone");
-        logger.Success($"[Escape From Borderlands] Final spawn method: standalone. PMC ({config.Describe("standalone")}); bosses ({config.Describe("bosses")}). Registered {entries} source-restricted equipment entries. Targets are combined per-slot EFB shares, not a weight for every individual variant.");
+        releaseLog.Success($"[Escape From Borderlands] Final spawn method: standalone. PMC ({config.Describe("standalone")}); bosses ({config.Describe("bosses")}). Final generated inventories own the only legendary chance roll.");
     }
 
     public void SelectApbsPmcSpawning(RarityConfiguration config)
@@ -280,58 +288,37 @@ public sealed class RarityMod(
         _spawnRegistrationFinalized = true;
         ReusableGrenadeSpawning.SelectMode(config, true);
         FactionEquipmentSpawning.SelectConfiguration(config);
+        LootContainerLegendarySpawning.SelectConfiguration(config);
         // APBS-disabled roles use native templates. Both paths read the same
         // shared rates; progressed roles normalize their returned copies.
-        var fallbackEntries = ApplyCategoryPools(config, "apbs", nonPmcOnly: true);
+        var fallbackEntries = ClearNativeBotPools();
         LogFactionRates(config, "apbs");
-        logger.Info(
+        releaseLog.Info(
             "[Escape From Borderlands] Final spawn method: APBS pools. Standalone PMC registration was not performed. " +
-            $"Shared PMC rates ({config.Describe("apbs")}); bosses ({config.Describe("bosses")}). {fallbackEntries} source-restricted non-PMC fallback entries use the shared faction rates. Category targets apply independently.");
+            $"Shared PMC rates ({config.Describe("apbs")}); bosses ({config.Describe("bosses")}). Eligible items in every faction use final conversion; APBS import settings do not control EFB chances.");
     }
 
-    private int ApplyCategoryPools(RarityConfiguration config, string method = "standalone", bool nonPmcOnly = false)
+    private int ClearNativeBotPools()
     {
-        var slots = new[] { EquipmentSlots.FirstPrimaryWeapon, EquipmentSlots.SecondPrimaryWeapon, EquipmentSlots.Holster, EquipmentSlots.Scabbard, EquipmentSlots.Backpack, EquipmentSlots.TacticalVest, EquipmentSlots.ArmorVest, EquipmentSlots.Earpiece };
+        // Every faction/category rolls at the final response boundary. Remove
+        // stale/imported EFB choices from all native slots, without touching
+        // ordinary templates or third-party weights.
         var catalog = LegendaryCatalog.Load();
-        var allEfb = catalog.Variants.Select(v => new MongoId(v.TemplateId)).Concat(catalog.LegacyAliases.Select(v => new MongoId(v.TemplateId))).ToHashSet();
-        var variantWeights = _spawnVariants.ToDictionary(v => v.Variant.TemplateId, v => v.Variant.SpawnWeight);
-        var total = 0;
-        foreach (var (role, bot) in botTable.Types)
-        {
-            if (bot is null) continue;
-            if (nonPmcOnly && BotSpawnGroups.Group(role) is "pmcUsec" or "pmcBear") continue;
-            foreach (var slot in slots)
-            {
-                if (!bot.BotInventory.Equipment.TryGetValue(slot, out var pool)) continue;
-                foreach (var id in allEfb) pool.Remove(id);
-                var category = RarityConfiguration.Category(slot.ToString());
-                var fraction = CustomBotSpawning.UsesPostGeneration(role) ? 0d : config.BotFraction(method, role, category);
-                if (fraction <= 0d) continue;
-                var sources = _spawnVariants.Where(v => v.EquipmentSlots.Contains(slot))
-                    .GroupBy(v => v.Variant.SourceTemplateId)
-                    .ToDictionary(g => g.Key, g => g.Select(v => v.Variant.TemplateId).ToArray());
-                var originals = pool.ToDictionary(p => p.Key.ToString(), p => p.Value);
-                if (category == "guns")
-                    foreach (var source in sources.Keys.ToArray())
-                        if (!bot.BotInventory.Mods.ContainsKey(new MongoId(source))) sources.Remove(source);
-                var weights = CategorySpawnPolicy.Weights(originals, sources, fraction, variantWeights);
-                foreach (var (id, weight) in weights)
-                {
-                    var definition = _spawnVariants.First(v => v.Variant.TemplateId == id).Variant;
-                    if (category is "guns" or "chestRigs") CopyBossWeaponModPool(bot.BotInventory.Mods, new MongoId(definition.SourceTemplateId), new MongoId(id));
-                    RigPanelModPool(bot.BotInventory.Mods,definition);
-                    pool[new MongoId(id)] = weight;
-                    total++;
-                }
-            }
-        }
-        return total;
+        var ids = catalog.Variants.Select(v => new MongoId(v.TemplateId))
+            .Concat(catalog.LegacyAliases.Select(v => new MongoId(v.TemplateId))).ToHashSet();
+        var removed = 0;
+        foreach (var bot in botTable.Types.Values)
+            if (bot?.BotInventory?.Equipment is { } equipment)
+                foreach (var pool in equipment.Values)
+                    foreach (var id in ids) if (pool.Remove(id)) removed++;
+        return removed;
     }
 
     private void LogFactionRates(RarityConfiguration config, string method)
     {
+        releaseLog.Info($"[Escape From Borderlands] Scavs: {config.Describe("scavs")}. Rolls apply after loadout generation.");
         foreach (var group in BotSpawnGroups.Expanded)
-            logger.Info($"[Escape From Borderlands] {method} {group}: " + string.Join(", ", new[] { "guns", "melee", "backpacks", "chestRigs", "grenades", "earpieces" }.Select(category => $"{category}={(config.AddToNonScavFactions ? config.FactionChance(method, group, category) : 0d):0.###}%")) + ". Ordinary/sniper Scavs are excluded.");
+            releaseLog.Info($"[Escape From Borderlands] {method} {group}: " + string.Join(", ", new[] { "guns", "melee", "backpacks", "chestRigs", "grenades", "earpieces" }.Select(category => $"{category}={(config.AddToNonScavFactions ? config.FactionChance(method, group, category) : 0d):0.###}%")) + ".");
     }
 
     private static string RigPanelId(VariantDefinition variant, string slot) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("efb:rig-panel:" + variant.StorageFamilyId + ":" + slot)))[..24].ToLowerInvariant();
@@ -379,8 +366,19 @@ public sealed class RarityMod(
                     mods[slot.Name]=[new MongoId(RigPanelId(variant,slot.Name))];
     }
 
-    private bool CreateDefaultPreset(Preset sourcePreset, VariantDefinition variant)
+    private void CopySectionLocales(MongoId source, MongoId target)
     {
+        foreach (var language in localeTable.Global.Keys)
+        {
+            var locale = localeService.GetLocaleDb(language);
+            foreach (var suffix in new[] { " Name", " ShortName", " Description" })
+                if (locale.TryGetValue(source + suffix, out var value)) locale[target + suffix] = value;
+        }
+    }
+
+    private bool CreateDefaultPreset(Preset? sourcePreset, VariantDefinition variant)
+    {
+        if (sourcePreset is null) return false;
         var preset = cloner.Clone(sourcePreset);
         if (preset is null || preset.Items.Count == 0)
         {
@@ -397,11 +395,13 @@ public sealed class RarityMod(
         if (variant.ChestRigEffect?.SoftArmorClass > 0)
             foreach (var child in preset.Items.Where(i => i.ParentId?.ToString() == sourceRoot.Id.ToString() && i.SlotId is "Soft_armor_front" or "Soft_armor_back" or "Groin"))
                 child.Template = new MongoId(RigPanelId(variant, child.SlotId!));
+        if (variant.IsHeadwear) HeadwearTemplates.Convert(root, new MongoId(variant.TemplateId), preset.Items);
         root.Id = new MongoId();
         root.Template = new MongoId(variant.TemplateId);
         root.ParentId = null;
         root.SlotId = null;
         preset.Items = itemHelper.ReparentItemAndChildren(root, preset.Items);
+        if (variant.IsHeadwear) HeadwearTemplates.Complete(preset.Items);
         preset.Id = new MongoId(variant.PresetId);
         preset.Parent = root.Id;
         preset.Encyclopedia = new MongoId(variant.TemplateId);
@@ -455,7 +455,7 @@ public sealed class RarityMod(
                 if (!botTypes.TryGetValue(faction, out var botType) || botType is null ||
                     !botType.BotInventory.Equipment.TryGetValue(slotGroup.Key, out var equipmentPool))
                 {
-                    logger.Warning($"[Escape From Borderlands] Could not weight Legendary weapons for {faction} {slotGroup.Key}: equipment pool missing.");
+                    releaseLog.Warning($"[Escape From Borderlands] Could not weight Legendary weapons for {faction} {slotGroup.Key}: equipment pool missing.");
                     continue;
                 }
 
@@ -464,7 +464,7 @@ public sealed class RarityMod(
                     .Sum(entry => entry.Value);
                 if (existingWeight <= 0d)
                 {
-                    logger.Warning($"[Escape From Borderlands] Could not weight Legendary weapons for {faction} {slotGroup.Key}: base pool has no positive weight.");
+                    releaseLog.Warning($"[Escape From Borderlands] Could not weight Legendary weapons for {faction} {slotGroup.Key}: base pool has no positive weight.");
                     continue;
                 }
 
@@ -603,7 +603,7 @@ public sealed class RarityMod(
     private void EnableMeleeLooting(LegendaryCatalog catalog)
     {
         MeleeLootingPolicy.Apply(catalog, templateTable.Items);
-        logger.Info("[Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.");
+        releaseLog.Info("[Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.");
     }
 
     private int AddMeleeWeaponsToStandalonePools(RarityConfiguration config)
@@ -664,13 +664,13 @@ public sealed class RarityMod(
     {
         if (!templateTable.Items.TryGetValue(DefaultInventoryTemplateId, out var inventoryTemplate))
         {
-            logger.Error("[Escape From Borderlands] Default player inventory template was not found; generated weapons cannot be whitelisted for equipment slots.");
+            releaseLog.Error("[Escape From Borderlands] Default player inventory template was not found; generated weapons cannot be whitelisted for equipment slots.");
             return [];
         }
 
         return (inventoryTemplate.Properties?.Slots ?? [])
             .Where(slot => Enum.TryParse<EquipmentSlots>(slot.Name, out var equipmentSlot) &&
-                equipmentSlot is EquipmentSlots.FirstPrimaryWeapon or EquipmentSlots.SecondPrimaryWeapon or EquipmentSlots.Holster or EquipmentSlots.Scabbard or EquipmentSlots.Backpack or EquipmentSlots.TacticalVest or EquipmentSlots.ArmorVest or EquipmentSlots.Earpiece &&
+                equipmentSlot is EquipmentSlots.FirstPrimaryWeapon or EquipmentSlots.SecondPrimaryWeapon or EquipmentSlots.Holster or EquipmentSlots.Scabbard or EquipmentSlots.Backpack or EquipmentSlots.TacticalVest or EquipmentSlots.ArmorVest or EquipmentSlots.Earpiece or EquipmentSlots.Headwear &&
                 (slot.Properties?.Filters ?? []).Any(filter =>
                     filter.Filter?.Any(filterId => filterId.Equals(sourceTemplateId) || itemHelper.IsOfBaseclass(sourceTemplateId, filterId)) == true))
             .Select(slot => Enum.Parse<EquipmentSlots>(slot.Name!))
@@ -704,7 +704,7 @@ public sealed class RarityMod(
         count++;
         if (count <= MaximumReportedErrors)
         {
-            logger.Error($"[Escape From Borderlands] {message}");
+            releaseLog.Error($"[Escape From Borderlands] {message}");
         }
     }
 

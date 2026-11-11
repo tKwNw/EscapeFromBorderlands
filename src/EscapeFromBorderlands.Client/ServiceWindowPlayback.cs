@@ -21,6 +21,7 @@ internal static class ServiceWindowPlayback
         internal bool Logged;
     }
     private static readonly Dictionary<FirearmsAnimator, Entry> Entries = new();
+    private static readonly List<KeyValuePair<FirearmsAnimator, Entry>> ActiveSnapshot = new();
     private static readonly Dictionary<Type, PropertyInfo> SpeedProperties = new();
     private static bool _reported;
 
@@ -53,7 +54,7 @@ internal static class ServiceWindowPlayback
     }
     private static void Apply(Entry e)
     {
-        e.Factor = ServiceWindow.Speed(e.Player);
+        e.Factor = ServiceWindow.Speed(e.Player) * HatMedical.Speed(e.Player, e.Controller.Item);
         var desired = e.Native * e.Factor;
         if (!Same(Read(e.Target), desired)) Write(e.Target, desired);
         e.Applied = desired;
@@ -117,28 +118,34 @@ internal static class ServiceWindowPlayback
 
     internal static void Maintain()
     {
-        foreach (var pair in Entries.ToArray())
+        if (Entries.Count == 0) return;
+        ActiveSnapshot.AddRange(Entries);
+        try
         {
-            var e = pair.Value;
-            try
+            foreach (var pair in ActiveSnapshot)
             {
-                if (!Owned(e)) { Restore(e); Entries.Remove(pair.Key); continue; }
-                var target = Native.Get(e.Animator, "Animator");
-                if (target is null) { Restore(e); Entries.Remove(pair.Key); continue; }
-                if (!ReferenceEquals(target, e.Target))
+                var e = pair.Value;
+                try
                 {
-                    Restore(e);
-                    e.Target = target;
-                    e.Native = Read(target);
-                    e.Factor = 1f;
-                    e.Applied = e.Native;
+                    if (!Owned(e)) { Restore(e); Entries.Remove(pair.Key); continue; }
+                    var target = Native.Get(e.Animator, "Animator");
+                    if (target is null) { Restore(e); Entries.Remove(pair.Key); continue; }
+                    if (!ReferenceEquals(target, e.Target))
+                    {
+                        Restore(e);
+                        e.Target = target;
+                        e.Native = Read(target);
+                        e.Factor = 1f;
+                        e.Applied = e.Native;
+                    }
+                    var actual = Read(e.Target);
+                    if (!Same(actual, e.Applied) && !Same(actual, e.Native)) e.Native = actual / e.Factor;
+                    Apply(e);
                 }
-                var actual = Read(e.Target);
-                if (!Same(actual, e.Applied) && !Same(actual, e.Native)) e.Native = actual / e.Factor;
-                Apply(e);
+                catch (Exception ex) { Report(ex); }
             }
-            catch (Exception ex) { Report(ex); }
         }
+        finally { ActiveSnapshot.Clear(); }
     }
 
     internal static void Reset()

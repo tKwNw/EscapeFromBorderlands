@@ -8,6 +8,16 @@ using EFT.InventoryLogic;
 using HarmonyLib;
 
 namespace EscapeFromBorderlands.Client;
+[HarmonyPatch(typeof(Player), nameof(Player.OnItemAddedOrRemoved), typeof(Item), typeof(ItemAddress), typeof(bool))]
+internal static class BackpackContentsChangePatch
+{
+    private static void Postfix(Player __instance, Item __0, ItemAddress __1)
+    {
+        CarriedGrenadeDisplay.InventoryChanged(__instance, __0);
+        BackpackRuntime.InventoryChanged(__instance, __1);
+    }
+}
+
 [HarmonyPatch(typeof(InventoryController), nameof(InventoryController.IsAtBindablePlace))]
 internal static class BackpackHotbarPatch
 {
@@ -23,8 +33,9 @@ internal static class BackpackReachabilityPatch
     private static void Postfix(InventoryController __instance, Item item, ref bool __result)
     {
         var s = BackpackRuntime.Get(BackpackRuntime.Actor(__instance));
-        if (s is null || !BackpackNative.InBag(item, s.Bag)) return;
-        if (s.Key == "BP02-2" && item is Magazine || s.Key == "BP04-2" && item is EFT.InventoryLogic.Meds || s.Key == "BP35-1" && item is ThrowWeap) __result = true;
+        if (s is null || !(s.Key == "BP02-2" && item is Magazine ||
+            s.Key == "BP04-2" && item is EFT.InventoryLogic.Meds || s.Key == "BP35-1" && item is ThrowWeap)) return;
+        if (BackpackNative.InBag(item, s.Bag)) __result = true;
     }
 }
 [HarmonyPatch(typeof(Player.PlayerInventoryController), nameof(Player.PlayerInventoryController.ThrowItem))]

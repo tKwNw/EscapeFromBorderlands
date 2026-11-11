@@ -29,14 +29,17 @@ internal static class EarpieceRuntime
     internal static readonly Dictionary<Player, State> States = new();
     private static readonly Dictionary<string, Dictionary<string, float>> Cooldowns = new(StringComparer.Ordinal);
     private static readonly HashSet<Player> Changed = new();
+    private static readonly HashSet<Player> Stale = new();
+    private static readonly List<string> StaleCooldowns = new();
+    private static readonly EquipmentSlot[] RechargeSlots = { EquipmentSlot.Pockets, EquipmentSlot.TacticalVest };
     private static readonly HashSet<string> Deaths = new(StringComparer.Ordinal);
     private static readonly Dictionary<string, string> Names = new(StringComparer.Ordinal);
     [ThreadStatic] internal static Shot? CurrentShot;
     private static bool Resetting;
     private static float NextTick;
-    internal static State? Get(Player? player)
+    internal static State? Get(Player? player, bool observed = false)
     {
-        if (Resetting || !PlayerRefresh.CanObserve(player))
+        if (Resetting || player is null || !observed && !PlayerRefresh.CanObserve(player))
         {
             if (player is not null) Forget(player);
             return null;
@@ -53,6 +56,12 @@ internal static class EarpieceRuntime
         return s;
     }
     internal static bool Is(Player? p, string key) => Get(p)?.Key == key;
+    // Only this group can require a firearm stat or animation refresh. The
+    // cartridge, audio and movement hooks still see every worn earpiece.
+    internal static bool ChangesFirearm(Player? p, bool observed = false) => Get(p, observed) is { } s &&
+        (s.Roll.Earpiece.Aim != 1f || s.Roll.Earpiece.Draw != 1f ||
+         s.Key is "EP01-4" or "EP02-5" or "EP03-3" or "EP04-1" or "EP04-2" or "EP04-3" or
+             "EP06-3" or "EP06-5" or "EP08-1" or "EP08-3" or "EP09-3" or "EP10-1" or "EP10-2" or "EP11-3");
     internal static State? Listener => Get(Singleton<GameWorld>.Instance?.MainPlayer);
     internal static bool Moving(Player p) => p.InputDirection.sqrMagnitude > .0001f;
     private static string Kind(Item? item) => item is Weapon ? "firearm" : item is Knife ? "melee" : "other";
@@ -80,42 +89,72 @@ internal static class EarpieceRuntime
             CurrentShot = null; NextTick = 0f; Resetting = false;
         }
     }
-    internal static void Maintain(GameWorld? world)
+    internal static void Maintain(GameWorld? world, RaidPlayerSnapshot snapshot)
     {
         if (PlayerRefresh.ActiveWorld(world) is null || Time.time < NextTick) return;
         NextTick = Time.time + .05f;
-        var live = world!.RegisteredPlayers.OfType<Player>().Where(PlayerRefresh.CanObserve).ToHashSet();
-        foreach (var p in States.Keys.Concat(Changed).Distinct().Where(p => !live.Contains(p)).ToArray()) Forget(p);
-        var liveIds = live.Select(p => p.ProfileId).ToHashSet(StringComparer.Ordinal);
-        foreach (var id in Cooldowns.Keys.Where(id => !liveIds.Contains(id)).ToArray()) Cooldowns.Remove(id);
-        foreach (var p in live)
+        snapshot.Capture(world!);
+        try
+        {
+            foreach (var p in States.Keys) if (!snapshot.Contains(p) || !PlayerRefresh.CanObserve(p)) Stale.Add(p);
+            foreach (var p in Changed) if (!snapshot.Contains(p) || !PlayerRefresh.CanObserve(p)) Stale.Add(p);
+            foreach (var p in Stale) Forget(p);
+            foreach (var id in Cooldowns.Keys) if (!snapshot.ContainsProfile(id)) StaleCooldowns.Add(id);
+            foreach (var id in StaleCooldowns) Cooldowns.Remove(id);
+        }
+        finally { Stale.Clear(); StaleCooldowns.Clear(); }
+        foreach (var p in snapshot)
         {
             var s = Get(p);
             var changed = Changed.Remove(p);
             if (s is not null)
             {
-                var motion = p.Position - s.Previous; s.Previous = p.Position;
-                var moving = Moving(p); var sprint = moving && p.MovementContext.IsSprintEnabled;
-                var elapsed = Math.Max(.001f, Time.time - s.LastTick); s.LastTick = Time.time;
-                var distance = new Vector2(motion.x, motion.z).magnitude;
-                var walked = moving && !sprint && p.MovementContext.IsGrounded && distance <= Math.Min(3f, elapsed * 12f) ? distance : 0f;
-                var restore = s.Effect.Tick(moving, sprint, p.MovementContext.IsInPronePose, p.HandsController?.IsAiming == true, walked, p.Physical.HandsStamina.Current);
+                // Only these signatures consume the sampled movement/timer
+                // inputs. Other signatures respond to discrete events.
+                var restore = TickSignature(s, p);
                 if (restore.Legs > 0f) { BackpackRuntime.RestoreLeg(p, restore.Legs); s.StatusNoticeUntil = Time.time + 2f; s.StatusNotice = "Triggered · Leg Stamina recovery"; }
                 if (restore.Arms > 0f) { ChestRigRuntime.RestoreArms(p, restore.Arms); s.StatusNoticeUntil = Time.time + 2f; s.StatusNotice = "Triggered · Arm Stamina recovery"; }
                 var held = p.HandsController?.Item; var id = held?.Id ?? "";
                 if (id != s.HeldId)
                 { s.HeldId = id; s.PreviousKind = Kind(held); changed = true; }
-                if (held is Weapon weapon)
+                if (held is Weapon)
                 {
-                    var aim = Aim(p); var reload = Reload(p); var recoil = Recoil(p); var accuracy = Accuracy(p); var rate = FireRate(p);
+                    var aim = s.Roll.Earpiece.Aim * s.Effect.Aim;
+                    var reload = s.Effect.Reload;
+                    var recoil = Recoil(s);
+                    var accuracy = HighFidelity(s) ? .75f : 1f;
+                    var rate = s.Effect.FireRate;
                     changed |= aim != s.LastAim || reload != s.LastReload || recoil != s.LastRecoil || accuracy != s.LastAccuracy || rate != s.LastRate;
                     s.LastAim = aim; s.LastReload = reload; s.LastRecoil = recoil; s.LastAccuracy = accuracy; s.LastRate = rate;
                 }
             }
             if (changed) PlayerRefresh.Firearm(p, "headset conditions");
         }
-        EarpieceAudio.Maintain(); EarpieceMedicalAnimation.Maintain();
+        EarpieceAudio.Maintain(snapshot); EarpieceMedicalAnimation.Maintain();
     }
+    private static (float Legs, float Arms) TickSignature(State s, Player p)
+    {
+        switch (s.Key)
+        {
+            case "EP01-1":
+            case "EP04-4": return s.Effect.Tick(Moving(p), false, false, false, 0f, 0f);
+            case "EP02-5": return s.Effect.Tick(false, false, p.MovementContext.IsInPronePose, false, 0f, 0f);
+            case "EP10-1": return s.Effect.Tick(false, false, false, p.HandsController?.IsAiming == true, 0f, 0f);
+            case "EP03-2": return s.Effect.Tick(false, false, false, false, 0f, p.Physical.HandsStamina.Current);
+            case "EP04-1":
+                return s.Effect.Tick(false, Moving(p) && p.MovementContext.IsSprintEnabled, false, false, 0f, 0f);
+            case "EP02-3":
+                var position = p.Position;
+                var motion = position - s.Previous; s.Previous = position;
+                var moving = Moving(p); var sprint = moving && p.MovementContext.IsSprintEnabled;
+                var elapsed = Math.Max(.001f, Time.time - s.LastTick); s.LastTick = Time.time;
+                var distance = new Vector2(motion.x, motion.z).magnitude;
+                var walked = moving && !sprint && p.MovementContext.IsGrounded && distance <= Math.Min(3f, elapsed * 12f) ? distance : 0f;
+                return s.Effect.Tick(false, sprint, false, false, walked, 0f);
+            default: return default;
+        }
+    }
+
     internal static Shot? Begin(Player p, Weapon weapon)
     {
         if (Get(p) is not { } s) return null;
@@ -126,35 +165,56 @@ internal static class EarpieceRuntime
     internal static void Killed(Player victim)
     {
         if (!Deaths.Add(victim.ProfileId)) return;
-        if (Native.Get(victim, "LastAggressor") is not Player killer || !AdvancedMeleeRuntime.Enemy(killer, victim) || Get(killer) is not { } s) return;
+        if (Native.Get(victim, "LastAggressor") is not Player killer ||
+            Get(killer) is not { Key: "EP05-3" or "EP10-2" or "EP06-4" } s ||
+            !AdvancedMeleeRuntime.Enemy(killer, victim)) return;
         if (Native.Get(victim, "LastDamageInfo") is not DamageInfo info) return;
         var firearm = info.DamageType == EDamageType.Bullet && info.Weapon is Weapon;
-        if (s.Effect.Killed(firearm, Vector3.Distance(killer.Position, victim.Position))) AccelerateGrenade(killer);
+        if (s.Effect.Killed(firearm, s.Key == "EP05-3" ? Vector3.Distance(killer.Position, victim.Position) : 0f)) AccelerateGrenade(killer);
     }
     private static void AccelerateGrenade(Player p)
     {
         var equipment = p.InventoryController.Inventory.Equipment;
-        var items = new[] { equipment.GetSlot(EquipmentSlot.Pockets).ContainedItem, equipment.GetSlot(EquipmentSlot.TacticalVest).ContainedItem }
-            .Where(i => i is not null).SelectMany(i => i!.GetAllItems()).Where(ReusableGrenadeRuntime.IsReusable).GroupBy(i => i.Id).Select(g => g.First());
-        var candidates = items.Select(i => (Item: i, Definition: RarityResolver.Resolve(i)!.Definition))
-            .Select(x => (x.Item, x.Definition, Seconds: ReusableGrenadeRuntime.Charges.SecondsUntil(x.Item.Id, x.Definition.GrenadeChargesPerRaid, LegendaryGrenadeSettings.Interval(x.Definition))))
-            .Where(x => x.Seconds > 0).OrderBy(x => x.Seconds).ThenBy(x => x.Item.Id, StringComparer.Ordinal).ToArray();
-        if (candidates.Length == 0) return;
-        var chosen = candidates[0];
-        ReusableGrenadeRuntime.Charges.ReduceRecharge(chosen.Item.Id, chosen.Definition.GrenadeChargesPerRaid, 15, LegendaryGrenadeSettings.Interval(chosen.Definition));
+        Item? chosen = null;
+        VariantDefinition? chosenDefinition = null;
+        var best = double.PositiveInfinity;
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var slot in RechargeSlots)
+        {
+            if (equipment.GetSlot(slot).ContainedItem is not { } root) continue;
+            foreach (var item in root.GetAllItems())
+            {
+                if (!ReusableGrenadeRuntime.IsReusable(item) || !seen.Add(item.Id)) continue;
+                var definition = RarityResolver.Resolve(item)!.Definition;
+                var seconds = ReusableGrenadeRuntime.Charges.SecondsUntil(item.Id, definition.GrenadeChargesPerRaid,
+                    LegendaryGrenadeSettings.Interval(definition));
+                if (!(seconds > 0d) || chosen is not null &&
+                    (seconds > best || seconds == best && string.CompareOrdinal(item.Id, chosen.Id) >= 0)) continue;
+                best = seconds; chosen = item; chosenDefinition = definition;
+            }
+        }
+        if (chosen is not null && chosenDefinition is { } d)
+            ReusableGrenadeRuntime.Charges.ReduceRecharge(chosen.Id, d.GrenadeChargesPerRaid, 15, LegendaryGrenadeSettings.Interval(d));
     }
     internal static void Damaged(Player target, DamageInfo info)
     {
-        if (info.DamageType != EDamageType.Bullet || info.Weapon is not Weapon || info.Player?.iPlayer is not Player attacker || !AdvancedMeleeRuntime.Enemy(target, attacker) || Get(target) is not { } s) return;
-        s.Effect.Damaged(ChestRigRuntime.Health(target));
+        if (info.DamageType != EDamageType.Bullet || info.Weapon is not Weapon || info.Player?.iPlayer is not Player attacker ||
+            Get(target) is not { Key: "EP03-3" or "EP04-5" } s || !AdvancedMeleeRuntime.Enemy(target, attacker)) return;
+        s.Effect.Damaged(s.Key == "EP04-5" ? ChestRigRuntime.Health(target) : 1f);
     }
-    internal static float Recoil(Player? p)
+    internal static float StatRecoil(Weapon weapon) => WeaponStatReadBatch.ResolveStatEarpiece(weapon) is { } s ? Recoil(s) : 1f;
+    private static float Recoil(State s) => s.Key switch
     {
-        var s = Get(p); if (s is null) return 1f;
-        return EarpieceEffectRules.Recoil(s.Key, s.Effect.Active, Math.Abs(p!.InputDirection.x) > .01f, AdvancedMeleeRuntime.Crouched(p), Moving(p));
-    }
-    private static bool HighFidelity(Player? p) => Get(p) is { } s && EarpieceEffectRules.HighFidelity(s.Key, p!.HandsController?.IsAiming == true, s.Effect.AdsSeconds);
-    internal static float Accuracy(Player? p) => HighFidelity(p) ? .75f : 1f;
+        "EP04-2" => EarpieceEffectRules.Recoil(s.Key, false, Math.Abs(s.Player.InputDirection.x) > .01f, false, false),
+        "EP08-1" => EarpieceEffectRules.Recoil(s.Key, false, false, AdvancedMeleeRuntime.Crouched(s.Player), Moving(s.Player)),
+        "EP06-5" => EarpieceEffectRules.Recoil(s.Key, s.Effect.Active, false, false, false),
+        _ => 1f
+    };
+    private static bool HighFidelity(State s) => s.Key == "EP10-1" &&
+        EarpieceEffectRules.HighFidelity(s.Key, s.Player.HandsController?.IsAiming == true, s.Effect.AdsSeconds);
+    private static bool HighFidelity(Player? p) => Get(p) is { } s && HighFidelity(s);
+    internal static float StatAccuracy(Weapon weapon) =>
+        WeaponStatReadBatch.ResolveStatEarpiece(weapon) is { } s && HighFidelity(s) ? .75f : 1f;
     internal static float Velocity(Player? p) => HighFidelity(p) ? 1.2f : 1f;
     internal static float FireRate(Player? p) => Get(p)?.Effect.FireRate ?? 1f;
     internal static float Aim(Player? p) => Get(p) is { } s ? s.Roll.Earpiece.Aim * s.Effect.Aim : 1f;
@@ -162,8 +222,12 @@ internal static class EarpieceRuntime
     internal static float Draw(Player? p) => Get(p)?.Roll.Earpiece.Draw ?? 1f;
     internal static float Sway(Player? p)
     {
-        var s = Get(p); if (s is null) return 1f;
-        return EarpieceEffectRules.Sway(s.Key, p!.MovementContext.IsInPronePose, s.Effect.ProneSeconds, Night());
+        return Get(p) is { } s ? s.Key switch
+        {
+            "EP02-5" => EarpieceEffectRules.Sway(s.Key, s.Player.MovementContext.IsInPronePose, s.Effect.ProneSeconds, false),
+            "EP08-3" => EarpieceEffectRules.Sway(s.Key, false, 0f, Night()),
+            _ => 1f
+        } : 1f;
     }
     internal static bool Night()
     {
@@ -171,9 +235,9 @@ internal static class EarpieceRuntime
         if (clock is null || Native.Call(clock, "Calculate") is not DateTime time) return false;
         return time.Hour >= 20 || time.Hour < 6;
     }
-    internal static float Value(Player p, string kind)
+    internal static float Value(Player p, string kind, bool observed = false)
     {
-        var s = Get(p); if (s is null) return 1f;
+        var s = Get(p, observed); if (s is null) return 1f;
         return kind switch
         {
             "aimCost" => s.Roll.Earpiece.AimCost * (s.Key == "EP08-3" && Night() ? .65f : 1f),

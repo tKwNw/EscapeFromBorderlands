@@ -101,56 +101,58 @@ internal static partial class AdvancedMeleeRuntime
         return true;
     }
 
-    public static void Maintain(GameWorld? world)
+    internal static bool HasPendingHoldWork(Player player) => WeightReduced.Contains(player) || Flights.ContainsKey(player);
+
+    internal static void MaintainPlayer(Player player, MeleeRuntime.HeldState? held)
     {
-        if (world is null) return;
-        foreach (var player in world.AllAlivePlayersList)
+        if (held is null && WeightReduced.Count == 0 && Flights.Count == 0) return;
+        var reduced = held?.Effect.WeightMultiplier < 1f;
+        if (reduced != WeightReduced.Contains(player))
         {
-            if (!PlayerRefresh.CanObserve(player)) continue;
-            var held = MeleeRuntime.Held(player);
-            var reduced = held?.Effect.WeightMultiplier < 1f;
-            if (reduced != WeightReduced.Contains(player))
-            {
-                if (reduced) WeightReduced.Add(player); else WeightReduced.Remove(player);
-                PlayerRefresh.Weight(player, "melee weight");
-            }
-            if (Flights.TryGetValue(player, out var flight))
-            {
-                if (!player.MovementContext.IsGrounded) flight.WasAirborne = true;
-                else if (flight.WasAirborne) Flights.Remove(player);
-                if (held?.Effect.ExtraJumpHeightMultiplier <= 0f || held is null) flight.Available = false;
-            }
-            if (held is null) continue;
-            var s = held.Advanced; var effect = held.Effect; var now = Time.time;
-            var dt = Math.Max(0f, Math.Min(.25f, now - s.LastUpdate));
-            var moved = player.Position - s.LastPosition; moved.y = 0f;
-            var still = player.InputDirection.sqrMagnitude < .0001f && moved.sqrMagnitude < .000001f;
-            if (!still) s.StationarySince = now;
-            var recoveryTime = still ? Math.Max(0f, Math.Min(dt, now - s.StationarySince - effect.StationarySeconds)) : 0f;
-            s.StationaryRecoveryActive = effect.StationarySeconds > 0f && recoveryTime > 0f;
-            if (effect.StationarySeconds > 0f && recoveryTime > 0f)
-            {
-                if (effect.StationaryLegStaminaPerSecond > 0f)
-                    Restore(player.Physical.Stamina, effect.StationaryLegStaminaPerSecond * recoveryTime);
-                MeleeRuntime.Heal(player, effect.StationaryHealPerSecond * recoveryTime);
-            }
-            if (effect.Ability == "sprint_charge")
-            {
-                var sprinting = player.MovementContext.IsSprintEnabled && player.InputDirection.sqrMagnitude > .0001f && moved.sqrMagnitude > .000001f;
-                if (!sprinting) s.SprintSince = -1f;
-                else
-                {
-                    if (s.SprintSince < 0f) s.SprintSince = now;
-                    if (now - s.SprintSince >= effect.ChargeSeconds) s.Charged = true;
-                }
-            }
-            if (effect.HoldPainkiller)
-            {
-                if (s.HeldPainkiller?.Existing != true) s.HeldPainkiller = Painkiller(player, 2f);
-                else s.HeldPainkiller.AddWorkTime(2f, true);
-            }
-            s.LastPosition = player.Position; s.LastUpdate = now;
+            if (reduced) WeightReduced.Add(player); else WeightReduced.Remove(player);
+            PlayerRefresh.Weight(player, "melee weight");
         }
+        if (Flights.TryGetValue(player, out var flight))
+        {
+            if (!player.MovementContext.IsGrounded) flight.WasAirborne = true;
+            else if (flight.WasAirborne) Flights.Remove(player);
+            if (held?.Effect.ExtraJumpHeightMultiplier <= 0f || held is null) flight.Available = false;
+        }
+        if (held is null) return;
+        var s = held.Advanced; var effect = held.Effect; var now = Time.time;
+        var dt = Math.Max(0f, Math.Min(.25f, now - s.LastUpdate));
+        var position = player.Position;
+        var moved = position - s.LastPosition; moved.y = 0f;
+        var still = player.InputDirection.sqrMagnitude < .0001f && moved.sqrMagnitude < .000001f;
+        if (!still) s.StationarySince = now;
+        var recoveryTime = still ? Math.Max(0f, Math.Min(dt, now - s.StationarySince - effect.StationarySeconds)) : 0f;
+        s.StationaryRecoveryActive = effect.StationarySeconds > 0f && recoveryTime > 0f;
+        if (effect.StationarySeconds > 0f && recoveryTime > 0f)
+        {
+            if (effect.StationaryLegStaminaPerSecond > 0f)
+                Restore(player.Physical.Stamina, effect.StationaryLegStaminaPerSecond * recoveryTime);
+            MeleeRuntime.Heal(player, effect.StationaryHealPerSecond * recoveryTime);
+        }
+        if (effect.Ability == "sprint_charge")
+        {
+            var sprinting = player.MovementContext.IsSprintEnabled && player.InputDirection.sqrMagnitude > .0001f && moved.sqrMagnitude > .000001f;
+            if (!sprinting) s.SprintSince = -1f;
+            else
+            {
+                if (s.SprintSince < 0f) s.SprintSince = now;
+                if (now - s.SprintSince >= effect.ChargeSeconds) s.Charged = true;
+            }
+        }
+        if (effect.HoldPainkiller)
+        {
+            if (s.HeldPainkiller?.Existing != true) s.HeldPainkiller = Painkiller(player, 2f);
+            else s.HeldPainkiller.AddWorkTime(2f, true);
+        }
+        s.LastPosition = position; s.LastUpdate = now;
+    }
+
+    internal static void MaintainExpired()
+    {
         foreach (var player in WeightReduced.Where(p => p.HealthController?.IsAlive != true).ToArray()) WeightReduced.Remove(player);
         foreach (var player in Flights.Keys.Where(p => p.HealthController?.IsAlive != true).ToArray()) Flights.Remove(player);
         foreach (var player in KillPainkillers.Keys.Where(p => p.HealthController?.IsAlive != true || !KillPainkillers[p].Existing).ToArray())
@@ -225,8 +227,12 @@ internal static partial class AdvancedMeleeRuntime
     {
         var e = held.Effect;
         if (e.NearbyEnemyRadius <= 0f || !Singleton<GameWorld>.Instantiated) return 0f;
-        var count = Singleton<GameWorld>.Instance.AllAlivePlayersList.Count(p => p != held.Player &&
-            p.HealthController?.IsAlive == true && Vector3.Distance(p.Position, held.Player.Position) <= e.NearbyEnemyRadius && Enemy(held.Player, p));
+        var owner = held.Player;
+        var position = owner.Position;
+        var count = 0;
+        foreach (var p in Singleton<GameWorld>.Instance.AllAlivePlayersList)
+            if (p != owner && p.HealthController?.IsAlive == true &&
+                Vector3.Distance(p.Position, position) <= e.NearbyEnemyRadius && Enemy(owner, p)) count++;
         return Math.Min(e.NearbyEnemySpeedMaximum, count * e.NearbyEnemySpeedBonus);
     }
 
@@ -250,7 +256,7 @@ internal static partial class AdvancedMeleeRuntime
         var held = MeleeRuntime.Held(player);
         if (held is null || !MeleeRuntime.Enabled(player, held.Effect)) return 1f;
         var factor = attacker != null && attacker != player ? held.Effect.IncomingDamageMultiplier : 1f;
-        if (attacker != null && held.Advanced.MarkedEnemies.Contains(attacker.ProfileId)) factor *= held.Effect.MarkedAttackerDamageMultiplier;
+        if (attacker != null && held.Advanced.MarkedEnemies.Contains(attacker.ProfileId)) factor *= Headwear.Amplifies(held) ? Math.Max(0f, 2f * held.Effect.MarkedAttackerDamageMultiplier - 1f) : held.Effect.MarkedAttackerDamageMultiplier;
         if (Crouched(player) && (type is EDamageType.Explosion or EDamageType.GrenadeFragment or EDamageType.ThermobaricExplosion)) factor *= held.Effect.CrouchExplosionMultiplier;
         return factor;
     }

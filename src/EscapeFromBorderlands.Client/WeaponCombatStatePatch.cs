@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using EFT;
 using EFT.Ballistics;
 using EFT.InventoryLogic;
@@ -12,18 +13,28 @@ namespace EscapeFromBorderlands.Client;
 
 internal static class WeaponCombatState
 {
-    internal static readonly FieldInfo PlayerField = AccessTools.Field(typeof(Player.ItemHandsController), "_player");
-    private static readonly FieldInfo AccuracyField = AccessTools.Field(typeof(Player.FirearmController), "float_3");
-    private static readonly FieldInfo DispersionField = AccessTools.Field(typeof(Player.FirearmController), "float_4");
-    private static readonly Dictionary<Player.FirearmController, (float recoil, float ergo, float accuracy)> Inputs = new();
+    private const BindingFlags InstanceFields = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+    private static readonly FieldInfo PlayerField = typeof(Player.ItemHandsController).GetField("_player", InstanceFields)!;
+    private static readonly FieldInfo AccuracyField = typeof(Player.FirearmController).GetField("float_3", InstanceFields)!;
+    private static readonly FieldInfo DispersionField = typeof(Player.FirearmController).GetField("float_4", InstanceFields)!;
+    private sealed class PreviousInputs { internal (float recoil, float ergo, float accuracy) Value; }
+    private sealed class PreviousInterval { internal float Value; }
+    private static ConditionalWeakTable<Player.FirearmController, PreviousInputs> Inputs = new();
     private static readonly HashSet<Player.FirearmController> Refreshing = new();
-    private static readonly Dictionary<Player.FirearmController.FireOperation, float> SingleIntervals = new();
+    private static ConditionalWeakTable<Player.FirearmController.FireOperation, PreviousInterval> SingleIntervals = new();
 
-    public static void ResetSession() { Inputs.Clear(); Refreshing.Clear(); SingleIntervals.Clear(); }
+    public static void ResetSession()
+    {
+        Inputs = new();
+        Refreshing.Clear();
+        SingleIntervals = new();
+        WeaponAttachmentReadBatch.ResetCompatibility();
+    }
 
     public static void RecordSingleStart(Player.FirearmController.FireOperation operation)
     {
-        if (RarityResolver.TryGetDefinition(operation.Weapon, out _) || ChestRigNative.For(operation.Weapon) is not null || EarpieceRuntime.Get(BackpackNative.WeaponOwner(operation.Weapon)) is not null) SingleIntervals[operation] = operation._singleFireCooldownTime;
+        if (TracksInterval(operation.Weapon))
+            SingleIntervals.GetValue(operation, static _ => new PreviousInterval()).Value = operation._singleFireCooldownTime;
     }
 
     public static void RefreshPreparedSingleInterval(Player.FirearmController controller, Weapon weapon)
@@ -31,35 +42,114 @@ internal static class WeaponCombatState
         if (controller.CurrentOperation is not Player.FirearmController.FireOperation operation ||
             !SingleIntervals.TryGetValue(operation, out var original)) return;
         var interval = 60f / Math.Max(1, weapon.SingleFireRate);
-        var elapsed = Math.Max(0f, original - operation._singleFireCooldownTime);
+        var elapsed = Math.Max(0f, original.Value - operation._singleFireCooldownTime);
         operation._singleFireCooldownTime = Math.Max(0f, interval - elapsed);
-        SingleIntervals[operation] = interval;
+        original.Value = interval;
     }
 
-    public static void Refresh(Player.FirearmController controller)
+    internal static Player? Owner(Player.FirearmController controller) => PlayerField.GetValue(controller) as Player;
+
+    public static void Refresh(Player.FirearmController controller) =>
+        Refresh(controller, controller.Item, Owner(controller));
+
+    internal static void Refresh(Player.FirearmController controller, Weapon? weapon, Player? player, bool forShot = false)
     {
-        var weapon = controller.Item;
-        var active = weapon is not null && (RarityResolver.Resolve(weapon) is not null || ChestRigRuntime.Get(BackpackRuntime.Actor(controller)) is not null || GrenadeBuffs.HasState(BackpackRuntime.Actor(controller)) || EarpieceRuntime.Get(BackpackRuntime.Actor(controller)) is not null);
-        if (weapon is null || !active && !Inputs.ContainsKey(controller) || !Refreshing.Add(controller)) return;
+        RarityResolver.TryGetDefinition(weapon, out var definition);
+        Refresh(controller, weapon, player, definition, forShot);
+    }
+    internal static WeaponPerformanceTrace.Route Refresh(Player.FirearmController controller, Weapon? weapon, Player? player, VariantDefinition? definition, bool forShot = false)
+    {
+        var trace = default(WeaponPerformanceTrace);
+        return Refresh(controller, weapon, player, definition, ref trace, forShot);
+    }
+    internal static WeaponPerformanceTrace.Route Refresh(Player.FirearmController controller, Weapon? weapon, Player? player,
+        VariantDefinition? definition, ref WeaponPerformanceTrace trace, bool forShot = false, bool livePoll = false)
+    {
+        if (weapon is null) return WeaponPerformanceTrace.Route.Neutral;
+        var active = definition is not null || HasGearEffects(player ?? BackpackRuntime.Actor(controller));
+        var route = definition is not null ? WeaponPerformanceTrace.Route.Legendary :
+            active ? WeaponPerformanceTrace.Route.Gear : WeaponPerformanceTrace.Route.Neutral;
+        Inputs.TryGetValue(controller, out var previous);
+        if ((!active && previous is null) || !Refreshing.Add(controller)) return route;
+        if (!active) route = WeaponPerformanceTrace.Route.Restore;
         try
         {
-            // EFT caches these values in the controller and recoil effector.
-            // Refresh before spread/speed/recoil are read for THIS cartridge.
-            var inputs = (weapon.RecoilDelta, weapon.ErgonomicsDelta, weapon.CenterOfImpactDelta);
-            AccuracyField.SetValue(controller, weapon.GetTotalCenterOfImpact(false));
-            DispersionField.SetValue(controller, weapon.TotalShotgunDispersion);
-            if (!Inputs.TryGetValue(controller, out var old) || old != inputs)
+            (float recoil, float ergo, float accuracy) inputs;
+            bool changed;
+            var intervalRefreshed = false;
+            using (new WeaponStatReadBatch.Scope(weapon, player, definition))
             {
-                Inputs[controller] = inputs;
+                var statStart = trace.Stamp();
+                using (var attachments = new WeaponAttachmentReadBatch.Scope(weapon, active && livePoll && !forShot))
+                {
+                    inputs = (weapon.RecoilDelta, weapon.ErgonomicsDelta, weapon.CenterOfImpactDelta);
+                    trace.ReadStats(statStart, attachments.Used);
+                }
+                // These controller fields are read by the native cartridge
+                // method. Sample at that boundary, or once to restore vanilla.
+                if (forShot || !active)
+                {
+                    AccuracyField.SetValue(controller, weapon.GetTotalCenterOfImpact(false));
+                    DispersionField.SetValue(controller, weapon.TotalShotgunDispersion * Headwear.Factor(player, HatStat.Dispersion));
+                }
+                changed = previous is null || previous.Value != inputs;
+                if (active && !changed && controller.CurrentOperation is Player.FirearmController.AutomaticFireOperation current)
+                {
+                    // No native animator callback intervened in this scope.
+                    var intervalStart = trace.Stamp();
+                    RefreshInterval(current, weapon);
+                    trace.Interval(intervalStart);
+                    intervalRefreshed = true;
+                }
+            }
+            if (changed)
+            {
+                var applyStart = trace.Stamp();
+                (previous ?? Inputs.GetValue(controller, static _ => new PreviousInputs())).Value = inputs;
                 controller.RecalculateErgonomic();
-                var player = PlayerField.GetValue(controller) as Player;
                 player?.ProceduralWeaponAnimation?.UpdateWeaponVariables();
                 controller.UpdateHipInaccuracy();
+                trace.Apply(applyStart);
             }
             if (!active) Inputs.Remove(controller);
-            if (controller.CurrentOperation is Player.FirearmController.AutomaticFireOperation automatic) RefreshInterval(automatic, weapon);
+            if (!intervalRefreshed && controller.CurrentOperation is Player.FirearmController.AutomaticFireOperation automatic)
+            {
+                var intervalStart = trace.Stamp();
+                RefreshInterval(automatic, weapon);
+                trace.Interval(intervalStart);
+            }
         }
         finally { Refreshing.Remove(controller); }
+        return route;
+    }
+
+    private static bool HasGearEffects(Player? player)
+    {
+        if (player is null) return false;
+        var observed = PlayerRefresh.CanObserve(player);
+        return Headwear.Get(player) is not null || ChestRigRuntime.Get(player, observed) is not null || GrenadeBuffs.ChangesFirearm(player, observed) ||
+            EarpieceRuntime.ChangesFirearm(player, observed);
+    }
+
+    internal static bool TracksInterval(Weapon weapon)
+    {
+        if (RarityResolver.TryGetDefinition(weapon, out _)) return true;
+        var owner = Headwear.Owner(weapon);
+        return Headwear.Get(owner) is not null || ChestRigRuntime.Get(owner) is not null || EarpieceRuntime.Get(owner) is not null;
+    }
+
+    internal static int? PreparedRemaining(Player.FirearmController controller, Weapon weapon, Ammo ammo)
+    {
+        // Double-tap can remove both cartridges before firing. Retain the
+        // native ammo identity and per-barrel count without a LINQ closure.
+        if (controller.CurrentOperation is not Player.FirearmController.FireOnlyBarrelFireOperation barrels) return null;
+        foreach (var shot in barrels._singleShotsData)
+        {
+            if (shot.AmmoToFire != ammo) continue;
+            return shot.AmmoCountInChamberBeforeShot > 0
+                ? shot.AmmoCountInChamberBeforeShot + weapon.GetCurrentMagazineCount() : null;
+        }
+        return null;
     }
 
     public static void RefreshInterval(Player.FirearmController.AutomaticFireOperation operation, Weapon weapon)
@@ -78,22 +168,12 @@ internal static class WeaponCartridgePreparationPatch
 {
     private static void Prefix(Player.FirearmController __instance, Weapon weapon, Ammo ammo, out LegendaryRuntime.ShotScope? __state)
     {
-        var player = WeaponCombatState.PlayerField.GetValue(__instance) as Player;
-        int? remaining = null;
-        // Double-tap prepares/removes BOTH cartridges before either barrel
-        // fires. Its per-barrel snapshots retain the correct 2, then 1 count.
-        if (__instance.CurrentOperation is Player.FirearmController.FireOnlyBarrelFireOperation barrels)
-        {
-            var prepared = barrels._singleShotsData.FirstOrDefault(value => value.AmmoToFire == ammo);
-            if (prepared.AmmoCountInChamberBeforeShot > 0)
-                remaining = prepared.AmmoCountInChamberBeforeShot + weapon.GetCurrentMagazineCount();
-        }
+        var player = WeaponCombatState.Owner(__instance);
+        var remaining = WeaponCombatState.PreparedRemaining(__instance, weapon, ammo);
         __state = LegendaryRuntime.BeginShot(weapon, ammo, player?.ProfileId ?? string.Empty, remaining);
-        if (__state is not null)
-        {
-            WeaponCombatState.Refresh(__instance);
-            WeaponCombatState.RefreshPreparedSingleInterval(__instance, weapon);
-        }
+        // Gear can change dispersion on an otherwise vanilla firearm as well.
+        WeaponCombatState.Refresh(__instance, __instance.Item, player, forShot: true);
+        if (__state is not null) WeaponCombatState.RefreshPreparedSingleInterval(__instance, weapon);
     }
 
     private static Exception? Finalizer(LegendaryRuntime.ShotScope? __state, Exception? __exception)
@@ -125,12 +205,17 @@ internal static class WeaponTotalProjectileCountPatch
 [HarmonyPatch(typeof(Player.FirearmController), nameof(Player.FirearmController.ManualUpdate))]
 internal static class WeaponLiveCombatStatePatch
 {
-    private static void Prefix(Player.FirearmController __instance, out LegendaryFireModePatch.ModeScope? __state)
+    private static void Prefix(Player.FirearmController __instance, Player? ____player, out LegendaryFireModePatch.ModeScope? __state)
     {
-        var player = WeaponCombatState.PlayerField.GetValue(__instance) as Player;
-        LegendaryRuntime.UpdateLiveState(player, __instance.Item);
-        __state = LegendaryFireModePatch.BeginCarrier(__instance.Item);
-        WeaponCombatState.Refresh(__instance);
+        var trace = WeaponPerformanceTrace.Begin();
+        var weapon = __instance.Item;
+        RarityResolver.TryGetDefinition(weapon, out var definition);
+        LegendaryRuntime.UpdateLiveState(____player, weapon, definition);
+        trace.Observe();
+        __state = weapon is not null && definition is not null ? LegendaryFireModePatch.BeginCarrier(weapon, definition) : null;
+        trace.Carrier();
+        var route = WeaponCombatState.Refresh(__instance, weapon, ____player, definition, ref trace, livePoll: true);
+        trace.Complete(route, definition);
     }
 
     private static Exception? Finalizer(LegendaryFireModePatch.ModeScope? __state, Exception? __exception)
@@ -145,7 +230,8 @@ internal static class WeaponAutomaticIntervalPatch
 {
     private static void Prefix(Player.FirearmController.AutomaticFireOperation __instance)
     {
-        if (RarityResolver.TryGetDefinition(__instance.Weapon, out _) || ChestRigNative.For(__instance.Weapon) is not null || EarpieceRuntime.Get(BackpackNative.WeaponOwner(__instance.Weapon)) is not null) WeaponCombatState.RefreshInterval(__instance, __instance.Weapon);
+        var weapon = __instance.Weapon;
+        if (WeaponCombatState.TracksInterval(weapon)) WeaponCombatState.RefreshInterval(__instance, weapon);
     }
 }
 

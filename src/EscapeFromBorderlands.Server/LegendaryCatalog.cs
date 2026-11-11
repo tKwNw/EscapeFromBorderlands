@@ -14,7 +14,12 @@ internal sealed class LegendaryCatalog
     public List<LegacyAliasDefinition> LegacyAliases { get; set; } = [];
     public List<VariantDefinition> Variants { get; set; } = [];
 
-    public static LegendaryCatalog Load()
+    // The resource and its expanded definitions are read-only after load.
+    // Share them with compatibility hooks instead of parsing per consumer.
+    private static readonly Lazy<LegendaryCatalog> Shared = new(Read);
+    public static LegendaryCatalog Load() => Shared.Value;
+
+    private static LegendaryCatalog Read()
     {
         var assembly = Assembly.GetExecutingAssembly();
         var resourceName = assembly.GetManifestResourceNames().Single(name =>
@@ -45,7 +50,7 @@ internal sealed class LegacyAliasDefinition
 
 internal sealed class VariantDefinition
 {
-    public bool IsEarpiece { get; set; }
+    public bool IsEarpiece { get; set; } public bool IsHeadwear => WeaponClass is "armoredHeadwear" or "unarmoredHeadwear";
     public bool SpawnEnabled { get; set; } = true;
     public bool IsMysteryFleaOffer { get; set; }
     public string FleaRevealTemplateId { get; set; } = string.Empty;
@@ -85,7 +90,7 @@ internal sealed class VariantDefinition
     public MeleeEffectDefinition? MeleeEffect { get; set; }
     public BackpackEffectDefinition? BackpackEffect { get; set; }
     public ChestRigEffectDefinition? ChestRigEffect { get; set; }
-    public string LocaleDescription => BackpackEffect is null && ChestRigEffect is null && GrenadeChargesPerRaid == 0 && !IsEarpiece ? Description
+    public string LocaleDescription => BackpackEffect is null && ChestRigEffect is null && GrenadeChargesPerRaid == 0 && !IsEarpiece && !IsHeadwear ? Description
         : "<color=#66D9EF>" + EffectText + "</color>" + (string.IsNullOrEmpty(Description) ? "" : "\n\n" + Description);
     public List<string> FireModes { get; set; } = [];
     public int? BurstShotsCount { get; set; }

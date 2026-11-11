@@ -128,10 +128,12 @@ internal static class ChestRigBoltCyclePatch
     private static readonly Dictionary<object,float> Speeds=new();
     private static void Postfix(Player.FirearmController.BoltActionFireOperation __instance)
     {
-        if(ChestRigNative.For(__instance.Weapon) is not { } s)return;
-        var speed=(s.Key=="TR16-2"?1.5f:1f)*s.CycleCharge;if(speed==1f)return;
+        var s = ChestRigNative.For(__instance.Weapon);
+        var hat = __instance.Weapon.BoltAction ? Headwear.Factor(Headwear.Owner(__instance.Weapon), HatStat.Bolt) : 1f;
+        var speed = (s?.Key == "TR16-2" ? 1.5f : 1f) * (s?.CycleCharge ?? 1f) * hat;
+        if(speed==1f)return;
         var original=Native.Get(Native.Get(__instance.FirearmsAnimator,"Animator"),"speed") is float f?f:1f;
-        Speeds[__instance]=original;__instance.FirearmsAnimator.SetAnimationSpeed(original*speed);s.CycleCharge=1f;
+        Speeds[__instance]=original;__instance.FirearmsAnimator.SetAnimationSpeed(original*speed);if(s is not null)s.CycleCharge=1f;
     }
     internal static void End(Player.FirearmController.FireOperation operation)
     {if(Speeds.TryGetValue(operation,out var speed)){operation.FirearmsAnimator.SetAnimationSpeed(speed);Speeds.Remove(operation);}}

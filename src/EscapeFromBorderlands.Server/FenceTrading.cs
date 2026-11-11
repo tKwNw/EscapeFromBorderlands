@@ -63,7 +63,12 @@ internal static class FenceTrading
 
     private static bool BeforeResale(IEnumerable<Item> __0, Item __1) => Policy?.BlocksResale(__0, __1) != true;
     private static void BeforeOffers(FenceService __instance) => CleanStored(__instance);
-    private static void AfterOffers(TraderAssort __result) => Policy?.Filter(__result);
+    private static void AfterOffers(TraderAssort __result)
+    {
+        if (Policy is not { } policy) return;
+        var timing = ServerPerformanceTrace.Measure("Fence offer filter");
+        timing.Complete(__result?.Items?.Count ?? 0, policy.Filter(__result));
+    }
     private static void AfterGeneration(FenceService __instance) => CleanStored(__instance);
     private static void AfterBaseGeneration() => CleanAll();
 

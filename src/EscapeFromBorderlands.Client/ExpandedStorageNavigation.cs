@@ -19,10 +19,11 @@ internal static class ExpandedStorageNavigation
     private static readonly List<RectTransform> DeadWindows = new();
     private static readonly Dictionary<(Type, string), PropertyInfo> Properties = new();
     private static bool Warned;
+    private static long BindingOrder;
 
     internal static void Register(RectTransform root, RectTransform[] grids, Func<bool>? dragging = null, int originalCount = -1, bool sidecar = false)
     {
-        if (Roots.TryGetValue(root, out var old)) { old.RestoreScales(); Bindings.Remove(old); }
+        if (Roots.TryGetValue(root, out var old)) { old.Detach(); old.RestoreScales(); Bindings.Remove(old); }
         var binding = new Binding(root, grids, dragging, originalCount, sidecar);
         Roots[root] = binding; Bindings.Add(binding);
         // Apply the initial width budget before the first visible layout pass.
@@ -34,12 +35,11 @@ internal static class ExpandedStorageNavigation
         try
         {
             if (Bindings.Count == 0 && OpenSessions.Count == 0 && Windows.Count == 0) return;
-            foreach (var session in OpenSessions) session.Bindings.Clear();
             for (var i = Bindings.Count - 1; i >= 0; i--)
             {
                 var binding = Bindings[i]; var root = binding.Root;
-                if (root == null) { Roots.Remove(root!); Bindings.RemoveAt(i); continue; }
-                if (!root.gameObject.activeInHierarchy) continue;
+                if (root == null) { binding.Detach(); Roots.Remove(root!); Bindings.RemoveAt(i); continue; }
+                if (!root.gameObject.activeInHierarchy) { binding.Detach(); continue; }
                 if (!binding.Resolved || binding.Parent != root.parent)
                 {
                     binding.Scroll = FindScroll(root);
@@ -49,19 +49,23 @@ internal static class ExpandedStorageNavigation
                 var scroll = binding.Scroll;
                 if (scroll == null)
                 {
+                    binding.Detach();
                     var parentWidth = (root.parent as RectTransform)?.rect.width ?? BackpackGridLayout.MaximumWidth;
                     binding.Apply(Math.Max(1f, Math.Min(BackpackGridLayout.MaximumWidth, parentWidth - Gap)));
                     continue;
                 }
                 if (!Sessions.TryGetValue(scroll, out var session))
                 { Sessions[scroll] = session = new Session(scroll); OpenSessions.Add(session); }
-                session.Bindings.Add(binding);
+                binding.Attach(session);
             }
             for (var i = OpenSessions.Count - 1; i >= 0; i--)
             {
                 var session = OpenSessions[i];
                 if (session.Scroll == null || session.Bindings.Count == 0)
-                { session.Dispose(); Sessions.Remove(session.Scroll!); OpenSessions.RemoveAt(i); }
+                {
+                    while (session.Bindings.Count > 0) session.Bindings[session.Bindings.Count - 1].Detach();
+                    session.Dispose(); Sessions.Remove(session.Scroll!); OpenSessions.RemoveAt(i);
+                }
                 else session.Update();
             }
             DeadWindows.Clear();
@@ -114,6 +118,8 @@ internal static class ExpandedStorageNavigation
     private sealed class Binding
     {
         internal readonly RectTransform Root;
+        private readonly long Order = ++BindingOrder;
+        private Session? Attached;
         internal readonly float NaturalWidth, NaturalHeight;
         private readonly RectTransform[] Grids;
         private readonly BackpackGridLayout.Placement[] Original;
@@ -143,11 +149,30 @@ internal static class ExpandedStorageNavigation
             }
         }
 
+        internal void Detach()
+        {
+            if (Attached is null) return;
+            Attached.Bindings.Remove(this);
+            Attached = null;
+        }
+
+        internal void Attach(Session session)
+        {
+            if (ReferenceEquals(Attached, session)) return;
+            Detach();
+            Attached = session;
+            var i = session.Bindings.Count;
+            // Maintain the same reverse-registration order as the old rebuild.
+            while (i > 0 && session.Bindings[i - 1].Order < Order) i--;
+            session.Bindings.Insert(i, this);
+        }
+
         internal bool Apply(float limit)
         {
             limit = Math.Min(BackpackGridLayout.MaximumWidth, Math.Max(1f, limit));
             if (Math.Abs(LastLimit - limit) < .5f) return true;
-            if (Dragging?.Invoke() == true || Grids.Any(grid => grid == null)) return false;
+            if (Dragging?.Invoke() == true) return false;
+            foreach (var grid in Grids) if (grid == null) return false;
             var layout = BackpackGridLayout.Wrap(Original, Widths, Heights, limit, Gap, OriginalCount, Sidecar);
             for (var i = 0; i < Grids.Length; i++)
             {

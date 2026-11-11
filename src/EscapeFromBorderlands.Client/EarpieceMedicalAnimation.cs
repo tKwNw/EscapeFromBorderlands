@@ -17,6 +17,7 @@ internal static class EarpieceMedicalAnimation
     private static float Factor(Player p, FirearmsAnimator animator) => EarpieceRuntime.MedicalSpeed(p, ServiceWindow.MedicalController(p, animator)?.Item);
     internal static void Maintain()
     {
+        if (Entries.Count == 0) return;
         foreach (var pair in Entries.ToArray())
         {
             var e = pair.Value;
