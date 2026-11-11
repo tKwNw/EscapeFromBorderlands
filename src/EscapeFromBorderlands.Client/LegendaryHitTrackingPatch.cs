@@ -1,3 +1,7 @@
+using Shot = EftBulletClass;
+using Magazine = MagazineItemClass;
+using Ammo = AmmoItemClass;
+using AmmoPack = AmmoPackReloadingClass;
 using System;
 using System.Reflection;
 using System.Linq;
@@ -6,16 +10,17 @@ using EFT;
 using EFT.Ballistics;
 using EFT.InventoryLogic;
 using EFT.RocketLauncher;
+using EFT.RocketLauncher.Explosion;
 using HarmonyLib;
 using Systems.Effects;
 using UnityEngine;
 
 namespace EscapeFromBorderlands.Client;
 
-[HarmonyPatch(typeof(EftBulletClass), nameof(EftBulletClass.Tick))]
+[HarmonyPatch(typeof(Shot), nameof(Shot.Tick))]
 internal static class LegendaryHitTrackingPatch
 {
-    private static void Postfix(EftBulletClass __instance)
+    private static void Postfix(Shot __instance)
     {
         if (!__instance.HasAchievedTarget || __instance.ShotProcessed)
         {
@@ -26,8 +31,7 @@ internal static class LegendaryHitTrackingPatch
         {
             if (__instance.Parent is null)
             {
-                ApplyHitLocationDamage(__instance, application);
-                ApplyLimbDamage(__instance, application);
+                ApplyLocationDamage(__instance, application);
                 ApplyPenetrationRetention(__instance, application);
                 TriggerExplosion(__instance, application);
             }
@@ -40,50 +44,35 @@ internal static class LegendaryHitTrackingPatch
         LegendaryRuntime.Release(__instance);
     }
 
-    private static void ApplyHitLocationDamage(EftBulletClass shot, EffectApplication application)
+    private static void ApplyLocationDamage(Shot shot, EffectApplication application)
     {
-        if (shot.HittedBallisticCollider is not BodyPartCollider body)
-        {
-            return;
-        }
+        if (application.HeadDamageMultiplier == 1f && application.BodyDamageMultiplier == 1f &&
+            application.ConditionalDamageMultiplier == 1f && application.LimbDamageMultiplier == 1f) return;
+        if (shot.HittedBallisticCollider is not BodyPartCollider body) return;
 
         var bodyPart = body.BodyPartType.ToString();
         shot.Damage *= bodyPart.IndexOf("Head", StringComparison.OrdinalIgnoreCase) >= 0
-            ? application.HeadDamageMultiplier
-            : application.BodyDamageMultiplier;
+            ? application.HeadDamageMultiplier : application.BodyDamageMultiplier;
         if (application.ConditionalDamageMultiplier != 1f &&
             (string.IsNullOrEmpty(application.ConditionalTargetProfileId) ||
                 string.Equals(application.ConditionalTargetProfileId, body.PlayerProfileID, StringComparison.Ordinal)) &&
             (string.IsNullOrEmpty(application.ConditionalBodyPart) ||
                 string.Equals(application.ConditionalBodyPart, bodyPart, StringComparison.Ordinal)))
-        {
             shot.Damage *= application.ConditionalDamageMultiplier;
-        }
-    }
-
-    private static void ApplyLimbDamage(EftBulletClass shot, EffectApplication application)
-    {
-        if (application.LimbDamageMultiplier == 1f || shot.HittedBallisticCollider is not BodyPartCollider body)
-        {
-            return;
-        }
-
-        var name = body.BodyPartType.ToString();
-        if (name.IndexOf("Arm", StringComparison.OrdinalIgnoreCase) >= 0 ||
-            name.IndexOf("Leg", StringComparison.OrdinalIgnoreCase) >= 0)
-        {
+        if (application.LimbDamageMultiplier != 1f &&
+            (bodyPart.IndexOf("Arm", StringComparison.OrdinalIgnoreCase) >= 0 ||
+             bodyPart.IndexOf("Leg", StringComparison.OrdinalIgnoreCase) >= 0))
             shot.Damage *= application.LimbDamageMultiplier;
-        }
     }
 
-    private static void ApplyPenetrationRetention(EftBulletClass shot, EffectApplication application)
+    private static void ApplyPenetrationRetention(Shot shot, EffectApplication application)
     {
         if (shot.Fragments.Count == 0)
         {
             return;
         }
 
-        if (application.RicochetRetention > 0f && shot.BulletState == EftBulletClass.EBulletState.RicochetHit)
+        if (application.RicochetRetention > 0f && shot.BulletState == Shot.EBulletState.RicochetHit)
         {
             foreach (var fragment in shot.Fragments)
             {
@@ -104,13 +93,14 @@ internal static class LegendaryHitTrackingPatch
         }
     }
 
-    private static void TriggerExplosion(EftBulletClass shot, EffectApplication application)
+    private static void TriggerExplosion(Shot shot, EffectApplication application)
     {
         if (application.ExplosionDamageFactor <= 0f || application.BonusProjectile || shot.Parent is not null)
         {
             return;
         }
 
+        using var timing = GrenadeSpikeTrace.MeasureWeapon(application.Definition, "impact explosion");
         ProjectileImpactExplosion.Trigger(shot,application.ExplosionDamageFactor,application.ExplosionRadius);
     }
 }
@@ -121,9 +111,9 @@ internal static class LegendaryMissTrackingPatch
     private static MethodBase TargetMethod() => AccessTools.Method(
         typeof(BallisticsCalculator),
         "method_1",
-        new[] { typeof(EftBulletClass) });
+        new[] { typeof(Shot) });
 
-    private static void Postfix(EftBulletClass __0, bool __result)
+    private static void Postfix(Shot __0, bool __result)
     {
         if (__result && !__0.HasAchievedTarget)
         {
@@ -134,10 +124,10 @@ internal static class LegendaryMissTrackingPatch
     }
 }
 
-[HarmonyPatch(typeof(EftBulletClass), nameof(EftBulletClass.Release))]
+[HarmonyPatch(typeof(Shot), nameof(Shot.Release))]
 internal static class LegendaryProjectilePoolCleanupPatch
 {
-    private static void Prefix(EftBulletClass shot)
+    private static void Prefix(Shot shot)
     {
         ChestRigRuntime.BulletFinished(shot);
         if (!LegendaryRuntime.TryGetApplication(shot, out _)) return;
@@ -262,7 +252,7 @@ internal static class LegendaryUtilityCompletionPatch
             var bit = __instance.EutilityType_0 == Player.FirearmController.GClass2038.EUtilityType.ExamineWeapon ? 4 :
                 __instance.EutilityType_0 == Player.FirearmController.GClass2038.EUtilityType.CheckChamber ? 1 :
                 __instance.EutilityType_0 == Player.FirearmController.GClass2038.EUtilityType.CheckMagazine ? 2 : 0;
-            if (bit != 0) { BackpackRuntime.Check(actor, __instance.Weapon_0.Id, bit); ChestRigRuntime.Check(actor,__instance.Weapon_0,bit); EarpieceRuntime.Get(actor)?.Effect.Check(bit); }
+            if (bit != 0) { BackpackRuntime.Check(actor, __instance.Weapon_0.Id, bit); ChestRigRuntime.Check(actor,__instance.Weapon_0,bit); EarpieceRuntime.Get(actor)?.Effect.Check(bit); Headwear.Checked(actor, bit); }
             if (ChestRigUtilitySpeedPatch.Speeds.TryGetValue(__instance,out var oldSpeed)) { __instance.FirearmsAnimator_0.SetAnimationSpeed(oldSpeed); ChestRigUtilitySpeedPatch.Speeds.Remove(__instance); }
         }
         switch (__instance.EutilityType_0)
@@ -325,11 +315,6 @@ internal static class LegendaryReloadCompletionPatch
 [HarmonyPatch(typeof(Player.FirearmController), nameof(Player.FirearmController.ManualUpdate))]
 internal static class LegendaryContinuousStatePatch
 {
-    private static readonly FieldInfo PlayerField = AccessTools.Field(typeof(Player.ItemHandsController), "_player");
-
-    private static void Postfix(Player.FirearmController __instance)
-    {
-        var player = PlayerField.GetValue(__instance) as Player;
-        LegendaryRuntime.UpdateLiveState(player, __instance.Item);
-    }
+    private static void Postfix(Player.FirearmController __instance, Player? ____player) =>
+        LegendaryRuntime.UpdateLiveState(____player, __instance.Item);
 }

@@ -20,7 +20,7 @@ internal static class BackpackSearch
     internal static InventoryEquipment? CorpseRoot(Item item) => item.Parent is null ? null : GClass3113.GetOwner(item.Parent)?.RootItem as InventoryEquipment;
     internal static float TimeFactor(Player p, Item searched)
     {
-        var rigFactor = ChestRigRuntime.Is(p,"TR19-2") ? 1f/1.75f : 1f;
+        var rigFactor = (ChestRigRuntime.Is(p,"TR19-2") ? 1f/1.75f : 1f) / Headwear.Factor(p, HatStat.Search);
         var s = BackpackRuntime.Get(p); if (s is null) return rigFactor;
         var time = s.Roll.Backpack.SearchTime;
         if (s.Key == "BP08-3" && Corpse(searched) && new[] { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon }
@@ -51,7 +51,7 @@ internal static class BackpackSearchTimingPatch
     private static bool Prefix(GClass3515 __instance, ref Task __result)
     {
         var p = BackpackSearch.Owner(__instance);
-        if (p is null || BackpackRuntime.Get(p) is null && !ChestRigRuntime.Is(p,"TR19-2")) return true;
+        if (p is null || BackpackRuntime.Get(p) is null && !ChestRigRuntime.Is(p,"TR19-2") && Headwear.Factor(p, HatStat.Search) == 1f) return true;
         __result = BackpackSearch.Search(__instance, p); return false;
     }
 }

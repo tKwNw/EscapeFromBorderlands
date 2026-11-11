@@ -1,7 +1,9 @@
+using DamageHelper = GClass3051;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Comfort.Common;
 using EFT;
 using EFT.HealthSystem;
@@ -31,29 +33,59 @@ internal static class BackpackNative
         public Player Player = null!; public Item Item = null!; public BackpackRuntime.State State = null!; public Vector3 Position; public float Expires;
     }
     internal static readonly List<Drop> Drops = new();
+    private static readonly List<Drop> DropSnapshot = new();
+    private static ConditionalWeakTable<IItemOwner, Player> ItemOwners = new();
     internal static void Reset()
     {
-        Uses.Clear(); ItemUses.Clear(); Drops.Clear(); BackpackTripwire.Recover.Clear();
+        Uses.Clear(); ItemUses.Clear(); Drops.Clear(); BackpackTripwire.Recover.Clear(); ItemOwners = new();
         SessionCleanup.Run(nameof(BackpackMedicalRestoration), BackpackMedicalRestoration.Reset);
         SessionCleanup.Run(nameof(BackpackLootTransfers), BackpackLootTransfers.Reset);
         SessionCleanup.Run(nameof(BackpackAudio), BackpackAudio.Reset);
         SessionCleanup.Run(nameof(BackpackPresentation), BackpackPresentation.Reset);
         SessionCleanup.Run(nameof(BackpackGrenadeAction), BackpackGrenadeAction.Reset);
     }
-    internal static bool InBag(Item? item, Item bag) => item is not null && bag.GetAllItems().Any(i => i.Id == item.Id);
-    internal static Player? ItemOwner(Item item)
+    internal static bool InBag(Item? item, Item bag) => item is not null && ContainsId(bag.GetAllItems(), item.Id);
+
+    internal static bool ContainsId(IEnumerable<Item> items, string id)
+    {
+        foreach (var candidate in items) if (candidate.Id == id) return true;
+        return false;
+    }
+    internal static Player? ItemOwner(Item item) => ItemOwner(item, null);
+
+    private static Player? ItemOwner(Item item, Player? controllerOwner)
     {
         var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
         if (world is null || item.Owner is not { } owner) return null;
-        // Native ownership follows the current address, so transfers invalidate
-        // naturally. Never walk every player's inventory or retain an owner cache.
-        return world.RegisteredPlayers.OfType<Player>().FirstOrDefault(p =>
-            PlayerRefresh.CanObserve(p) && (ReferenceEquals(p.InventoryController, owner) ||
-            ReferenceEquals(p.InventoryController.Inventory.Equipment.Owner, owner)));
+        // The controller gives us the likely player. Check the current native
+        // inventory owner and raid membership before using it. Fall back to
+        // the native roster for stash reads, transfers and unusual mods.
+        if (controllerOwner is not null && Owns(controllerOwner, owner) &&
+            PlayerRefresh.IsRegistered(world, controllerOwner) && PlayerRefresh.CanObserve(controllerOwner))
+            return controllerOwner;
+        if (ItemOwners.TryGetValue(owner, out var known))
+        {
+            if (Owns(known, owner) && PlayerRefresh.CanObserve(known) && PlayerRefresh.IsRegistered(world, known)) return known;
+            ItemOwners.Remove(owner);
+        }
+        foreach (var candidate in world.RegisteredPlayers)
+            if (candidate is Player player && Owns(player, owner) && PlayerRefresh.CanObserve(player))
+            {
+                ItemOwners.GetValue(owner, _ => player);
+                return player;
+            }
+        return null;
     }
-    internal static Player? WeaponOwner(Weapon weapon)
+
+    private static bool Owns(Player player, IItemOwner owner) =>
+        player.InventoryController is { } inventory && (ReferenceEquals(inventory, owner) ||
+            ReferenceEquals(inventory.Inventory?.Equipment?.Owner, owner));
+
+    internal static Player? WeaponOwner(Weapon weapon) => WeaponStatReadBatch.ResolveOwner(weapon);
+
+    internal static Player? FindWeaponOwner(Weapon weapon, Player? controllerOwner = null)
     {
-        var owner = ItemOwner(weapon);
+        var owner = ItemOwner(weapon, controllerOwner);
         return owner?.HandsController?.Item?.Id == weapon.Id ? owner : null;
     }
     internal static float ErgonomicsFactor(BackpackRuntime.State? s) => s is null ? 1f : s.Roll.Backpack.Ergonomics * BackpackRules.Ergonomics(s.Key, s.Key == "BP24-1" && BackpackRuntime.Daytime(), s.Key == "BP31-2" && BackpackRuntime.Milestone(s));
@@ -70,12 +102,18 @@ internal static class BackpackNative
     }
     internal static void MaintainWorld()
     {
-        foreach (var drop in Drops.ToArray())
+        if (Drops.Count == 0) return;
+        DropSnapshot.AddRange(Drops);
+        try
         {
-            if (drop.Expires < Time.time || drop.Player.HealthController?.IsAlive != true) { Drops.Remove(drop); continue; }
-            if (drop.Player.InventoryController.Inventory.Equipment.GetAllItems().Any(i => i.Id == drop.Item.Id)) continue;
-            Drops.Remove(drop); Dropped(drop);
+            foreach (var drop in DropSnapshot)
+            {
+                if (drop.Expires < Time.time || drop.Player.HealthController?.IsAlive != true) { Drops.Remove(drop); continue; }
+                if (ContainsId(drop.Player.InventoryController.Inventory.Equipment.GetAllItems(), drop.Item.Id)) continue;
+                Drops.Remove(drop); Dropped(drop);
+            }
         }
+        finally { DropSnapshot.Clear(); }
     }
 
     internal static Use? Begin(object effect)
@@ -109,10 +147,14 @@ internal static class BackpackNative
         if (s.Key == "BP42-1" && Native.Component<FoodDrinkComponent>(item) is not null) factor *= .5f;
         return factor;
     }
-    internal static IEnumerable<EffectStatusModel.Status> UseStatuses(Player player)
+    internal static void AppendUseStatuses(Player player, List<EffectStatusModel.Status> statuses)
     {
-        foreach (var pair in Uses.Where(p => p.Value.Player == player && p.Value.Factor < 1f && p.Value.StatusKey.Length > 0 && Native.Get(p.Key, "Bool_2") is not true))
-            yield return new EffectStatusModel.Status(pair.Value.StatusKey, pair.Value.StatusName, true, detail: "Item use speed active");
+        foreach (var pair in Uses)
+        {
+            var use = pair.Value;
+            if (use.Player == player && use.Factor < 1f && use.StatusKey.Length > 0 && Native.Get(pair.Key, "Bool_2") is not true)
+                statuses.Add(new EffectStatusModel.Status(use.StatusKey, use.StatusName, true, detail: "Item use speed active"));
+        }
     }
     internal static void End(object effect)
     {
@@ -156,7 +198,7 @@ internal static class BackpackNative
         var h = p.ActiveHealthController;
         var parts = Enum.GetValues(typeof(EBodyPart)).Cast<EBodyPart>().Where(b => b != EBodyPart.Common && b != excluded && !h.IsBodyPartDestroyed(b)).Select(b => (Part: b, Missing: Math.Max(0f, h.GetBodyPartHealth(b, false).Maximum - h.GetBodyPartHealth(b, false).Current))).ToArray();
         var total = parts.Sum(v => v.Missing); if (total <= 0f) return;
-        foreach (var part in parts) h.ChangeHealth(part.Part, amount * part.Missing / total, GClass3051.MedKitUse);
+        foreach (var part in parts) h.ChangeHealth(part.Part, amount * part.Missing / total, DamageHelper.MedKitUse);
     }
     internal static void QueueDrop(Player p, Item item)
     {

@@ -29,32 +29,32 @@ internal static class ChestRigNative
 internal static class ChestRigRecoilPatch
 {
     private static void Postfix(Weapon __instance,ref float __result)
-    {if(ChestRigNative.For(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Recoil-1f;}
+    {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Recoil-1f;}
 }
 [HarmonyPatch(typeof(Weapon),"get_ErgonomicsDelta")]
 internal static class ChestRigErgonomicsPatch
 {
     private static void Postfix(Weapon __instance,ref float __result)
-    {if(ChestRigNative.For(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Ergonomics-1f;}
+    {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Ergonomics-1f;}
 }
 [HarmonyPatch(typeof(Weapon),"get_CenterOfImpactDelta")]
 internal static class ChestRigAccuracyPatch
 {
     private static void Postfix(Weapon __instance,ref float __result)
-    {if(ChestRigNative.For(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Accuracy-1f;}
+    {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Accuracy-1f;}
 }
 [HarmonyPatch(typeof(Weapon),"get_VelocityDelta")]
 internal static class ChestRigVelocityPatch
 {
     private static void Postfix(Weapon __instance,ref float __result)
-    {if(ChestRigNative.For(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Velocity-1f;}
+    {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Velocity-1f;}
 }
 [HarmonyPatch]
 internal static class ChestRigFireRatePatch
 {
     private static IEnumerable<MethodBase> TargetMethods()=>new[]{AccessTools.PropertyGetter(typeof(Weapon),"FireRate"),AccessTools.PropertyGetter(typeof(Weapon),"SingleFireRate")};
     private static void Postfix(Weapon __instance,ref int __result)
-    {if(ChestRigNative.For(__instance) is { } s)__result=Math.Max(1,(int)Math.Round(__result*ChestRigRuntime.Stats(s,__instance).FireRate));}
+    {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=Math.Max(1,(int)Math.Round(__result*ChestRigRuntime.Stats(s,__instance).FireRate));}
 }
 [HarmonyPatch(typeof(BreathEffector),nameof(BreathEffector.Process))]
 internal static class ChestRigSwayPatch
@@ -160,12 +160,13 @@ internal static class ChestRigMedicalCostPatch
 internal static class ChestRigMedSpeedPatch
 {
     private static void Postfix(HealthEffectsComponent __instance,ref float __result)
-    {if(BackpackNative.ItemOwner(__instance.Item) is { } p)__result/=ChestRigMedical.UseSpeed(p,__instance.Item)*GrenadeBuffs.Medicine(p)*EarpieceRuntime.MedicalSpeed(p,__instance.Item);}
+    {if(BackpackNative.ItemOwner(__instance.Item) is { } p)__result/=ChestRigMedical.UseSpeed(p,__instance.Item)*GrenadeBuffs.Medicine(p)*EarpieceRuntime.MedicalSpeed(p,__instance.Item)*HatMedical.Speed(p,__instance.Item);}
 }
 [HarmonyPatch(typeof(Player.PlayerInventoryController.Class1204),"method_4")]
 internal static class ChestRigManualPackingPatch
 {
-    private static void Postfix(Player.PlayerInventoryController.Class1204 __instance)=>ChestRigInventory.Packed(__instance.InventoryController_0);
+    private static void Postfix(Player.PlayerInventoryController.Class1204 __instance)
+    { ChestRigInventory.Packed(__instance.InventoryController_0); Headwear.Packed(BackpackRuntime.Actor(__instance.InventoryController_0)); }
 }
 
 [HarmonyPatch(typeof(Player.FirearmController),nameof(Player.FirearmController.UpdateHipInaccuracy))]
@@ -207,5 +208,5 @@ internal static class ChestRigBoltResetPatch
 internal static class ChestRigFlatErgonomicsPatch
 {
     private static void Postfix(Weapon __instance,ref float __result)
-    {if(ChestRigNative.For(__instance) is { } s)__result+=ChestRigRuntime.Stats(s,__instance).FlatErgonomics;}
+    {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result+=ChestRigRuntime.Stats(s,__instance).FlatErgonomics;}
 }

@@ -1,3 +1,5 @@
+using PhysicalBase = BasePhysicalClass;
+using Physical = PlayerPhysicalClass;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -26,8 +28,8 @@ internal static class PlayerRefresh
 
     private static readonly Dictionary<Player, Pending> Requests = new();
     private static readonly HashSet<Player> Disposed = new();
-    private static readonly FieldInfo PhysicalOwner = AccessTools.Field(typeof(PlayerPhysicalClass), "Player_0");
-    private static readonly FieldInfo PhysicalBridge = AccessTools.Field(typeof(BasePhysicalClass), "IobserverToPlayerBridge_0");
+    private static readonly FieldInfo PhysicalOwner = AccessTools.Field(typeof(Physical), "Player_0");
+    private static readonly FieldInfo PhysicalBridge = AccessTools.Field(typeof(PhysicalBase), "IobserverToPlayerBridge_0");
     private static GameWorld? ClosingWorld;
     internal static bool Resetting;
 
@@ -52,13 +54,16 @@ internal static class PlayerRefresh
     internal static void Forget(Player player)
     {
         Disposed.Add(player);
+        Headwear.Forget(player);
         Requests.Remove(player);
+        BackpackRuntime.ForgetEndpoints(player);
     }
 
     internal static void Reset()
     {
         Requests.Clear();
         Disposed.Clear();
+        NextCheck = 0f;
     }
 
     internal static void Weight(Player player, string site) => Request(player, Work.Weight, site);
@@ -70,6 +75,7 @@ internal static class PlayerRefresh
         if (!Requests.TryGetValue(player, out var pending)) Requests[player] = pending = new Pending();
         pending.Work |= work;
         pending.Site = site;
+        NextCheck = Math.Min(NextCheck, pending.NextAttempt);
     }
 
     private static bool Ready(Player player)
@@ -83,19 +89,42 @@ internal static class PlayerRefresh
             inventory.TotalWeight is null || inventory.TotalWeightEliteSkill is null ||
             physical.Stamina.TotalCapacity is null || physical.HandsStamina.TotalCapacity is null ||
             physical.Oxygen.TotalCapacity is null) return false;
-        if (physical is PlayerPhysicalClass full &&
+        if (physical is Physical full &&
             (!ReferenceEquals(PhysicalOwner.GetValue(full), player) || full.Consumptions is null)) return false;
         return player.HandsController is not Player.FirearmController || player.ProceduralWeaponAnimation is not null;
     }
 
+    internal static bool IsRegistered(GameWorld world, Player player)
+    {
+        var id = player.ProfileId;
+        if (!string.IsNullOrEmpty(id) && ReferenceEquals(world.GetAlivePlayerByProfileID(id), player)) return true;
+        foreach (var candidate in world.RegisteredPlayers)
+            if (ReferenceEquals(candidate, player)) return true;
+        return false;
+    }
+
+    private static readonly List<KeyValuePair<Player, Pending>> WorkSnapshot = new();
+    private static float NextCheck;
     internal static void Maintain(GameWorld? world)
     {
-        if (Resetting || ActiveWorld(world) == null || Requests.Count == 0) return;
-        foreach (var pair in Requests.ToArray())
+        if (Resetting || ActiveWorld(world) == null || Requests.Count == 0 || Time.unscaledTime < NextCheck) return;
+        WorkSnapshot.AddRange(Requests);
+        try { ApplyRequests(world!); }
+        finally
+        {
+            WorkSnapshot.Clear();
+            NextCheck = float.PositiveInfinity;
+            foreach (var pending in Requests.Values) NextCheck = Math.Min(NextCheck, pending.NextAttempt);
+        }
+    }
+
+    private static void ApplyRequests(GameWorld world)
+    {
+        foreach (var pair in WorkSnapshot)
         {
             var player = pair.Key;
             var pending = pair.Value;
-            if (!CanObserve(player) || !world!.RegisteredPlayers.OfType<Player>().Contains(player))
+            if (!CanObserve(player) || !IsRegistered(world, player))
             { Requests.Remove(player); continue; }
             if (Time.unscaledTime < pending.NextAttempt) continue;
             var work = pending.Work;

@@ -13,7 +13,8 @@ namespace EscapeFromBorderlands.Server;
 internal sealed class AirdropLegendaryRolls
 {
     private readonly Dictionary<string, string> Sources;
-    private readonly Dictionary<string, VariantDefinition[]> Variants;
+    private readonly Dictionary<string, WeightedSpawnChoices> Variants;
+    private readonly MongoId[] EfbIds;
     private readonly ConditionalWeakTable<List<Item>, Attempt> Attempts = new();
     private sealed class Attempt { internal bool Done; }
 
@@ -24,12 +25,13 @@ internal sealed class AirdropLegendaryRolls
         Sources = all.Select(v => (v.TemplateId, v.SourceTemplateId))
             .Concat(aliases.Select(v => (v.TemplateId, v.SourceTemplateId)))
             .DistinctBy(v => v.TemplateId).ToDictionary(v => v.TemplateId, v => v.SourceTemplateId, StringComparer.Ordinal);
+        EfbIds = Sources.Keys.Select(id => new MongoId(id)).ToArray();
         Variants = all.Where(v => v.SpawnEnabled && !v.IsMysteryFleaOffer &&
                 double.IsFinite(v.SpawnWeight) && v.SpawnWeight > 0d &&
                 v.WeaponClass is not "grenadeLauncher" and not "specialWeapon" &&
                 excludedSources?.Contains(v.SourceTemplateId) != true)
             .DistinctBy(v => v.TemplateId).GroupBy(v => v.SourceTemplateId)
-            .ToDictionary(g => g.Key, g => g.OrderBy(v => v.TemplateId, StringComparer.Ordinal).ToArray(), StringComparer.Ordinal);
+            .ToDictionary(g => g.Key, g => new WeightedSpawnChoices(g.OrderBy(v => v.TemplateId, StringComparer.Ordinal).ToArray()), StringComparer.Ordinal);
     }
 
     internal AirdropLootRequest Prepare(AirdropLootRequest request)
@@ -37,7 +39,7 @@ internal sealed class AirdropLegendaryRolls
         // These are request-local copies; native global blacklists, forced
         // loot mappings and unrelated reward generators stay untouched.
         var blacklist = new HashSet<MongoId>(request.ItemBlacklist ?? []);
-        blacklist.UnionWith(Sources.Keys.Select(id => new MongoId(id)));
+        blacklist.UnionWith(EfbIds);
         var prepared = request with { ItemBlacklist = blacklist };
         if (request.ForcedLoot is not null)
         {
@@ -57,9 +59,14 @@ internal sealed class AirdropLegendaryRolls
 
     internal IEnumerable<List<Item>> Roll(IEnumerable<List<Item>> loot, RarityConfiguration config, Func<double> randomUnit)
     {
-        var groups = loot.ToArray();
-        if (!config.Enabled) return groups;
+        if (!config.Enabled) return loot;
+        var groups = loot as List<Item>[] ?? loot.ToArray();
         var fraction = config.AirdropFraction;
+        // Keep the existing once-only evaluation of a deferred native source.
+        // With conversion off there are no item markers to look up or allocate.
+        if (fraction <= 0d) return groups;
+        var timing = ServerPerformanceTrace.Measure("airdrop conversion");
+        var converted = 0;
         foreach (var group in groups)
         {
             if (group.Count == 0) continue;
@@ -71,22 +78,18 @@ internal sealed class AirdropLegendaryRolls
                 var root = group[0];
                 // Native supported gear is individual. Retain unusual modded
                 // stacks rather than creating an invalid max-stack-1 clone.
-                if (fraction <= 0d || (root.Upd?.StackObjectsCount ?? 1d) != 1d ||
+                if ((root.Upd?.StackObjectsCount ?? 1d) != 1d ||
                     !Variants.TryGetValue(root.Template.ToString(), out var variants)) continue;
                 if (fraction < 1d && randomUnit() >= fraction) continue;
-                var pick = Math.Clamp(randomUnit(), 0d, 1d) * variants.Sum(v => v.SpawnWeight);
-                var selected = variants[^1];
-                foreach (var variant in variants)
-                {
-                    pick -= variant.SpawnWeight;
-                    if (pick < 0d) { selected = variant; break; }
-                }
-                root.Template = new MongoId(selected.TemplateId);
+                var (selected, id) = variants.Pick(Math.Clamp(randomUnit(), 0d, 1d));
+                if (selected.IsHeadwear) HeadwearTemplates.Convert(root, id, group); else root.Template = id;
+                converted++;
                 if (selected.FireModes.Count > 0 && root.Upd is { FireMode: { } mode } state &&
                     !selected.FireModes.Contains(mode.FireMode ?? "", StringComparer.OrdinalIgnoreCase))
                     root.Upd = state with { FireMode = mode with { FireMode = selected.FireModes[0] } };
             }
         }
+        timing.Complete(groups.Length, converted);
         return groups;
     }
 }

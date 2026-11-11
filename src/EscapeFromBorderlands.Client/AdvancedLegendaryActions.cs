@@ -1,4 +1,12 @@
 extern alias CoreUnity;
+
+using ThrowWeap = ThrowWeapItemClass;
+using Magazine = MagazineItemClass;
+using Ammo = AmmoItemClass;
+using ItemFactory = ItemFactoryClass;
+using GlobalEventDispatcher = BotEventHandler;
+using ObjectsFactory = PoolManagerClass;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,10 +28,11 @@ internal static class AdvancedLegendaryActions
 {
     private const string SmokeGrenadeTemplateId = "5a2a57cfc4a2826c6e06d44a";
     private static readonly object Sync = new();
-    private static readonly HashSet<string> PendingMisses = new(StringComparer.Ordinal);
-    private static readonly HashSet<string> PendingShotCleanups = new(StringComparer.Ordinal);
+    private static readonly HashSet<(string Weapon, int FireIndex)> PendingMisses = new();
+    private static readonly HashSet<(string Weapon, int FireIndex)> PendingShotCleanups = new();
     private static readonly HashSet<string> PendingTransfers = new(StringComparer.Ordinal);
     private static readonly List<ShortSmoke> Smokes = new();
+    private static readonly List<ShortSmoke> SmokeUpdateSnapshot = new();
     private static GameWorld? AssetWorld;
     private static Task? AssetLoad;
     private static CancellationTokenSource? AssetCancellation;
@@ -53,13 +62,19 @@ internal static class AdvancedLegendaryActions
 
     public static void Maintain(GameWorld? world)
     {
-        if (world is not null && Singleton<PoolManagerClass>.Instantiated && Singleton<ItemFactoryClass>.Instantiated && AssetWorld != world)
+        if (world is not null && Singleton<ObjectsFactory>.Instantiated && Singleton<ItemFactory>.Instantiated && AssetWorld != world)
             PreloadSmoke(world);
-        foreach (var smoke in Smokes.ToArray())
+        if (Smokes.Count == 0) return;
+        SmokeUpdateSnapshot.AddRange(Smokes);
+        try
         {
-            if (smoke.World != world || smoke.Grenade == null || Time.time >= smoke.EndTime) RemoveSmoke(smoke);
-            else smoke.Grenade.UpdateEmissionArea(smoke.AreaTime);
+            foreach (var smoke in SmokeUpdateSnapshot)
+            {
+                if (smoke.World != world || smoke.Grenade == null || Time.time >= smoke.EndTime) RemoveSmoke(smoke);
+                else smoke.Grenade.UpdateEmissionArea(smoke.AreaTime);
+            }
         }
+        finally { SmokeUpdateSnapshot.Clear(); }
     }
 
     private static void PreloadSmoke(GameWorld world)
@@ -68,9 +83,9 @@ internal static class AdvancedLegendaryActions
         AssetCancellation = new CancellationTokenSource();
         try
         {
-            var item = Singleton<ItemFactoryClass>.Instance.CreateItem("efb-smoke-preload", SmokeGrenadeTemplateId, null);
-            AssetLoad = Singleton<PoolManagerClass>.Instance.LoadBundlesAndCreatePools(
-                PoolManagerClass.PoolsCategory.Raid, PoolManagerClass.AssemblyType.Local,
+            var item = Singleton<ItemFactory>.Instance.CreateItem("efb-smoke-preload", SmokeGrenadeTemplateId, null);
+            AssetLoad = Singleton<ObjectsFactory>.Instance.LoadBundlesAndCreatePools(
+                ObjectsFactory.PoolsCategory.Raid, ObjectsFactory.AssemblyType.Local,
                 new[] { item.Prefab }, JobPriorityClass.Low, ct: AssetCancellation.Token);
         }
         catch (Exception exception)
@@ -82,7 +97,7 @@ internal static class AdvancedLegendaryActions
 
     public static void DeferMissResolution(string weaponId, int fireIndex)
     {
-        var key = $"{weaponId}:{fireIndex}";
+        var key = (weaponId, fireIndex);
         lock (Sync)
         {
             if (!PendingMisses.Add(key))
@@ -115,15 +130,17 @@ internal static class AdvancedLegendaryActions
     public static void DeploySmokeAt(Player player, Vector3 position, float durationSeconds, string statusName = "", string statusKey = "", bool instant = false)
     { DeploySmokeAt(player.ProfileId, position, durationSeconds, statusName, statusKey, instant); }
 
-    public static void DeploySmokeAt(string ownerProfileId, Vector3 position, float durationSeconds, string statusName = "", string statusKey = "", bool instant = false)
+    public static void DeploySmokeAt(string ownerProfileId, Vector3 position, float durationSeconds, string statusName = "", string statusKey = "", bool instant = false,
+        LegendaryGrenadeEffects.Payload? trace = null)
     {
         var world = Singleton<GameWorld>.Instance;
         if (world?.GrenadeFactory is null) return;
         if (AssetWorld != world) PreloadSmoke(world);
-        world.StartCoroutine(DeploySmokeWhenReady(world, position, ownerProfileId, durationSeconds, statusName, statusKey, instant));
+        world.StartCoroutine(DeploySmokeWhenReady(world, position, ownerProfileId, durationSeconds, statusName, statusKey, instant, trace));
     }
 
-    private static IEnumerator DeploySmokeWhenReady(GameWorld world, Vector3 position, string profileId, float durationSeconds, string statusName, string statusKey, bool instant = false)
+    private static IEnumerator DeploySmokeWhenReady(GameWorld world, Vector3 position, string profileId, float durationSeconds, string statusName, string statusKey, bool instant = false,
+        LegendaryGrenadeEffects.Payload? trace = null)
     {
         var load = AssetLoad;
         var deadline = Time.time + 30f;
@@ -138,6 +155,7 @@ internal static class AdvancedLegendaryActions
             Plugin.LogSource.LogWarning("Like A Ghost smoke asset was unavailable; deployment was skipped safely.");
             yield break;
         }
+        using var timing = trace is not null ? GrenadeSpikeTrace.Measure(trace, "instant smoke") : default;
         CreateSmoke(world, position, profileId, durationSeconds, statusName, statusKey, instant);
     }
 
@@ -149,8 +167,8 @@ internal static class AdvancedLegendaryActions
         try
         {
             var id = $"efb-smoke-{Guid.NewGuid():N}";
-            var item = (ThrowWeapItemClass)Singleton<ItemFactoryClass>.Instance.CreateItem(id, SmokeGrenadeTemplateId, null);
-            pooledItem = Singleton<PoolManagerClass>.Instance.CreateItem(item, true);
+            var item = (ThrowWeap)Singleton<ItemFactory>.Instance.CreateItem(id, SmokeGrenadeTemplateId, null);
+            pooledItem = Singleton<ObjectsFactory>.Instance.CreateItem(item, true);
             settings = (SmokeGrenadeSettings)UnityEngine.Object.Instantiate(pooledItem.GetComponent<GrenadePrefab>().GrenadeItself);
             settings.Offset = Vector3.zero;
             settings.gameObject.SetActive(true);
@@ -158,7 +176,7 @@ internal static class AdvancedLegendaryActions
             smoke = new ShortSmoke { World = world, Grenade = grenade, Id = id, EndTime = Time.time + Math.Max(1f, durationSeconds),
                 OwnerProfileId = profileId, StatusName = statusName, StatusKey = statusKey,
                 Area = AccessTools.Field(typeof(SmokeGrenadeSettings), "_emissionArea").GetValue(settings) as Component,
-                AreaTime = instant ? settings._sizeOverTime.keys.OrderByDescending(k => k.value).First().time : 0.35f };
+                AreaTime = instant ? LegendaryGrenadeEffects.SmokePeakTime(settings._sizeOverTime) : 0.35f };
             Smokes.Add(smoke);
             // Only this grenade instance gets a short lifetime. Cancel native
             // fuse/emission timers before starting its visual and AI screen.
@@ -177,8 +195,8 @@ internal static class AdvancedLegendaryActions
             emission.AttachTo(grenade.transform, Vector3.zero);
             emission.SetFillParams(0f, Math.Max(1f, durationSeconds));
             emission.StartEmission(instant ? smoke.OriginalFillDelay : 0f);
-            if (Singleton<BotEventHandler>.Instantiated)
-                Singleton<BotEventHandler>.Instance.GrenadeExplosion(position, profileId, true,
+            if (Singleton<GlobalEventDispatcher>.Instantiated)
+                Singleton<GlobalEventDispatcher>.Instance.GrenadeExplosion(position, profileId, true,
                     SmokeRadius(smoke), Math.Max(1f, durationSeconds), grenade.Id);
         }
         catch (Exception exception)
@@ -190,11 +208,14 @@ internal static class AdvancedLegendaryActions
         finally { if (pooledItem is not null) AssetPoolObject.ReturnToPool(pooledItem); }
     }
 
-    internal static IEnumerable<EffectStatusModel.Status> SmokeStatuses(Player player)
+    internal static void AppendSmokeStatuses(Player player, List<EffectStatusModel.Status> statuses)
     {
+        if (Smokes.Count == 0) return;
+        var now = Time.time;
+        var id = player.ProfileId;
         foreach (var smoke in Smokes)
-            if (smoke.OwnerProfileId == player.ProfileId && smoke.StatusKey.Length > 0 && smoke.Grenade != null && Time.time < smoke.EndTime)
-                yield return new EffectStatusModel.Status(smoke.StatusKey, smoke.StatusName, true, smoke.EndTime - Time.time);
+            if (smoke.OwnerProfileId == id && smoke.StatusKey.Length > 0 && smoke.Grenade != null && now < smoke.EndTime)
+                statuses.Add(new EffectStatusModel.Status(smoke.StatusKey, smoke.StatusName, true, smoke.EndTime - now));
     }
 
     private static float SmokeRadius(ShortSmoke smoke)
@@ -207,7 +228,7 @@ internal static class AdvancedLegendaryActions
 
     public static void DeferShotApplicationCleanup(string weaponId, int fireIndex)
     {
-        var key = $"{weaponId}:{fireIndex}";
+        var key = (weaponId, fireIndex);
         lock (Sync)
         {
             if (!PendingShotCleanups.Add(key))
@@ -243,7 +264,7 @@ internal static class AdvancedLegendaryActions
         _ = TransferMatchingRoundAsync(player, weapon, magazine, ammoTemplateId, Singleton<GameWorld>.Instance, SessionGeneration);
     }
 
-    private static async Task TransferMatchingRoundAsync(Player player, Weapon weapon, MagazineItemClass magazine, string ammoTemplateId, GameWorld? world, int session)
+    private static async Task TransferMatchingRoundAsync(Player player, Weapon weapon, Magazine magazine, string ammoTemplateId, GameWorld? world, int session)
     {
         try
         {
@@ -254,7 +275,7 @@ internal static class AdvancedLegendaryActions
                 .Concat(gun.GetCurrentMagazine()?.Cartridges.Items ?? Enumerable.Empty<Item>())).ToHashSet();
             var source = player.Inventory
                 .GetPlayerItems(EPlayerItems.Equipment)
-                .OfType<AmmoItemClass>()
+                .OfType<Ammo>()
                 .FirstOrDefault(round => round.StringTemplateId == ammoTemplateId && !round.IsUsed && !loadedRounds.Contains(round));
             if (source is null || session != SessionGeneration || Singleton<GameWorld>.Instance != world || weapon.GetCurrentMagazine() != magazine)
             {
@@ -277,7 +298,7 @@ internal static class AdvancedLegendaryActions
         finally { lock (Sync) { if (session == SessionGeneration) PendingTransfers.Remove(weapon.Id); } }
     }
 
-    private static IEnumerator ResolveMissNextFrame(string key, string weaponId, int fireIndex, int session)
+    private static IEnumerator ResolveMissNextFrame((string Weapon, int FireIndex) key, string weaponId, int fireIndex, int session)
     {
         yield return null;
         if (session != SessionGeneration) yield break;
@@ -288,7 +309,7 @@ internal static class AdvancedLegendaryActions
         }
     }
 
-    private static IEnumerator CleanupShotNextFrame(string key, string weaponId, int fireIndex, int session)
+    private static IEnumerator CleanupShotNextFrame((string Weapon, int FireIndex) key, string weaponId, int fireIndex, int session)
     {
         yield return null;
         if (session != SessionGeneration) yield break;

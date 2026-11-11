@@ -1,3 +1,9 @@
+using Shot = EftBulletClass;
+using ThrowWeap = ThrowWeapItemClass;
+using Ammo = AmmoItemClass;
+using ItemFactory = ItemFactoryClass;
+using GlobalEventDispatcher = BotEventHandler;
+using ObjectsFactory = PoolManagerClass;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -8,9 +14,9 @@ using System.Threading.Tasks;
 using Systems.Effects;
 using Comfort.Common;
 using EFT;
+using EFT.Ballistics;
 using EFT.AssetsManager;
 using EFT.InventoryLogic;
-using EFT.Interactive;
 using HarmonyLib;
 using UnityEngine;
 
@@ -42,6 +48,35 @@ internal static class LegendaryGrenadeEffects
         internal SmokeParticleScale[] Particles = Array.Empty<SmokeParticleScale>();
     }
     private static readonly Dictionary<string, Payload> Payloads = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, List<Payload>> SmokePayloads = new(StringComparer.Ordinal);
+    private static readonly List<string> ExpiredPayloads = new();
+    private static float NextPayloadExpiry = float.PositiveInfinity;
+
+    private static void StorePayload(string id, Payload payload)
+    {
+        if (Payloads.TryGetValue(id, out var previous)) RemoveSmokePayload(previous);
+        Payloads[id] = payload;
+        NextPayloadExpiry = Math.Min(NextPayloadExpiry, payload.Expires);
+        if (payload.Key is "GR57" or "GR58" or "GR62" or "GR63" or "GR64")
+        {
+            if (!SmokePayloads.TryGetValue(payload.Key, out var list)) SmokePayloads[payload.Key] = list = new();
+            list.Add(payload);
+        }
+    }
+
+    private static void RemoveSmokePayload(Payload payload)
+    {
+        if (!SmokePayloads.TryGetValue(payload.Key, out var list)) return;
+        list.Remove(payload);
+        if (list.Count == 0) SmokePayloads.Remove(payload.Key);
+    }
+    internal static bool HasSmokePayload(string key) => SmokePayloads.ContainsKey(key);
+    internal static bool HasOwnedSmoke(string owner, string key)
+    {
+        if (!SmokePayloads.TryGetValue(key, out var candidates)) return false;
+        foreach (var p in candidates) if (p.Owner == owner && ActiveSmoke(p)) return true;
+        return false;
+    }
     private static readonly Dictionary<GrenadeEmission, EmissionState> Emissions = new();
     private static GameWorld? World;
     private static Task? Assets;
@@ -52,7 +87,17 @@ internal static class LegendaryGrenadeEffects
     private static readonly MethodInfo Clone = AccessTools.Method(typeof(object), "MemberwiseClone");
     [ThreadStatic] internal static Payload? CurrentExplosion;
     internal static bool Try(Item? item, out Payload p) => Payloads.TryGetValue(item?.Id ?? "", out p!);
-    internal static bool HasRecoilSmoke => Payloads.Values.Any(p => p.Key == "GR58" && !p.SmokeEnded && p.Expires > Time.time);
+    internal static bool HasRecoilSmoke
+    {
+        get
+        {
+            if (!SmokePayloads.TryGetValue("GR58", out var candidates)) return false;
+            var now = Time.time;
+            foreach (var p in candidates)
+                if (!p.SmokeEnded && p.Expires > now) return true;
+            return false;
+        }
+    }
     internal static void Reset()
     {
         Generation++;
@@ -66,7 +111,8 @@ internal static class LegendaryGrenadeEffects
         }
         finally
         {
-            Payloads.Clear(); Emissions.Clear(); World = null; Assets = null;
+            Payloads.Clear(); SmokePayloads.Clear(); ExpiredPayloads.Clear(); NextPayloadExpiry = float.PositiveInfinity;
+            Emissions.Clear(); World = null; Assets = null;
             RetryAssetsAt = 0f; CurrentExplosion = null;
         }
     }
@@ -78,19 +124,27 @@ internal static class LegendaryGrenadeEffects
         {
                 try
                 {
-                    var item = Singleton<ItemFactoryClass>.Instance.CreateItem(NewId(), F1, null);
-                    Assets = Singleton<PoolManagerClass>.Instance.LoadBundlesAndCreatePools(PoolManagerClass.PoolsCategory.Raid,
-                        PoolManagerClass.AssemblyType.Local, new[] { item.Prefab }, JobPriorityClass.Low, ct: CancellationToken.None);
+                    var item = Singleton<ItemFactory>.Instance.CreateItem(NewId(), F1, null);
+                    Assets = Singleton<ObjectsFactory>.Instance.LoadBundlesAndCreatePools(ObjectsFactory.PoolsCategory.Raid,
+                        ObjectsFactory.AssemblyType.Local, new[] { item.Prefab }, JobPriorityClass.Low, ct: CancellationToken.None);
                 }
                 catch (Exception e) { Assets = Task.FromException(e); Plugin.LogSource.LogError("M.I.R.V. asset preload failed: " + e.Message); }
                 RetryAssetsAt = Time.time + 10f;
         }
-        foreach (var id in Payloads.Where(kv => kv.Value.Expires < Time.time).Select(kv => kv.Key).ToArray()) Payloads.Remove(id);
+        var now = Time.time;
+        if (now <= NextPayloadExpiry) return;
+        NextPayloadExpiry = float.PositiveInfinity;
+        foreach (var pair in Payloads)
+            if (pair.Value.Expires < now) ExpiredPayloads.Add(pair.Key);
+            else NextPayloadExpiry = Math.Min(NextPayloadExpiry, pair.Value.Expires);
+        foreach (var id in ExpiredPayloads)
+            if (Payloads.Remove(id, out var payload)) RemoveSmokePayload(payload);
+        ExpiredPayloads.Clear();
     }
     private static string NewId() => Guid.NewGuid().ToString("N").Substring(0, 24);
-    internal static ThrowWeapItemClass Projectile(RarityResolver.ShotRoll roll, bool secondary = false)
+    internal static ThrowWeap Projectile(RarityResolver.ShotRoll roll, bool secondary = false)
     {
-        var baseItem = (ThrowWeapItemClass)Singleton<ItemFactoryClass>.Instance.CreateItem(NewId(), roll.Definition.SourceTemplateId, null);
+        var baseItem = (ThrowWeap)Singleton<ItemFactory>.Instance.CreateItem(NewId(), roll.Definition.SourceTemplateId, null);
         // Clone only the template for this projectile. Never alter the native database
         // template, or a saved inventory item's stats, to adjust a fuse or smoke life.
         var template = (ThrowWeapTemplateClass)Clone.Invoke(baseItem.Template, null)!;
@@ -99,11 +153,11 @@ internal static class LegendaryGrenadeEffects
         if (GrenadeEffectRules.FlashPulseCount(roll.Definition.RuntimeKey) > 1)
         { template.Strength = 0f; template.FragmentsCount = 0; }
         if (roll.Definition.GrenadeCategory == "smoke") template.EmitTime = LegendaryGrenadeStats.SmokeDuration(template.EmitTime, roll);
-        var proxy = new ThrowWeapItemClass(baseItem.Id, template);
-        Payloads[proxy.Id] = new Payload { Roll = roll.GrenadeSnapshot(), Expires = Time.time + 900f, Secondary = secondary };
+        var proxy = new ThrowWeap(baseItem.Id, template);
+        StorePayload(proxy.Id, new Payload { Roll = roll.GrenadeSnapshot(), Expires = Time.time + 900f, Secondary = secondary });
         return proxy;
     }
-    internal static void Created(Grenade grenade, ThrowWeapItemClass item, string owner)
+    internal static void Created(Grenade grenade, ThrowWeap item, string owner)
     {
         if (!Try(item, out var p)) return;
         p.Grenade = grenade; p.Owner = owner;
@@ -115,11 +169,17 @@ internal static class LegendaryGrenadeEffects
             grenade.StopTimer(); grenade.StopAllCoroutines(); grenade.StartTimer();
         }
         if (p.Key == "GR13") Maintain();
-        var actor = GrenadeBuffs.Find(owner);
-        if (actor != null)
+        // Only the sidearm signature can use this equipment check.
+        if (p.Key == "GR36" && GrenadeBuffs.Find(owner) is { } actor && actor != null)
         {
-            var weapons = actor.InventoryController.Inventory.Equipment.Slots.Select(s => s.ContainedItem).OfType<Weapon>().ToArray();
-            p.PistolOnly = weapons.Length == 1 && weapons[0].WeapClass == "pistol";
+            Weapon? weapon = null;
+            foreach (var slot in actor.InventoryController.Inventory.Equipment.Slots)
+            {
+                if (slot.ContainedItem is not Weapon candidate) continue;
+                if (weapon is not null) { weapon = null; break; }
+                weapon = candidate;
+            }
+            p.PistolOnly = weapon?.WeapClass == "pistol";
         }
         if (p.Key == "GR65" && p.Path is null)
         {
@@ -152,21 +212,21 @@ internal static class LegendaryGrenadeEffects
     }
     internal static IExplosiveItem Explosion(IExplosiveItem source, Item item) => Try(item, out var p) && !p.SmokeChild
         ? new LegendaryGrenadeExplosive(source, p) : source;
-    internal static void Fragment(EftBulletClass shot, Item weapon)
+    internal static void Fragment(Shot shot, Item weapon)
     { if (Try(weapon, out var p)) shot.Damage *= p.Roll.GrenadeFragmentDamageMultiplier; }
-    internal static bool Collision(Grenade grenade, object collision)
+    internal static bool Collision(Grenade grenade, Collision collision)
     {
         if (!Try(grenade.WeaponSource, out var p)) return true;
-        var collider = Native.Get(collision, "collider") as Component;
+        var collider = collision.collider;
         if (collider == null) return true;
         var body = collider.GetComponentInParent<BodyPartCollider>();
-        var hitOwner = body?.PlayerProfileID ?? (Native.Call(Singleton<GameWorld>.Instance, "GetAlivePlayerBridgeByCollider", collider) as IPlayerOwner)?.iPlayer.ProfileId;
+        var hitOwner = body?.PlayerProfileID ?? Singleton<GameWorld>.Instance?.GetAlivePlayerBridgeByCollider(collider)?.iPlayer.ProfileId;
         if (hitOwner == p.Owner) return true;
         // Record direct contact before native impact detonation runs in LateUpdate.
         if (p.DirectTarget.Length == 0 && hitOwner != null) p.DirectTarget = hitOwner;
         if (!p.WaitForLanding || GroundContact(collision))
         {
-            if (p.Key == "GR65" && !p.Landed) p.Path?.Advance(grenade.transform.position, position => DropSmoke(p, position));
+            if (p.Key == "GR65" && !p.Landed) p.Path?.Advance(grenade.transform.position, p, DropSmoke);
             p.Landed = true;
             if (p.WaitForLanding && p.FuseReady && !p.SignatureFired) grenade.InvokeBlowUpEvent();
         }
@@ -189,7 +249,7 @@ internal static class LegendaryGrenadeEffects
         if (p.Key == "GR04" && p.Anchor != null)
             grenade.transform.SetPositionAndRotation(p.Anchor.TransformPoint(p.LocalPoint), p.Anchor.rotation * p.LocalRotation);
         if (p.Key == "GR65" && !p.Landed && !p.SignatureFired)
-            p.Path?.Advance(grenade.transform.position, position => DropSmoke(p, position));
+            p.Path?.Advance(grenade.transform.position, p, DropSmoke);
     }
     internal static bool Fuse(Grenade grenade)
     {
@@ -202,10 +262,15 @@ internal static class LegendaryGrenadeEffects
     {
         if (!Try(original, out var p) || p.SignatureFired) return;
         p.SignatureFired = true;
+        using var timing = GrenadeSpikeTrace.Measure(p, "detonation callback");
         if (!p.Secondary && GrenadeEffectRules.FlashPulseCount(p.Key) > 1 && Singleton<GameWorld>.Instance is { } flashWorld)
             flashWorld.StartCoroutine(RepeatFlashes(flashWorld, p, position, Generation));
-        if (p.Roll.GrenadeDoorBreach) OpenDoors(position);
-        if (p.Key == "GR12") AdvancedLegendaryActions.DeploySmokeAt(p.Owner, position, 15f, instant: true);
+        if (p.Roll.GrenadeDoorBreach)
+        {
+            using var doors = GrenadeSpikeTrace.Measure(p, "Door Breaching");
+            GrenadeBreachDoors.OpenNear(position);
+        }
+        if (p.Key == "GR12") AdvancedLegendaryActions.DeploySmokeAt(p.Owner, position, 15f, instant: true, trace: p);
         if (Singleton<GameWorld>.Instance is { } world && (p.Key == "GR13" || p.Key == "GR26" && !p.Secondary))
             world.StartCoroutine(Secondary(world, p, position, Generation));
     }
@@ -221,23 +286,25 @@ internal static class LegendaryGrenadeEffects
         }
         if (generation != Generation || world != Singleton<GameWorld>.Instance) yield break;
         if (world.GrenadeFactory is not { } factory) yield break;
-        var count = parent.Key == "GR13" ? 3 : 1;
+        using var timing = GrenadeSpikeTrace.Measure(parent, parent.Key == "GR13" ? "M.I.R.V. children" : "secondary grenade");
+        var mirv = parent.Key == "GR13";
+        var count = mirv ? 3 : 1;
         var startAngle = UnityEngine.Random.Range(0f, 360f);
         for (var i = 0; i < count; i++)
         {
             try
             {
-                var item = parent.Key == "GR13"
-                    ? (ThrowWeapItemClass)Singleton<ItemFactoryClass>.Instance.CreateItem(NewId(), F1, null)
+                var item = mirv
+                    ? (ThrowWeap)Singleton<ItemFactory>.Instance.CreateItem(NewId(), F1, null)
                     : Projectile(parent.Roll, true);
-                var pooled = Singleton<PoolManagerClass>.Instance.CreateItem(item, true);
+                var pooled = Singleton<ObjectsFactory>.Instance.CreateItem(item, true);
                 GrenadeSettings settings;
                 try { settings = UnityEngine.Object.Instantiate(pooled.GetComponent<GrenadePrefab>().GrenadeItself); }
                 finally { AssetPoolObject.ReturnToPool(pooled); }
-                var child = factory.Create(settings, position + (parent.Key == "GR13" ? Vector3.up * .2f : Vector3.zero), Quaternion.identity, Vector3.zero, item, parent.Owner);
+                var child = factory.Create(settings, position + (mirv ? Vector3.up * .2f : Vector3.zero), Quaternion.identity, Vector3.zero, item, parent.Owner);
                 Created(child, item, parent.Owner);
                 world.RegisterGrenade(child);
-                if (parent.Key == "GR13")
+                if (mirv)
                 {
                     // A 45-degree ballistic launch targets an approximate 5–10 m
                     // landing radius on level terrain; native bounces remain intact.
@@ -246,7 +313,7 @@ internal static class LegendaryGrenadeEffects
                     var velocity = new Vector3(Mathf.Cos(radians) * speed, speed, Mathf.Sin(radians) * speed);
                     Native.Set(Native.Get(child, "Rigidbody")!, "velocity", velocity);
                     Native.Set(child, "Velocity", velocity);
-                    if (Singleton<BotEventHandler>.Instantiated) Native.Call(Singleton<BotEventHandler>.Instance, "ThrowGrenade", child, position, velocity, .5f);
+                    if (Singleton<GlobalEventDispatcher>.Instantiated) Singleton<GlobalEventDispatcher>.Instance.ThrowGrenade(child, position, velocity, .5f);
                 }
                 else { child.StopTimer(); child.InvokeBlowUpEvent(); }
             }
@@ -262,13 +329,14 @@ internal static class LegendaryGrenadeEffects
         {
             yield return new WaitForSeconds(interval);
             if (generation != Generation || world != Singleton<GameWorld>.Instance || world.GrenadeFactory is not { } factory) yield break;
+            using var timing = GrenadeSpikeTrace.Measure(parent, "repeat flash");
             try
             {
                 // Reuse the native flash path for every pulse: cover, facing,
                 // player/AI effects, visuals and sound are evaluated afresh.
                 // No inventory throw/release occurs, so no extra charge is spent.
                 var item = Projectile(parent.Roll, true);
-                var pooled = Singleton<PoolManagerClass>.Instance.CreateItem(item, true);
+                var pooled = Singleton<ObjectsFactory>.Instance.CreateItem(item, true);
                 GrenadeSettings settings;
                 try { settings = UnityEngine.Object.Instantiate(pooled.GetComponent<GrenadePrefab>().GrenadeItself); }
                 finally { AssetPoolObject.ReturnToPool(pooled); }
@@ -280,29 +348,43 @@ internal static class LegendaryGrenadeEffects
             catch (Exception error) { Plugin.LogSource.LogError("Legendary flash pulse failed: " + error.Message); }
         }
     }
-    private static void OpenDoors(Vector3 position)
-    {
-        foreach (var door in UnityEngine.Object.FindObjectsOfType<Door>())
-            if (door.GetType() == typeof(Door) && door.DoorState == EDoorState.Shut && Vector3.Distance(door.transform.position, position) <= 3f && door.Operatable)
-            {
-                // Breach intact doors normally. Reopen a previously broken
-                // door through its native Open interaction without rebreaking it.
-                if (door.IsBroken) door.Interact(new InteractionResult(EInteractionType.Open));
-                else door.KickOpen(position);
-            }
-    }
     private static bool ActiveSmoke(Payload p) => !p.SmokeChild && !p.SmokeEnded && p.SmokeStarted >= 0f && Time.time < p.SmokeUntil && p.Grenade != null;
-    internal static bool InSmoke(Player player, string key) => Payloads.Values.Any(p => p.Key == key && p.Owner == player.ProfileId &&
-        ActiveSmoke(p) && Vector3.Distance(player.Position, p.Grenade!.transform.position) <= 8f);
-    internal static IEnumerable<EffectStatusModel.Status> SmokeStatuses(Player player)
+    internal static bool InSmoke(Player player, string key)
     {
-        foreach (var group in Payloads.Values.Where(p => p.Key is "GR57" or "GR58" or "GR62" or "GR63" or "GR64" &&
-            p.Owner == player.ProfileId && ActiveSmoke(p) && Vector3.Distance(player.Position, p.Grenade!.transform.position) <= 8f &&
-            (p.Key != "GR58" || AdvancedMeleeRuntime.Crouched(player))).GroupBy(p => p.Key))
+        if (!SmokePayloads.TryGetValue(key, out var candidates)) return false;
+        var profileId = player.ProfileId;
+        foreach (var p in candidates)
+            if (p.Owner == profileId && ActiveSmoke(p) && Vector3.Distance(player.Position, p.Grenade!.transform.position) <= 8f) return true;
+        return false;
+    }
+    private static readonly List<Payload> SmokeStatusBuffer = new(5);
+    internal static void AppendSmokeStatuses(Player player, List<EffectStatusModel.Status> statuses)
+    {
+        if (SmokePayloads.Count == 0) return;
+        var owner = player.ProfileId;
+        var owned = false;
+        foreach (var key in SmokePayloads.Keys)
+            if (HasOwnedSmoke(owner, key)) { owned = true; break; }
+        if (!owned) return;
+        try
         {
-            var p = group.OrderByDescending(p => p.SmokeUntil).First();
-            yield return new EffectStatusModel.Status("grenade-buff:smoke:" + p.Key, p.Roll.Definition.ShortName, true, p.SmokeUntil - Time.time);
+            // Keep first visible signature order and longest active timer.
+            foreach (var p in Payloads.Values)
+            {
+                var key = p.Key;
+                if (key is not ("GR57" or "GR58" or "GR62" or "GR63" or "GR64") || p.Owner != owner || !ActiveSmoke(p) ||
+                    !(Vector3.Distance(player.Position, p.Grenade!.transform.position) <= 8f) ||
+                    key == "GR58" && !AdvancedMeleeRuntime.Crouched(player)) continue;
+                var i = 0;
+                while (i < SmokeStatusBuffer.Count && SmokeStatusBuffer[i].Key != key) i++;
+                if (i == SmokeStatusBuffer.Count) SmokeStatusBuffer.Add(p);
+                else if (p.SmokeUntil > SmokeStatusBuffer[i].SmokeUntil) SmokeStatusBuffer[i] = p;
+            }
+            var now = Time.time;
+            foreach (var p in SmokeStatusBuffer)
+                statuses.Add(new EffectStatusModel.Status("grenade-buff:smoke:" + p.Key, p.Roll.Definition.ShortName, true, p.SmokeUntil - now));
         }
+        finally { SmokeStatusBuffer.Clear(); }
     }
     internal static bool StartSmokeTimer(SmokeGrenade smoke) => !Try(smoke.WeaponSource, out var p) || !p.WaitForLanding || p.SmokeStarted >= 0f;
     internal static void Emitting(SmokeGrenade smoke, float time)
@@ -314,7 +396,7 @@ internal static class LegendaryGrenadeEffects
         p.SmokeStarted = time; p.SmokeUntil = time + Math.Max(.01f, smoke.LifeTime); p.SmokeEnded = false;
         if (p.WaitForLanding && !p.SmokeTimerStarted) { p.SmokeTimerStarted = true; smoke.StartEmissionBehaviour(); }
         if (p.DeferredEmission) CreateEmission(smoke, p);
-        if (p.Key == "GR59") smoke.UpdateEmissionArea(smoke.SmokeGrenadeSettings_0._sizeOverTime.keys.OrderByDescending(k => k.value).First().time);
+        if (p.Key == "GR59") smoke.UpdateEmissionArea(SmokePeakTime(smoke.SmokeGrenadeSettings_0._sizeOverTime));
     }
     private static void CreateEmission(SmokeGrenade smoke, Payload p)
     {
@@ -332,21 +414,22 @@ internal static class LegendaryGrenadeEffects
         }
         catch (Exception e) { Plugin.LogSource.LogError("Legendary smoke deployment failed: " + e.Message); }
     }
-    private static bool GroundContact(object collision)
+    private static bool GroundContact(Collision collision)
     {
-        if (Native.Get(collision, "contacts") is not IEnumerable contacts) return false;
-        foreach (var contact in contacts)
-            if (Native.Get(contact, "normal") is Vector3 normal && normal.y >= .35f) return true;
+        var count = collision.contactCount;
+        for (var i = 0; i < count; i++)
+            if (collision.GetContact(i).normal.y >= .35f) return true;
         return false;
     }
     private static void DropSmoke(Payload parent, Vector3 position)
     {
         if (Singleton<GameWorld>.Instance is not { } world || world.GrenadeFactory is not { } factory) return;
+        using var timing = GrenadeSpikeTrace.Measure(parent, "Trailblazer smoke drop");
         try
         {
-            var item = (ThrowWeapItemClass)Singleton<ItemFactoryClass>.Instance.CreateItem(NewId(), M18, null);
-            Payloads[item.Id] = new Payload { Roll = parent.Roll.GrenadeSnapshot(), Owner = parent.Owner, SmokeChild = true, Expires = Time.time + 900f };
-            var pooled = Singleton<PoolManagerClass>.Instance.CreateItem(item, true);
+            var item = (ThrowWeap)Singleton<ItemFactory>.Instance.CreateItem(NewId(), M18, null);
+            StorePayload(item.Id, new Payload { Roll = parent.Roll.GrenadeSnapshot(), Owner = parent.Owner, SmokeChild = true, Expires = Time.time + 900f });
+            var pooled = Singleton<ObjectsFactory>.Instance.CreateItem(item, true);
             GrenadeSettings settings;
             try { settings = UnityEngine.Object.Instantiate(pooled.GetComponent<GrenadePrefab>().GrenadeItself); }
             finally { AssetPoolObject.ReturnToPool(pooled); }
@@ -360,10 +443,23 @@ internal static class LegendaryGrenadeEffects
     }
     internal static void SmokeArea(SmokeGrenade grenade, ref float normalTime)
     {
-        if (!Try(grenade.WeaponSource, out var p) || p.SmokeChild) return;
-        var curve = grenade.SmokeGrenadeSettings_0._sizeOverTime;
-        var peakTime = curve.keys.OrderByDescending(k => k.value).First().time;
-        if (normalTime > 0f && normalTime < peakTime) normalTime = p.Key == "GR59" ? peakTime : Math.Min(peakTime, normalTime / p.Roll.GrenadeSmokeBuildTimeMultiplier);
+        if (!(normalTime > 0f) || !Try(grenade.WeaponSource, out var p) || p.SmokeChild) return;
+        var peakTime = SmokePeakTime(grenade.SmokeGrenadeSettings_0._sizeOverTime);
+        if (normalTime < peakTime) normalTime = p.Key == "GR59" ? peakTime : Math.Min(peakTime, normalTime / p.Roll.GrenadeSmokeBuildTimeMultiplier);
+    }
+
+    internal static float SmokePeakTime(AnimationCurve curve)
+    {
+        var count = curve.length;
+        if (count == 0) throw new InvalidOperationException("Smoke size curve has no keys.");
+        var peak = curve[0];
+        for (var i = 1; i < count; i++)
+        {
+            var key = curve[i];
+            // Match the previous stable descending sort, including ties.
+            if (key.value.CompareTo(peak.value) > 0) peak = key;
+        }
+        return peak.time;
     }
     internal static void SmokeScale(SmokeGrenade grenade)
     {
@@ -437,5 +533,5 @@ internal sealed class LegendaryGrenadeExplosive : IExplosiveItem
     public int FragmentsCount => (int)Math.Round(Source.FragmentsCount * Roll.GrenadeFragmentMultiplier, MidpointRounding.AwayFromZero);
     public float GetStrength => Source.GetStrength * Roll.GrenadeDamageMultiplier;
     public bool IsDummy => Source.IsDummy;
-    public AmmoItemClass CreateFragment() => Source.CreateFragment();
+    public Ammo CreateFragment() => Source.CreateFragment();
 }

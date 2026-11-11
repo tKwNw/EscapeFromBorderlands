@@ -61,6 +61,8 @@ internal sealed class StatRewardsLegendaryRolls
 [Injectable(InjectionType.Singleton, null, int.MaxValue)]
 public sealed class StatRewardsCompatibility(ISptLogger<StatRewardsCompatibility> logger, DatabaseService database) : IOnLoad
 {
+    private readonly ReleaseLog releaseLog = new(logger);
+
     public Task OnLoad()
     {
         var config = RarityConfiguration.Load();
@@ -69,9 +71,9 @@ public sealed class StatRewardsCompatibility(ISptLogger<StatRewardsCompatibility
         if (type is null) return Task.CompletedTask;
         var catalog = LegendaryCatalog.Load();
         var registered = database.GetItems().Keys.Select(id => id.ToString()).ToHashSet(StringComparer.Ordinal);
-        StatRewardsIntegration.Configure(catalog, registered, config, message => logger.Warning(message));
+        StatRewardsIntegration.Configure(catalog, registered, config, message => releaseLog.Warning(message));
         if (StatRewardsIntegration.Install(type))
-            logger.Info($"[Escape From Borderlands] Stat Rewards compatibility enabled: {config.StatRewardsFraction * 100d:0.###}% per supported random equipment reward.");
+            releaseLog.Info($"[Escape From Borderlands] Stat Rewards compatibility enabled: {config.StatRewardsFraction * 100d:0.###}% per supported random equipment reward.");
         return Task.CompletedTask;
     }
 }

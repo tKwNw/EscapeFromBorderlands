@@ -4,7 +4,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <Version>0.31.7</Version>
+    <Version>0.40.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <InformationalVersion>$(Version)</InformationalVersion>
@@ -38,6 +38,7 @@
       <Aliases>LegacyUnity</Aliases>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(EftManagedRoot)/UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Comfort">
       <HintPath>$(EftManagedRoot)/Comfort.dll</HintPath>
       <Private>false</Private>

@@ -25,7 +25,9 @@ internal static class LegendaryMeleeDamagePatch
     private static void Prefix(GameWorld __instance, ref DamageInfoStruct damageInfo)
     {
         if (damageInfo.DamageType != EDamageType.Melee || damageInfo.Weapon is null) return;
-        var held = MeleeRuntime.Held(MeleeRuntime.OwnerOfDamage(damageInfo));
+        var attacker = MeleeRuntime.OwnerOfDamage(damageInfo);
+        damageInfo.Damage *= Headwear.Factor(attacker, HatStat.MeleeDamage);
+        var held = MeleeRuntime.Held(attacker);
         if (held is null || held.Item.Id != damageInfo.Weapon.Id) return;
         var body = damageInfo.HittedBallisticCollider as BodyPartCollider;
         var target = body?.PlayerProfileID is { } id ? __instance.GetAlivePlayerByProfileID(id) : null;
@@ -99,10 +101,10 @@ internal static class LegendaryMeleeSpeedPatch
     private static void Prefix(Player.BaseKnifeController __instance, ref float speed)
     {
         if (__instance.Interface10_0 is not Player.KnifeController.Class1287) return;
-        speed *= EarpieceRuntime.MeleeSpeed(MeleeRuntime.Owner(__instance));
+        speed *= EarpieceRuntime.MeleeSpeed(MeleeRuntime.Owner(__instance)) * Headwear.Factor(MeleeRuntime.Owner(__instance), HatStat.MeleeSwing);
         var held = MeleeRuntime.Held(MeleeRuntime.Owner(__instance));
         if (held?.Controller != __instance) return;
-        speed *= held.Roll.MeleeAttackSpeedMultiplier * (MeleeRuntime.Enabled(held.Player, held.Effect) ? AdvancedMeleeRuntime.Speed(held) : 1f);
+        speed *= held.Roll.MeleeAttackSpeedMultiplier * (MeleeRuntime.Enabled(held.Player, held.Effect) ? AdvancedMeleeRuntime.Speed(held) * (Headwear.Amplifies(held) && held.Item.StringTemplateId == "3ef13605279d6076cc9d9433" ? 1.66f / 1.33f : 1f) : 1f);
     }
 }
 
@@ -194,7 +196,7 @@ internal static class LegendaryMeleeMovementPatch
         _depth++;
         var player = MeleeRuntime.Owner(__instance);
         if (__state.Depth != 0 || player is null || player.InputDirection.sqrMagnitude <= 0.0001f && !__instance.IsSprintEnabled) return;
-        var factor = AdvancedMeleeRuntime.Movement(player) * BackpackRuntime.MotionFactor(player) * ChestRigRuntime.Movement(player) * GrenadeBuffs.Movement(player) * EarpieceRuntime.Movement(player);
+        var factor = AdvancedMeleeRuntime.Movement(player) * BackpackRuntime.MotionFactor(player) * ChestRigRuntime.Movement(player) * GrenadeBuffs.Movement(player) * EarpieceRuntime.Movement(player) * Headwear.Factor(player, HatStat.Move);
         if (factor == 1f) return;
         // One scope composes melee and backpack movement. Scale the resolved
         // motion, including sprint's +1 term, instead of patching an inlined getter.

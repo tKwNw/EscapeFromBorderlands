@@ -5,22 +5,26 @@ using BepInEx.Logging;
 using Comfort.Common;
 using EFT;
 using HarmonyLib;
+using UnityEngine.SceneManagement;
 
 namespace EscapeFromBorderlands.Client;
 
 [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
+
 [BepInDependency("com.janky.hollywoodfx", BepInDependency.DependencyFlags.SoftDependency)]
+
 public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.tKwNw.escapefromborderlands";
     public const string PluginName = "tKwNw-EscapeFromBorderlands";
-    public const string PluginVersion = "0.31.7";
+    public const string PluginVersion = "0.40.0";
 
-    internal static ManualLogSource LogSource { get; private set; } = null!;
+    internal static ReleaseLog LogSource { get; private set; } = new ReleaseLog();
     internal static Plugin Instance { get; private set; } = null!;
 
     private Harmony? _harmony;
     private GameWorld? _world;
+    private float _nextHeadwearError;
 
     private void MigrateLegacyClientConfig()
     {
@@ -37,20 +41,21 @@ public sealed class Plugin : BaseUnityPlugin
             var imported = LegacyClientConfigMigration.Migrate(configDirectory, destination);
             if (imported <= 0) return;
             Config.Reload();
-            Logger.LogInfo($"Migrated {imported} previous Escape From Borderlands client config entries; old settings remain backed up.");
+            LogSource.LogInfo($"Migrated {imported} previous Escape From Borderlands client config entries; old settings remain backed up.");
         }
         catch (Exception ex)
         {
-            Logger.LogWarning($"Could not migrate previous Escape From Borderlands client settings: {ex.Message}");
+            LogSource.LogWarning($"Could not migrate previous Escape From Borderlands client settings: {ex.Message}");
         }
     }
 
     private void Awake()
     {
         Instance = this;
-        LogSource = Logger;
+        LogSource = new ReleaseLog(Logger);
         MigrateLegacyClientConfig();
         StatusHudSettings.Bind(Config);
+        HeadwearSettings.Bind(Config);
         LegendaryGrenadeSettings.Bind(Config);
         _harmony = new Harmony(PluginGuid);
         // Install presentation first and name any failed gameplay hook, so one
@@ -63,39 +68,77 @@ public sealed class Plugin : BaseUnityPlugin
         foreach (var type in patchTypes)
         {
             try { _harmony.CreateClassProcessor(type).Patch(); }
-            catch (Exception e) { failures++; Logger.LogError($"Escape From Borderlands could not install {type.Name}: {e}"); }
+            catch (Exception e) { failures++; LogSource.LogError($"Escape From Borderlands could not install {type.Name}: {e}"); }
         }
-        if (failures > 0) Logger.LogError($"Escape From Borderlands: {failures} hook group(s) failed. The error above identifies each unavailable feature.");
-        Logger.LogInfo($"Escape From Borderlands {PluginVersion} loaded with {RarityResolver.DefinitionCount} Legendary gun, melee, backpack, chest-rig, grenade and earpiece definitions from catalog revision {RarityResolver.CatalogRevision}. Effects remain restricted to Escape From Borderlands template IDs.");
+        if (failures > 0) LogSource.LogError($"Escape From Borderlands: {failures} hook group(s) failed. The error above identifies each unavailable feature.");
+        SceneManager.sceneUnloaded += GrenadeBreachDoors.SceneUnloaded;
+        LogSource.LogInfo($"Escape From Borderlands {PluginVersion} loaded for SPT 4.0.13 with {RarityResolver.DefinitionCount} Legendary gun, melee, backpack, chest-rig, grenade, earpiece and headwear definitions from catalog revision {RarityResolver.CatalogRevision}. Early access testing build. Effects remain restricted to Escape From Borderlands template IDs.");
     }
 
     private void OnDestroy()
     {
+        SceneManager.sceneUnloaded -= GrenadeBreachDoors.SceneUnloaded;
+        GrenadeBreachDoors.Dispose();
         ResetSession();
+        EffectStatusHud.ReleasePanel();
         ExpandedStorageNavigation.Reset();
         LegendaryGrenadeDrawAudio.Dispose();
         _harmony?.UnpatchSelf();
     }
 
+    private readonly RaidPlayerSnapshot _raidPlayers = new();
+
     private void Update()
     {
         var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
-        if (_world != world) { ResetSession(); _world = world; }
-        AdvancedLegendaryActions.Maintain(world);
-        LegendaryExplosionFx.Maintain(world);
-        ReusableGrenadeRuntime.Maintain();
-        LegendaryGrenadeDrawAudio.Maintain();
-        LegendaryRuntime.MaintainVolleys();
-        LegendaryRuntime.ObserveHeldWeapon(world?.MainPlayer);
-        EarpieceRuntime.Maintain(world);
-        ServiceWindowPlayback.Maintain();
-        ChestRigRuntime.Maintain(world);
-        MeleeRuntime.Maintain(world);
-        AdvancedMeleeRuntime.Maintain(world);
-        BackpackRuntime.Maintain(world);
-        BackpackVisitorExtraction.Maintain(world);
-        EffectStatusHud.Maintain(world);
-        PlayerRefresh.Maintain(world);
+        if (!ReferenceEquals(_world, world)) { ResetSession(); _world = world; }
+        if (world is null) return; // Menu storage still updates in LateUpdate.
+        EffectStatusHud.PrepareDuringSetup(world);
+        var trace = RaidUpdateTrace.Begin();
+        var completed = false;
+        try
+        {
+            try { Headwear.Maintain(world); }
+            catch (Exception e)
+            {
+                if (UnityEngine.Time.unscaledTime >= _nextHeadwearError)
+                { _nextHeadwearError = UnityEngine.Time.unscaledTime + 30; LogSource.LogWarning($"EFB headwear update will retry: {e.Message}"); }
+            }
+            trace.Phase("headwear");
+            AdvancedLegendaryActions.Maintain(world);
+            trace.Phase("short smoke");
+            LegendaryExplosionFx.Maintain(world);
+            trace.Phase("explosion visuals");
+            ReusableGrenadeRuntime.Maintain(world, _raidPlayers);
+            trace.Phase("grenade payloads and buffs");
+            LegendaryGrenadeDrawAudio.Maintain();
+            trace.Phase("grenade draw sound");
+            LegendaryRuntime.MaintainVolleys();
+            LegendaryRuntime.ObserveHeldWeapon(world.MainPlayer);
+            trace.Phase("firearm outcomes");
+            EarpieceRuntime.Maintain(world, _raidPlayers);
+            trace.Phase("headsets and audio");
+            ServiceWindowPlayback.Maintain();
+            trace.Phase("medical playback");
+            ChestRigRuntime.Maintain(world, _raidPlayers);
+            trace.Phase("chest rigs");
+            MeleeRuntime.Maintain(world);
+            trace.Phase("melee");
+            BackpackRuntime.Maintain(world, _raidPlayers);
+            BackpackVisitorExtraction.Maintain(world);
+            trace.Phase("backpacks");
+            EffectStatusHud.Maintain(world);
+            trace.Phase("effect HUD and grenade charges");
+            PlayerRefresh.Maintain(world);
+            trace.Phase("deferred player refresh");
+            completed = true;
+        }
+        finally
+        {
+            _raidPlayers.Clear();
+            trace.Phase(completed ? "roster cleanup" : "interrupted update");
+            trace.Finish();
+        }
     }
 
     private void LateUpdate() => ExpandedStorageNavigation.Maintain();
@@ -108,6 +151,7 @@ public sealed class Plugin : BaseUnityPlugin
         {
             SessionCleanup.Begin();
             PlayerRefresh.Reset();
+            SessionCleanup.Run(nameof(Headwear), Headwear.Reset);
             SessionCleanup.Run(nameof(ServiceWindowPlayback), ServiceWindowPlayback.Reset);
             SessionCleanup.Run("earpiece suspend", EarpieceRuntime.Suspend);
             SessionCleanup.Run(nameof(EffectStatusHud), EffectStatusHud.Reset);
@@ -125,6 +169,9 @@ public sealed class Plugin : BaseUnityPlugin
             SessionCleanup.Run(nameof(LegendaryRuntime), LegendaryRuntime.ResetSession);
             SessionCleanup.Run(nameof(RarityResolver), RarityResolver.ResetSession);
             SessionCleanup.Run(nameof(ReusableGrenadeRuntime), ReusableGrenadeRuntime.Reset);
+            SessionCleanup.Run(nameof(GrenadeSpikeTrace), GrenadeSpikeTrace.Reset);
+            SessionCleanup.Run(nameof(RaidUpdateTrace), RaidUpdateTrace.Reset);
+            SessionCleanup.Run(nameof(WeaponPerformanceTrace), WeaponPerformanceTrace.Reset);
             SessionCleanup.Run(nameof(LegendaryGrenadeDrawAudio), LegendaryGrenadeDrawAudio.ResetSession);
             SessionCleanup.Run(nameof(LegendaryGrenadeSettings), LegendaryGrenadeSettings.Reset);
             SessionCleanup.Run(nameof(EarpieceRuntime), EarpieceRuntime.Reset);

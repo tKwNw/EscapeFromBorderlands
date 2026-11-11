@@ -41,6 +41,7 @@ internal static class BallisticEffectPatch
             __result.FragmentationChance = Clamp01(__result.FragmentationChance + application.FragmentationChanceBonus);
         }
         ChestRigBallistics.Apply(__result,ammo,player,ref application);
+        if (HatCartridge.Current is { } hat && weapon == hat.Gun) __result.PenetrationPower *= hat.Penetration;
         if (EarpieceRuntime.CurrentShot is { } earpiece && weapon == earpiece.Weapon) __result.Damage *= earpiece.Damage;
         LegendaryGrenadeEffects.Fragment(__result, weapon);
         if(application.Active && application.ProjectileCount>1)

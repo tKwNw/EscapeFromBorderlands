@@ -39,7 +39,7 @@ internal static class LegendaryGrenadeSignaturePatch
 [HarmonyPatch(typeof(Grenade), nameof(Grenade.OnCollisionEnter))]
 internal static class LegendaryGrenadeContactPatch
 {
-    private static bool Prefix(Grenade __instance, object __0) => LegendaryGrenadeEffects.Collision(__instance, __0);
+    private static bool Prefix(Grenade __instance, Collision __0) => LegendaryGrenadeEffects.Collision(__instance, __0);
 }
 [HarmonyPatch(typeof(Grenade), nameof(Grenade.LateUpdate))]
 internal static class LegendaryGrenadeAnchorPatch

@@ -26,7 +26,7 @@ internal static class BackpackEffectStatus
             case "BP12-1": timer = "lootSprint"; break;
             case "BP13-1": active = !moving; break;
             case "BP14-3": active = s.ColdCharge; break;
-            case "BP15-1": active = Native.Get(Native.Get(p.NightVisionObserver, "Component"), "IsOn") is true; break;
+            case "BP15-1": active = BackpackPresentation.NightVisionOn(p); break;
             case "BP16-1": active = s.JumpCharged || s.JumpSafe; break;
             case "BP17-1": timer = "fallSpeed"; break;
             case "BP22-3": active = BackpackRuntime.Woods(p); break;
@@ -36,7 +36,7 @@ internal static class BackpackEffectStatus
             case "BP24-1": active = BackpackRuntime.Daytime(); break;
             case "BP24-2": active = s.Record.Categories.Count > 0; break;
             case "BP26-1": active = s.Record.Templates.Count >= 21; break;
-            case "BP27-2": active = p.HandsController is Player.FirearmController f && f.Weapon.WeapClass == "sniperRifle"; break;
+            case "BP27-2": active = p.HandsController is Player.FirearmController f && f.Item.WeapClass == "sniperRifle"; break;
             case "BP28-3": active = p.MovementContext.IsInPronePose; break;
             case "BP30-1": active = BackpackRuntime.AimingLoadedPrimary(p); break;
             case "BP31-2": active = BackpackRuntime.Milestone(s); break;
@@ -46,7 +46,7 @@ internal static class BackpackEffectStatus
             case "BP35-3": timer = "meleeReach"; break;
             case "BP37-2": timer = "milk"; break;
             case "BP38-1": active = p.SearchController?.SearchOperations?.Any(o => BackpackSearch.Corpse(o.Item)) == true; break;
-            case "BP39-1": active = p.HandsController is Player.FirearmController pistol && pistol.Weapon.WeapClass == "pistol" && new[] { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon }.All(slot => p.InventoryController.Inventory.Equipment.GetSlot(slot).ContainedItem is null); break;
+            case "BP39-1": active = p.HandsController is Player.FirearmController pistol && pistol.Item.WeapClass == "pistol" && new[] { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon }.All(slot => p.InventoryController.Inventory.Equipment.GetSlot(slot).ContainedItem is null); break;
             case "BP40-2": active = s.Record.Active("traversal:sprint") || s.Record.Active("traversal:jump") || s.Record.Active("traversal:vault") ||
                 BackpackRuntime.TraversalFactor(p, "sprint") < 1f || BackpackRuntime.TraversalFactor(p, "jump") < 1f || BackpackRuntime.TraversalFactor(p, "vault") < 1f; break;
             case "BP41-2": active = BackpackPresentation.FullCompartments(s.Bag); break;

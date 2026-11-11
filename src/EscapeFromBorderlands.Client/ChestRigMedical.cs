@@ -1,3 +1,4 @@
+using DamageHelper = GClass3051;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -81,17 +82,28 @@ internal static class ChestRigMedical
     private static readonly EBodyPart[] HealParts={EBodyPart.Head,EBodyPart.Chest,EBodyPart.Stomach,EBodyPart.LeftArm,EBodyPart.RightArm,EBodyPart.LeftLeg,EBodyPart.RightLeg};
     internal static void Heal(ActiveHealthController h,float budget)
     {
-        var injured=HealParts.Where(p=>!h.IsBodyPartDestroyed(p)&&h.GetBodyPartHealth(p,false).Current>0f&&h.GetBodyPartHealth(p,false).Current<h.GetBodyPartHealth(p,false).Maximum).ToList();
-        while(budget>.0001f&&injured.Count>0)
+        Span<int> injured = stackalloc int[HealParts.Length];
+        var count = 0;
+        for (var i = 0; i < HealParts.Length; i++)
         {
-            var share=budget/injured.Count;
-            foreach(var part in injured.ToArray())
+            var part = HealParts[i];
+            if (h.IsBodyPartDestroyed(part)) continue;
+            var health = h.GetBodyPartHealth(part, false);
+            if (health.Current > 0f && health.Current < health.Maximum) injured[count++] = i;
+        }
+        while (budget > .0001f && count > 0)
+        {
+            var share = budget / count;
+            var remaining = 0;
+            for (var i = 0; i < count; i++)
             {
-                var health=h.GetBodyPartHealth(part,false);
-                var amount=Math.Min(share,health.Maximum-health.Current);
-                h.ChangeHealth(part,amount,GClass3051.MedKitUse);budget-=amount;
-                if(amount<share||h.GetBodyPartHealth(part,false).Current>=health.Maximum)injured.Remove(part);
+                var part = HealParts[injured[i]];
+                var health = h.GetBodyPartHealth(part, false);
+                var amount = Math.Min(share, health.Maximum - health.Current);
+                h.ChangeHealth(part, amount, DamageHelper.MedKitUse); budget -= amount;
+                if (!(amount < share || h.GetBodyPartHealth(part, false).Current >= health.Maximum)) injured[remaining++] = injured[i];
             }
+            count = remaining;
         }
     }
     internal static bool HasDressing(ChestRigRuntime.State s)=>ChestRigInventory.Carried(s).Any(i=>Supply(i,false)||Supply(i,true));

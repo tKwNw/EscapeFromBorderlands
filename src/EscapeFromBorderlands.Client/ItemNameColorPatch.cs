@@ -33,6 +33,12 @@ internal static class InspectItemNameColorPatch
 
     private static void Postfix(ItemSpecificationPanel __instance)
     {
+        try { Apply(__instance); }
+        catch (Exception error) { ItemDescriptionPresentation.ReportFailure("inspection name", error); }
+    }
+
+    private static void Apply(ItemSpecificationPanel __instance)
+    {
         var item = ItemField.GetValue(__instance) as Item;
         var roll = RarityResolver.Resolve(item);
         if (roll is null)
@@ -72,6 +78,12 @@ internal static class GridItemNameColorPatch
         AccessTools.Method(typeof(GridItemView), "method_29", new[] { typeof(ItemAddress) });
 
     private static void Postfix(GridItemView __instance, ref string __result)
+    {
+        try { Apply(__instance, ref __result); }
+        catch (Exception error) { ItemDescriptionPresentation.ReportFailure("inventory name", error); }
+    }
+
+    private static void Apply(GridItemView __instance, ref string __result)
     {
         var roll = RarityResolver.Resolve(__instance.Item);
         if (roll is null || string.IsNullOrEmpty(__result))

@@ -1,3 +1,5 @@
+using Magazine = MagazineItemClass;
+using Ammo = AmmoItemClass;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,12 +15,38 @@ internal static class ChestRigInventory
 {
     private static readonly HashSet<string> Busy = new(StringComparer.Ordinal);
     private static readonly Dictionary<string,float> LastHeld = new(StringComparer.Ordinal), NextFill = new(StringComparer.Ordinal);
-    internal static readonly Dictionary<string,MagazineItemClass> ReloadMagazines = new(StringComparer.Ordinal);
+    internal static readonly Dictionary<string,Magazine> ReloadMagazines = new(StringComparer.Ordinal);
     private static int Generation;
     internal static void Reset(){Generation++;Busy.Clear();LastHeld.Clear();NextFill.Clear();ReloadMagazines.Clear();}
     internal static Item[] Carried(ChestRigRuntime.State s)=>s.Player.InventoryController.Inventory.Equipment.GetAllItems().ToArray();
-    // Former weight signatures and the frame-weight boon have been replaced.
-    internal static float Weight(ChestRigRuntime.State? s,float original) => original;
+    private sealed class PackingView
+    {
+        internal readonly List<Ammo> AmmoInOrder = new();
+        private readonly HashSet<Magazine> CarriedMagazines = new();
+        private readonly HashSet<Item> Installed = new();
+        private readonly HashSet<string> InstalledIds = new(StringComparer.Ordinal);
+        private readonly HashSet<string> Contained = new(StringComparer.Ordinal);
+        internal PackingView(Item[] items)
+        {
+            foreach (var root in items)
+            {
+                if (root is Ammo round) AmmoInOrder.Add(round);
+                if (root is Magazine magazine) CarriedMagazines.Add(magazine);
+                if (root is not (Magazine or Weapon)) continue;
+                var weapon = root as Weapon;
+                if (weapon?.GetCurrentMagazine() is { } loaded) InstalledIds.Add(loaded.Id);
+                foreach (var child in root.GetAllItems())
+                {
+                    if (weapon is not null && child is Magazine) Installed.Add(child);
+                    if (child.Id != root.Id) Contained.Add(child.Id);
+                }
+            }
+        }
+        internal bool HasSpare(Magazine magazine) =>
+            CarriedMagazines.Contains(magazine) && !InstalledIds.Contains(magazine.Id) && !Installed.Contains(magazine);
+        internal bool IsLoose(Ammo ammo, string? loaded) => !ammo.IsUsed && ammo.StackObjectsCount > 0 &&
+            !Contained.Contains(ammo.Id) && (loaded is null || ammo.StringTemplateId == loaded);
+    }
     internal static void Maintain(ChestRigRuntime.State s,float dt)
     {
         if(s.Key is not("TR17-1" or "TR05-2"))return;
@@ -35,26 +63,30 @@ internal static class ChestRigInventory
         var id=s.Player.ProfileId;if(!Busy.Add(id))return;
         try
         {
-            foreach(var mag in Carried(s).OfType<MagazineItemClass>().Where(m=>m.Count<m.MaxCount).ToArray())
+            Item[]? carried = Carried(s);
+            var magazines = carried.OfType<Magazine>().Where(m=>m.Count<m.MaxCount).ToArray();
+            PackingView? view = null;
+            foreach(var mag in magazines)
             {
                 if(generation!=Generation||ChestRigRuntime.Get(s.Player)!=s)return;
                 if(s.Key=="TR05-2"&&(!s.Player.MovementContext.IsSprintEnabled||s.Player.InputDirection.sqrMagnitude<=.0001f))return;
-                var carried=Carried(s);
                 // Never modify a magazine installed in a firearm or reserved
-                // by a reload. Re-read inventory after each real transaction.
-                if(!carried.Contains(mag)||mag.Count>=mag.MaxCount||
-                    carried.OfType<Weapon>().Any(w=>w.GetCurrentMagazine()?.Id==mag.Id||w.GetAllItems().Contains(mag))||
+                // by a reload. Reuse the index during synchronous checks.
+                view ??= new PackingView(carried ?? Carried(s));
+                if(mag.Count>=mag.MaxCount||!view.HasSpare(mag)||
                     ReloadMagazines.TryGetValue(id,out var incoming)&&incoming.Id==mag.Id)continue;
-                var loaded=mag.Cartridges.Items.OfType<AmmoItemClass>().LastOrDefault()?.StringTemplateId;
+                var loaded=mag.Cartridges.Items.OfType<Ammo>().LastOrDefault()?.StringTemplateId;
                 if(mag.Count>0&&loaded is null)continue;
-                var contained=carried.Where(i=>i is MagazineItemClass or Weapon).SelectMany(i=>i.GetAllItems().Where(child=>child.Id!=i.Id)).Select(i=>i.Id).ToHashSet();
-                foreach(var round in carried.OfType<AmmoItemClass>().Where(a=>!a.IsUsed&&a.StackObjectsCount>0&&!contained.Contains(a.Id)&&(loaded is null||a.StringTemplateId==loaded)))
+                var snapshot = view;
+                foreach(var round in snapshot.AmmoInOrder)
                 {
+                    if (!snapshot.IsLoose(round, loaded)) continue;
                     if(generation!=Generation||ChestRigRuntime.Get(s.Player)!=s)return;
                     if(s.Key=="TR05-2"&&(!s.Player.MovementContext.IsSprintEnabled||s.Player.InputDirection.sqrMagnitude<=.0001f))return;
                     var op=mag.ApplyWithoutRestrictions(s.Player.InventoryController,round,1,simulate:true);
                     if(op.Failed)continue;
                     var result=await s.Player.InventoryController.TryRunNetworkTransaction(op);
+                    view = null; carried = null; // Re-read before the next magazine after any real transaction.
                     if(!result.Failed){EffectStatusModel.Notify(s.Player.ProfileId,"rig:"+s.Key,s.Roll.Definition.ShortName,Time.time,"automatic magazine packing");break;}
                 }
             }

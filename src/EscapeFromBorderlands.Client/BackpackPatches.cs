@@ -1,8 +1,11 @@
+using GlobalEventDispatcher = BotEventHandler;
+using Physical = PlayerPhysicalClass;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using EFT;
+using EFT.Ballistics;
 using EFT.HealthSystem;
 using EFT.InventoryLogic;
 using HarmonyLib;
@@ -18,47 +21,26 @@ internal static class BackpackCachedValuePatch
         AccessTools.PropertyGetter(typeof(GClass849<float>), "Value") };
     private static void Postfix(GClass848<float> __instance, ref float __result)
     {
-        if (BackpackRuntime.Values.TryGetValue(__instance, out var value)) __result *= BackpackRuntime.Value(value.Player, value.Kind) * ChestRigRuntime.Value(value.Player, value.Kind) * GrenadeBuffs.Recovery(value.Player, value.Kind) * EarpieceRuntime.Value(value.Player, value.Kind);
+        if (!BackpackRuntime.Values.TryGetValue(__instance, out var value)) return;
+        var (player, kind) = value;
+        var observed = PlayerRefresh.CanObserve(player);
+        __result *= BackpackRuntime.Value(player, kind, observed) * ChestRigRuntime.Value(player, kind, observed) *
+            GrenadeBuffs.Recovery(player, kind) * EarpieceRuntime.Value(player, kind, observed) * Headwear.Recovery(player, kind);
     }
 }
 internal static class BackpackWeightScope
 {
     [ThreadStatic] public static Player? Player;
 }
-[HarmonyPatch(typeof(PlayerPhysicalClass), nameof(PlayerPhysicalClass.OnWeightUpdated))]
+[HarmonyPatch(typeof(Physical), nameof(Physical.OnWeightUpdated))]
 internal static class BackpackPhysicalWeightPatch
 {
-    private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
-    {
-        var field = AccessTools.Field(typeof(BasePhysicalClass), "WalkSpeedLimit");
-        var count = 0;
-        foreach (var instruction in instructions)
-        {
-            if (instruction.opcode == System.Reflection.Emit.OpCodes.Stfld && Equals(instruction.operand, field))
-            {
-                // Correct only the native weight limit, before native movement
-                // combines it with aiming, terrain and all other restrictions.
-                var opcode = instruction.opcode; var operand = instruction.operand;
-                instruction.opcode = System.Reflection.Emit.OpCodes.Ldarg_0; instruction.operand = null;
-                yield return instruction;
-                yield return new CodeInstruction(System.Reflection.Emit.OpCodes.Call, AccessTools.Method(typeof(BackpackPhysicalWeightPatch), nameof(WalkLimit)));
-                yield return new CodeInstruction(opcode, operand);
-                count++;
-                continue;
-            }
-            yield return instruction;
-        }
-        if (count != 1) throw new InvalidOperationException($"Expected one native walking weight limit assignment; found {count}.");
-    }
-    // Feather Light removes only its own template penalties and empty weight.
-    // Contents and all other carried gear still incur their ordinary weight penalties.
-    internal static float WalkLimit(float value, PlayerPhysicalClass physical) => value;
     internal sealed class Snapshot
     {
         public Player? Previous;
         public Vector2 Base, Walk, Sprint, Speed;
     }
-    private static void Prefix(PlayerPhysicalClass __instance, out Snapshot __state)
+    private static void Prefix(Physical __instance, out Snapshot __state)
     {
         __state = new Snapshot { Previous = BackpackWeightScope.Player, Base = __instance.BaseOverweightLimits, Walk = __instance.WalkOverweightLimits, Sprint = __instance.SprintOverweightLimits, Speed = __instance.WalkSpeedOverweightLimits };
         var p = BackpackRuntime.Actor(__instance); BackpackWeightScope.Player = p;
@@ -66,7 +48,7 @@ internal static class BackpackPhysicalWeightPatch
         __instance.BaseOverweightLimits *= factor; __instance.WalkOverweightLimits *= factor;
         __instance.SprintOverweightLimits *= factor; __instance.WalkSpeedOverweightLimits *= factor;
     }
-    private static Exception? Finalizer(PlayerPhysicalClass __instance, Snapshot __state, Exception? __exception)
+    private static Exception? Finalizer(Physical __instance, Snapshot __state, Exception? __exception)
     {
         __instance.BaseOverweightLimits = __state.Base; __instance.WalkOverweightLimits = __state.Walk;
         __instance.SprintOverweightLimits = __state.Sprint; __instance.WalkSpeedOverweightLimits = __state.Speed;
@@ -79,10 +61,20 @@ internal static class BackpackWeightValuePatch
     private static void Postfix(GClass849<float> __instance, ref float __result)
     {
         var p = BackpackWeightScope.Player;
-        if (p is null) return;
-        var inv = p.InventoryController.Inventory;
-        if (ReferenceEquals(MeleeWeightScope.Inventory, inv)) return; // The shared EFB pass composes bag and melee discounts in order.
-        if (ReferenceEquals(__instance, inv.TotalWeight) || ReferenceEquals(__instance, inv.TotalWeightEliteSkill)) __result = BackpackRuntime.Weight(p, __result);
+        var melee = MeleeWeightScope.Inventory;
+        if (p is not null)
+        {
+            var inv = p.InventoryController.Inventory;
+            if (!ReferenceEquals(melee, inv) &&
+                (ReferenceEquals(__instance, inv.TotalWeight) || ReferenceEquals(__instance, inv.TotalWeightEliteSkill)))
+                __result = BackpackRuntime.Weight(p, __result);
+        }
+        if (melee is not null &&
+            (ReferenceEquals(__instance, melee.TotalWeight) || ReferenceEquals(__instance, melee.TotalWeightEliteSkill)))
+        {
+            if (p is not null) __result = BackpackRuntime.Weight(p, __result);
+            __result *= MeleeWeightScope.Multiplier;
+        }
     }
 }
 [HarmonyPatch(typeof(MovementContext), nameof(MovementContext.OnJump))]
@@ -152,7 +144,7 @@ internal static class BackpackMovementSoundPatch
 {
     private static void Postfix(Player __instance, ref float __result) => __result *= BackpackRuntime.Noise(__instance, "movement");
 }
-[HarmonyPatch(typeof(BotEventHandler), nameof(BotEventHandler.PlaySound))]
+[HarmonyPatch(typeof(GlobalEventDispatcher), nameof(GlobalEventDispatcher.PlaySound))]
 internal static class BackpackAiSoundPatch
 {
     private static void Prefix(IPlayer person, ref float power, AISoundType type)
@@ -161,13 +153,13 @@ internal static class BackpackAiSoundPatch
 [HarmonyPatch]
 internal static class BackpackMedBeginPatch
 {
-    private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController).GetNestedType("MedEffect", BindingFlags.NonPublic), "Started");
+    private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController).GetNestedType("MedEffect", BindingFlags.Public | BindingFlags.NonPublic), "Started");
     private static void Prefix(object __instance) => BackpackNative.Begin(__instance);
 }
 [HarmonyPatch]
 internal static class BackpackMedCompletePatch
 {
-    private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController).GetNestedType("MedEffect", BindingFlags.NonPublic), "Residue");
+    private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController).GetNestedType("MedEffect", BindingFlags.Public | BindingFlags.NonPublic), "Residue");
     private static void Prefix(object __instance, out BackpackMedicalRestoration.Scope? __state) => __state = BackpackMedicalRestoration.Enter(__instance, true);
     private static void Postfix(object __instance) => BackpackNative.End(__instance);
     private static Exception? Finalizer(BackpackMedicalRestoration.Scope? __state, Exception? __exception)
@@ -190,7 +182,7 @@ internal static class BackpackMedCompletePatch
 [HarmonyPatch]
 internal static class BackpackPainkillerDoseCapPatch
 {
-    private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController).GetNestedType("PainKiller", BindingFlags.NonPublic), "StoreValues");
+    private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController).GetNestedType("PainKiller", BindingFlags.Public | BindingFlags.NonPublic), "StoreValues");
     private static void Prefix(object __instance, string templateId, ref float duration)
     {
         var p = BackpackRuntime.Actor(Native.Get(__instance, "HealthController"));

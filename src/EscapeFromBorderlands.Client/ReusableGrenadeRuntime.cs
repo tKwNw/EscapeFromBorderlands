@@ -1,3 +1,7 @@
+using ThrowWeap = ThrowWeapItemClass;
+using Ammo = AmmoItemClass;
+using GlobalEventDispatcher = BotEventHandler;
+using Physical = PlayerPhysicalClass;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,13 +23,13 @@ internal static class ReusableGrenadeRuntime
     private sealed class ThrowState { internal bool Handled; }
     private static ConditionalWeakTable<Player.BaseGrenadeHandsController, ThrowState> Controllers = new();
 
-    internal static bool IsReusable(Item? item) => item is ThrowWeapItemClass &&
+    internal static bool IsReusable(Item? item) => item is ThrowWeap &&
         RarityResolver.TryGetDefinition(item, out var d) && d.GrenadeChargesPerRaid > 0;
     internal static int Remaining(Item item) => RarityResolver.TryGetDefinition(item, out var d) && d.GrenadeChargesPerRaid > 0
         ? Charges.Remaining(item.Id, d.GrenadeChargesPerRaid, LegendaryGrenadeSettings.Interval(d)) : 0;
     internal static bool Usable(Item item) => !IsReusable(item) || Remaining(item) > 0;
     internal static IEnumerable<Item> UsableItems(IEnumerable<Item> items) => items.Where(Usable);
-    internal static void Filter(IList<ThrowWeapItemClass> items)
+    internal static void Filter(IList<ThrowWeap> items)
     {
         for (var i = items.Count - 1; i >= 0; i--) if (!Usable(items[i])) items.RemoveAt(i);
     }
@@ -38,10 +42,14 @@ internal static class ReusableGrenadeRuntime
             SessionCleanup.Run(nameof(GrenadeBuffs), GrenadeBuffs.Reset);
             SessionCleanup.Run(nameof(GrenadePackingSpeed), GrenadePackingSpeed.Reset);
         }
-        finally { Controllers = new(); }
+        finally { Controllers = new(); CarriedGrenadeDisplay.Reset(); }
     }
-    internal static void Maintain() { LegendaryGrenadeEffects.Maintain(); GrenadeBuffs.Maintain(); }
-    internal static void Select(InventoryController inventory, IList<ThrowWeapItemClass> available)
+    internal static void Maintain(GameWorld? world, RaidPlayerSnapshot live)
+    {
+        LegendaryGrenadeEffects.Maintain();
+        GrenadeBuffs.Maintain(world, live);
+    }
+    internal static void Select(InventoryController inventory, IList<ThrowWeap> available)
     {
         var priority = inventory.Inventory.Equipment.TopPriorityGrenade;
         var hadReusable = available.Any(IsReusable) || IsReusable(priority);
@@ -57,9 +65,9 @@ internal static class ReusableGrenadeRuntime
     }
     internal static void Selected(Item item, Player? actor)
     {
-        if (actor is not null && item is ThrowWeapItemClass && (!IsReusable(item) || Remaining(item) > 0)) Charges.Pin(actor.ProfileId, item.Id);
+        if (actor is not null && item is ThrowWeap && (!IsReusable(item) || Remaining(item) > 0)) Charges.Pin(actor.ProfileId, item.Id);
     }
-    internal static ThrowWeapItemClass ProjectileItem(ThrowWeapItemClass source)
+    internal static ThrowWeap ProjectileItem(ThrowWeap source)
     {
         if (!IsReusable(source)) return source;
         return LegendaryGrenadeEffects.Projectile(RarityResolver.Resolve(source)!);
@@ -74,8 +82,8 @@ internal static class ReusableGrenadeRuntime
         state.Handled = true;
         var p = BackpackRuntime.Actor(controller);
         if (!FactoryHookReady || p?.HealthController?.IsAlive != true || source!.CurrentAddress is null ||
-            !p.InventoryController.Inventory.Equipment.GetAllItems().Any(i => i.Id == source.Id) ||
-            !RarityResolver.TryGetDefinition(source, out var definition)) return true;
+            !RarityResolver.TryGetDefinition(source, out var definition) ||
+            !BackpackNative.ContainsId(p.InventoryController.Inventory.Equipment.GetAllItems(), source.Id)) return true;
         var token = Guid.NewGuid().ToString("N");
         if (!Charges.Reserve(source.Id, definition.GrenadeChargesPerRaid, token, LegendaryGrenadeSettings.Interval(definition))) return true;
         var spawned = false;
@@ -97,29 +105,18 @@ internal static class ReusableGrenadeRuntime
             p.Physical.OnThrow(lowThrow);
             if (Native.Get(controller, "transform_2") is Transform[] parts)
                 foreach (var part in parts) if (part != null) part.gameObject.SetActive(false);
-            if (Singleton<BotEventHandler>.Instantiated)
-                Native.Call(Singleton<BotEventHandler>.Instance, "ThrowGrenade", grenade, position + Vector3.up, force, p.IsAI ? .5f : .6f);
+            if (Singleton<GlobalEventDispatcher>.Instantiated)
+                Native.Call(Singleton<GlobalEventDispatcher>.Instance, "ThrowGrenade", grenade, position + Vector3.up, force, p.IsAI ? .5f : .6f);
         }
         catch (Exception e) { Plugin.LogSource.LogError($"Reusable grenade throw failed: {e.Message}"); }
         finally { if (!spawned) Charges.Finish(source!.Id, token, false); }
         return true;
     }
-    internal static IEnumerable<EffectStatusModel.Status> Statuses(Player p)
+    internal static void AppendStatuses(Player p, List<EffectStatusModel.Status> statuses, ref RaidUpdateTrace trace)
     {
-        var heldId = (p.HandsController as Player.BaseGrenadeHandsController)?.Item?.Id;
-        foreach (var item in p.InventoryController.Inventory.Equipment.GetAllItems().Where(IsReusable).GroupBy(i => i.Id).Select(g => g.First()))
-        {
-            var d = RarityResolver.Resolve(item)!.Definition;
-            var remaining = Remaining(item);
-            var seconds = Charges.SecondsUntil(item.Id, d.GrenadeChargesPerRaid, LegendaryGrenadeSettings.Interval(d));
-            var held = item.Id == heldId && remaining > 0;
-            var showCharges = GrenadeEffectRules.ShowCharges(remaining, d.GrenadeChargesPerRaid, held);
-            if (!showCharges && seconds <= 0) continue;
-            var detail = GrenadeEffectRules.ChargeText(remaining, d.GrenadeChargesPerRaid, held, seconds);
-            if (!showCharges) detail = "· " + detail;
-            yield return new EffectStatusModel.Status("grenade:" + item.Id, d.ShortName, true, detail: detail);
-        }
-        foreach (var status in GrenadeBuffs.Statuses(p)) yield return status;
+        CarriedGrenadeDisplay.Append(p, statuses, ref trace);
+        GrenadeBuffs.AppendStatuses(p, statuses);
+        trace.Phase("HUD grenade buffs and smoke");
     }
 }
 
@@ -137,7 +134,7 @@ internal sealed class ReusableGrenadeExplosive : IExplosiveItem
     public int FragmentsCount => (int)Math.Round(Source.FragmentsCount * Fragments, MidpointRounding.AwayFromZero);
     public float GetStrength => Source.GetStrength * Damage;
     public bool IsDummy => Source.IsDummy;
-    public AmmoItemClass CreateFragment() => Source.CreateFragment();
+    public Ammo CreateFragment() => Source.CreateFragment();
 }
 
 [HarmonyPatch(typeof(Player.BaseGrenadeHandsController), "method_10")]
@@ -150,7 +147,7 @@ internal static class ReusableGrenadeProjectilePatch
         foreach (var instruction in code)
         {
             yield return instruction;
-            if (instruction.operand is MethodInfo method && method.Name == "get_Item" && method.ReturnType == typeof(ThrowWeapItemClass))
+            if (instruction.operand is MethodInfo method && method.Name == "get_Item" && method.ReturnType == typeof(ThrowWeap))
             {
                 yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(ReusableGrenadeRuntime), nameof(ReusableGrenadeRuntime.ProjectileItem)));
                 count++;
@@ -175,11 +172,12 @@ internal static class ReusableGrenadeSelectedPatch
 }
 
 [HarmonyPatch(typeof(GClass3373), nameof(GClass3373.GetThrowablePriorityGrenadesList))]
+[HarmonyPriority(Priority.Last)]
 internal static class ReusableGrenadeQuickSelectPatch
 {
     // Both the held-key selector and the grenade quick-slot view use this list.
     // Copy it before filtering so another caller's cached list cannot be changed.
-    private static void Postfix(ref List<ThrowWeapItemClass> __result)
+    private static void Postfix(ref List<ThrowWeap> __result)
     {
         if (!__result.Any(i => !ReusableGrenadeRuntime.Usable(i))) return;
         __result = __result.Where(ReusableGrenadeRuntime.Usable).ToList();
@@ -190,7 +188,7 @@ internal static class ReusableGrenadeQuickSelectPatch
 internal static class ReusableGrenadeSelectorResultPatch
 {
     private static MethodBase TargetMethod() => AccessTools.Method(AccessTools.TypeByName("EFT.UI.GrenadeSelector"), "GetGrenade");
-    private static void Postfix(ref ThrowWeapItemClass __result)
+    private static void Postfix(ref ThrowWeap __result)
     { if (__result is not null && !ReusableGrenadeRuntime.Usable(__result)) __result = null!; }
 }
 

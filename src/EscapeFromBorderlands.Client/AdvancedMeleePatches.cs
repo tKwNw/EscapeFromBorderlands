@@ -57,20 +57,6 @@ internal static class LegendaryMeleeWeightPatch
     }
 }
 
-[HarmonyPatch(typeof(GClass849<float>), "get_Value")]
-internal static class LegendaryMeleeWeightValuePatch
-{
-    private static void Postfix(GClass849<float> __instance, ref float __result)
-    {
-        var inventory = MeleeWeightScope.Inventory;
-        if (inventory != null && (ReferenceEquals(__instance, inventory.TotalWeight) || ReferenceEquals(__instance, inventory.TotalWeightEliteSkill)))
-        {
-            if (BackpackWeightScope.Player is { } player) __result = BackpackRuntime.Weight(player, __result);
-            __result *= MeleeWeightScope.Multiplier;
-        }
-    }
-}
-
 [HarmonyPatch(typeof(Player.BaseKnifeController), "method_6")]
 internal static class LegendaryMeleeDoorUnlockPatch
 {

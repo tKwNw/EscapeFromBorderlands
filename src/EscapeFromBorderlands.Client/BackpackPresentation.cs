@@ -1,3 +1,4 @@
+using Physical = PlayerPhysicalClass;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace EscapeFromBorderlands.Client;
 internal static class BackpackPresentation
 {
     private static bool NightReduced;
+    internal static bool NightVisionOn(Player? player) => player?.NightVisionObserver?.Component?.Togglable?.On == true;
     internal static void Reset() { NightReduced = false; RefreshNight(); }
     internal static void Restore(Player p) { if (Singleton<GameWorld>.Instance?.MainPlayer == p) { NightReduced = false; RefreshNight(); } }
     internal static void Maintain(BackpackRuntime.State s)
@@ -50,9 +52,9 @@ internal static class BackpackRecoilSettlingPatch
     private static IEnumerable<MethodBase> TargetMethods() => new[] {
         AccessTools.Method(typeof(EFT.Animations.NewRecoil.NewRecoilShotEffect), "FixedUpdate"),
         AccessTools.Method(typeof(OldRecoilShotEffect), "FixedUpdate") };
-    private static void Prefix(object __instance, ref float deltaTime)
+    private static void Prefix(Player.FirearmController ___FirearmController, ref float deltaTime)
     {
-        var p = BackpackRuntime.Actor(Native.Get(__instance, "FirearmController"));
+        var p = BackpackRuntime.Actor(___FirearmController);
         var s = BackpackRuntime.Get(p);
         if (s?.Key == "BP41-2" && BackpackPresentation.FullCompartments(s.Bag)) deltaTime *= 1.3f;
     }
@@ -84,7 +86,7 @@ internal static class BackpackBloomPatch
     {
         __state = __instance.m_BloomIntensity;
         var p = Singleton<GameWorld>.Instance?.MainPlayer;
-        if (BackpackRuntime.Is(p, "BP15-1") && Native.Get(p?.NightVisionObserver, "Component") is { } state && Native.Get(state, "IsOn") is true) __instance.m_BloomIntensity *= .2f;
+        if (BackpackRuntime.Is(p, "BP15-1") && BackpackPresentation.NightVisionOn(p)) __instance.m_BloomIntensity *= .2f;
     }
     private static Exception? Finalizer(UltimateBloom __instance, float __state, Exception? __exception)
     { __instance.m_BloomIntensity = __state; return __exception; }

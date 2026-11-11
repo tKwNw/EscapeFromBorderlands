@@ -31,19 +31,34 @@ internal static class EffectStatusText
         private readonly Component Label;
         private int MeasureAfterFrame;
         private string? Text;
-        private bool Measured;
+        private bool Measured, Bound;
+        private Assets BoundAssets;
+        private int ProbeAfterFrame = -1;
+
+        internal void Revalidate() => Bound = false;
         internal float Height { get; private set; } = 25f;
 
         internal Layout(Component label, int frame) { Label = label; MeasureAfterFrame = frame; }
         internal bool Update(Assets assets, string text, int frame)
         {
             if (Label == null || !assets.Ready) return false;
-            var rebound = false;
-            if (!ReferenceEquals(Native.Get(Label, "font"), assets.Font))
-            { Native.Set(Label, "font", assets.Font); rebound = true; }
-            if (!ReferenceEquals(Native.Get(Label, "fontSharedMaterial"), assets.SharedMaterial))
-            { Native.Set(Label, "fontSharedMaterial", assets.SharedMaterial); rebound = true; }
-            if (rebound) { Measured = false; MeasureAfterFrame = frame; }
+            // These labels are owned by the HUD. Recheck native bindings after
+            // enable or asset changes, and once after TMP has initialized them.
+            var changedAssets = !Bound ||
+                !ReferenceEquals(BoundAssets.Font, assets.Font) ||
+                !ReferenceEquals(BoundAssets.BaseMaterial, assets.BaseMaterial) ||
+                !ReferenceEquals(BoundAssets.SharedMaterial, assets.SharedMaterial);
+            if (changedAssets || ProbeAfterFrame >= 0 && frame > ProbeAfterFrame)
+            {
+                var rebound = false;
+                if (!ReferenceEquals(Native.Get(Label, "font"), assets.Font))
+                { Native.Set(Label, "font", assets.Font); rebound = true; }
+                if (!ReferenceEquals(Native.Get(Label, "fontSharedMaterial"), assets.SharedMaterial))
+                { Native.Set(Label, "fontSharedMaterial", assets.SharedMaterial); rebound = true; }
+                if (rebound) { Measured = false; MeasureAfterFrame = frame; }
+                ProbeAfterFrame = changedAssets || rebound ? frame : -1;
+                Bound = true; BoundAssets = assets;
+            }
             if (Text != text) { Native.Set(Label, "text", text); Text = text; Measured = false; }
             if (!Measured && frame > MeasureAfterFrame)
             {

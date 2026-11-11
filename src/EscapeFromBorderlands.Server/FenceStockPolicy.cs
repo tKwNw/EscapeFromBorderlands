@@ -6,6 +6,7 @@ namespace EscapeFromBorderlands.Server;
 internal sealed class FenceStockPolicy
 {
     private readonly HashSet<string> Blocked;
+    private readonly HashSet<MongoId> BlockedIds;
     internal IReadOnlySet<string> BlockedTemplates => Blocked;
 
     internal FenceStockPolicy(LegendaryCatalog catalog, bool allowEfb)
@@ -15,18 +16,22 @@ internal sealed class FenceStockPolicy
         Blocked = catalog.Variants.Where(v => !allowEfb || v.IsMysteryFleaOffer)
             .Select(v => v.TemplateId).Concat(catalog.LegacyAliases.Select(v => v.TemplateId))
             .ToHashSet(StringComparer.Ordinal);
+        BlockedIds = Blocked.Select(id => new MongoId(id)).ToHashSet();
     }
 
     internal void AddBlacklist(HashSet<MongoId> blacklist)
     {
-        foreach (var id in Blocked) blacklist.Add(new MongoId(id));
+        blacklist.UnionWith(BlockedIds);
     }
 
     // The caller passes inventory items, not necessarily just the sold subtree.
     // Reject only the offered root and descendants; never mutate that inventory.
     internal bool BlocksResale(IEnumerable<Item> items, Item root)
     {
-        if (Blocked.Contains(root.Template.ToString())) return true;
+        if (BlockedIds.Contains(root.Template)) return true;
+        // A stable inventory collection with no blocked templates cannot
+        // contain a blocked descendant. Keep the subtree guard for mixed stock.
+        if (items is ICollection<Item> collection && !collection.Any(item => BlockedIds.Contains(item.Template))) return false;
         var children = Children(items);
         var pending = new Stack<string>();
         var visited = new HashSet<string>(StringComparer.Ordinal);
@@ -36,7 +41,7 @@ internal sealed class FenceStockPolicy
             if (!visited.Add(id) || !children.TryGetValue(id, out var entries)) continue;
             foreach (var item in entries)
             {
-                if (Blocked.Contains(item.Template.ToString())) return true;
+                if (BlockedIds.Contains(item.Template)) return true;
                 pending.Push(item.Id.ToString());
             }
         }
@@ -45,11 +50,11 @@ internal sealed class FenceStockPolicy
 
     internal int Filter(TraderAssort? assort)
     {
-        if (assort?.Items is not { Count: > 0 } items || !items.Any(i => Blocked.Contains(i.Template.ToString()))) return 0;
+        if (assort?.Items is not { Count: > 0 } items || !items.Any(i => BlockedIds.Contains(i.Template))) return 0;
         var byId = new Dictionary<string, Item>(StringComparer.Ordinal);
         foreach (var item in items) byId.TryAdd(item.Id.ToString(), item);
         var roots = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var item in items.Where(i => Blocked.Contains(i.Template.ToString())))
+        foreach (var item in items.Where(i => BlockedIds.Contains(i.Template)))
         {
             var root = item;
             var visited = new HashSet<string>(StringComparer.Ordinal);

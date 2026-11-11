@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
@@ -19,35 +18,44 @@ internal static class GrenadeBuffs
     private static readonly Dictionary<(string Owner, string Target), float> Marked = new();
     private static readonly Dictionary<string, string> MarkNames = new(StringComparer.Ordinal);
     private static readonly Dictionary<Player, (Player.FirearmController Hands, float Reload, float Hip, float Recoil)> Inputs = new();
+    private static readonly List<(string Owner, string Target)> ExpiredMarks = new();
+    private static readonly HashSet<string> OwnersWithMarks = new(StringComparer.Ordinal);
+    private static readonly List<string> ExpiredIds = new(), ExpiredTimers = new();
+    private static readonly List<Player> StalePlayers = new();
     private static float NextTick;
     private static State Get(Player p)
     { if (!States.TryGetValue(p.ProfileId, out var s)) States[p.ProfileId] = s = new(); return s; }
     internal static void Reset() { States.Clear(); Marked.Clear(); MarkNames.Clear(); Inputs.Clear(); NextTick = 0f; }
-    internal static bool HasState(Player? p) => PlayerRefresh.CanObserve(p) &&
-        (States.ContainsKey(p.ProfileId) || Smoke(p, "GR58"));
-    internal static void Maintain()
+    internal static bool HasState(Player? p) => (States.Count != 0 || LegendaryGrenadeEffects.HasSmokePayload("GR58")) &&
+        PlayerRefresh.CanObserve(p) && (States.ContainsKey(p.ProfileId) || Smoke(p, "GR58"));
+    internal static bool ChangesFirearm(Player? p, bool observed = false)
     {
-        if (Time.time < NextTick) return;
-        NextTick = Time.time + .05f;
-        var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
-        if (world is null) { Reset(); return; }
-        if (States.Count == 0 && Inputs.Count == 0 && Marked.Count == 0 && !LegendaryGrenadeEffects.HasRecoilSmoke) return;
-        var players = world.RegisteredPlayers.OfType<Player>().Where(PlayerRefresh.CanObserve).ToArray();
-        var live = players.Select(p => p.ProfileId).ToHashSet(StringComparer.Ordinal);
-        foreach (var key in Marked.Where(kv => kv.Value <= Time.time || !live.Contains(kv.Key.Owner) || !live.Contains(kv.Key.Target)).Select(kv => kv.Key).ToArray()) Marked.Remove(key);
-        foreach (var id in MarkNames.Keys.Where(id => !Marked.Keys.Any(k => k.Owner == id)).ToArray()) MarkNames.Remove(id);
-        foreach (var id in States.Keys.ToArray())
+        if (p is null || (States.Count == 0 && !LegendaryGrenadeEffects.HasSmokePayload("GR58")) || !observed && !PlayerRefresh.CanObserve(p)) return false;
+        if (States.TryGetValue(p.ProfileId, out var s))
         {
-            if (!live.Contains(id)) { States.Remove(id); continue; }
-            var state = States[id];
-            foreach (var key in state.Timers.Where(kv => kv.Value.Until <= Time.time).Select(kv => kv.Key).ToArray()) state.Timers.Remove(key);
-            if (state.Timers.Count == 0 && !state.Draw) States.Remove(id);
+            var now = Time.time;
+            if (s.Timers.TryGetValue("reload", out var reload) && reload.Until > now ||
+                s.Timers.TryGetValue("hip", out var hip) && hip.Until > now ||
+                s.Timers.TryGetValue("recoil", out var recoil) && recoil.Until > now) return true;
         }
-        foreach (var player in Inputs.Keys.Where(p => !live.Contains(p.ProfileId) || !PlayerRefresh.CanObserve(p)).ToArray()) Inputs.Remove(player);
+        return Smoke(p, "GR58");
+    }
+
+    internal static void Maintain(GameWorld? world, RaidPlayerSnapshot live)
+    {
+        var now = Time.time;
+        if (now < NextTick) return;
+        NextTick = now + .05f;
+        if (world is null) { if (States.Count != 0 || Inputs.Count != 0 || Marked.Count != 0 || MarkNames.Count != 0) Reset(); return; }
         var smoke = LegendaryGrenadeEffects.HasRecoilSmoke;
-        foreach (var player in players)
+        if (States.Count == 0 && Inputs.Count == 0 && Marked.Count == 0 && !smoke) return;
+        live.Capture(world);
+        Prune(now, live);
+        foreach (var player in live)
         {
-            if (!States.ContainsKey(player.ProfileId) && !Inputs.ContainsKey(player) && !smoke) continue;
+            if (!PlayerRefresh.CanObserve(player)) continue;
+            if (!States.ContainsKey(player.ProfileId) && !Inputs.ContainsKey(player) &&
+                (!smoke || !LegendaryGrenadeEffects.HasOwnedSmoke(player.ProfileId, "GR58"))) continue;
             if (player.HandsController is not Player.FirearmController hands) { Inputs.Remove(player); continue; }
             var input = (hands, Reload(player), Hip(player), Recoil(player));
             var known = Inputs.TryGetValue(player, out var old);
@@ -59,6 +67,35 @@ internal static class GrenadeBuffs
             if (modified) Inputs[player] = input;
             else Inputs.Remove(player);
         }
+    }
+    private static void Prune(float now, RaidPlayerSnapshot live)
+    {
+        try
+        {
+            foreach (var pair in Marked)
+                if (pair.Value <= now || !live.ContainsProfile(pair.Key.Owner) || !live.ContainsProfile(pair.Key.Target))
+                    ExpiredMarks.Add(pair.Key);
+                else OwnersWithMarks.Add(pair.Key.Owner);
+            foreach (var key in ExpiredMarks) Marked.Remove(key);
+            foreach (var id in MarkNames.Keys) if (!OwnersWithMarks.Contains(id)) ExpiredIds.Add(id);
+            foreach (var id in ExpiredIds) MarkNames.Remove(id);
+            ExpiredIds.Clear();
+            foreach (var pair in States)
+            {
+                if (!live.ContainsProfile(pair.Key)) { ExpiredIds.Add(pair.Key); continue; }
+                var state = pair.Value;
+                foreach (var timer in state.Timers) if (timer.Value.Until <= now) ExpiredTimers.Add(timer.Key);
+                foreach (var key in ExpiredTimers) state.Timers.Remove(key);
+                ExpiredTimers.Clear();
+                if (state.Timers.Count == 0 && !state.Draw) ExpiredIds.Add(pair.Key);
+            }
+            foreach (var id in ExpiredIds) States.Remove(id);
+            foreach (var player in Inputs.Keys)
+                if (!live.ContainsProfile(player.ProfileId) || !PlayerRefresh.CanObserve(player)) StalePlayers.Add(player);
+            foreach (var player in StalePlayers) Inputs.Remove(player);
+        }
+        finally
+        { ExpiredMarks.Clear(); OwnersWithMarks.Clear(); ExpiredIds.Clear(); ExpiredTimers.Clear(); StalePlayers.Clear(); }
     }
     private static bool Active(Player p, string key) => States.TryGetValue(p.ProfileId, out var s) && s.Timers.TryGetValue(key, out var t) && t.Until > Time.time;
     private static void Arm(Player p, string kind, string name, float seconds) => Get(p).Timers[kind] = (Time.time + seconds, name);
@@ -80,7 +117,19 @@ internal static class GrenadeBuffs
         if (payload.Key == "GR50") { Marked[(payload.Owner, target.ProfileId)] = Time.time + 8f; MarkNames[payload.Owner] = payload.Roll.Definition.ShortName; }
         if (payload.Key == "GR54" && Find(payload.Owner) is { } owner && PlayerRefresh.CanObserve(owner)) Arm(owner, "recoil", payload.Roll.Definition.ShortName, 8f);
     }
-    internal static Player? Find(string id) => Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => p.ProfileId == id);
+    internal static Player? Find(string id)
+    {
+        var world = Singleton<GameWorld>.Instance;
+        if (!string.IsNullOrEmpty(id) && world?.GetAlivePlayerByProfileID(id) is { } indexed && indexed != null) return indexed;
+        return Find(world, id);
+    }
+    internal static Player? Find(GameWorld? world, string id)
+    {
+        if (world is null) return null;
+        foreach (var entry in world.RegisteredPlayers)
+            if (entry is Player player && player.ProfileId == id) return player;
+        return null;
+    }
     internal static bool MarkedBy(Player target, Player shooter) => Marked.TryGetValue((shooter.ProfileId, target.ProfileId), out var end) && end > Time.time;
     internal static float Incoming(Player p) => Active(p, "protection") ? .1f : 1f;
     internal static float Reload(Player? p) => p is not null && Active(p, "reload") ? 1.4f : 1f;
@@ -97,15 +146,19 @@ internal static class GrenadeBuffs
         if (consume) s.Draw = false;
         return 2f;
     }
-    internal static IEnumerable<EffectStatusModel.Status> Statuses(Player p)
+    internal static void AppendStatuses(Player p, List<EffectStatusModel.Status> statuses)
     {
-        foreach (var status in LegendaryGrenadeEffects.SmokeStatuses(p)) yield return status;
-        var marks = Marked.Where(kv => kv.Key.Owner == p.ProfileId && kv.Value > Time.time && Find(kv.Key.Target)?.HealthController?.IsAlive == true).ToArray();
-        if (marks.Length > 0)
-            yield return new EffectStatusModel.Status("grenade-buff:marked", MarkNames[p.ProfileId], true, marks.Max(kv => kv.Value) - Time.time, detail: marks.Length + " marked targets");
-        if (!States.TryGetValue(p.ProfileId, out var s)) yield break;
-        foreach (var pair in s.Timers.Where(kv => kv.Value.Until > Time.time))
-            yield return new EffectStatusModel.Status("grenade-buff:" + pair.Key, pair.Value.Name, true, pair.Value.Until - Time.time);
-        if (s.Draw) yield return new EffectStatusModel.Status("grenade-buff:draw", "Rapid Response", true, detail: "Next firearm draw +100% speed");
+        LegendaryGrenadeEffects.AppendSmokeStatuses(p, statuses);
+        var now = Time.time; var id = p.ProfileId; var count = 0; var latest = 0f;
+        foreach (var mark in Marked)
+            if (mark.Key.Owner == id && mark.Value > now && Find(mark.Key.Target)?.HealthController?.IsAlive == true)
+            { count++; latest = Math.Max(latest, mark.Value); }
+        if (count > 0)
+            statuses.Add(new EffectStatusModel.Status("grenade-buff:marked", MarkNames[id], true, latest - now, detail: count + " marked targets"));
+        if (!States.TryGetValue(id, out var s)) return;
+        foreach (var pair in s.Timers)
+            if (pair.Value.Until > now)
+                statuses.Add(new EffectStatusModel.Status("grenade-buff:" + pair.Key, pair.Value.Name, true, pair.Value.Until - now));
+        if (s.Draw) statuses.Add(new EffectStatusModel.Status("grenade-buff:draw", "Rapid Response", true, detail: "Next firearm draw +100% speed"));
     }
 }

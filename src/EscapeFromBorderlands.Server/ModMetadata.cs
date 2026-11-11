@@ -10,7 +10,7 @@ public record ModMetadata : AbstractModMetadata
     public override string Name { get; init; } = "EscapeFromBorderlands";
     public override string Author { get; init; } = "tKwNw";
     public override List<string>? Contributors { get; init; } = ["OpenAI Codex"];
-    public override SemVersion Version { get; init; } = new("0.31.7", false);
+    public override SemVersion Version { get; init; } = new("0.40.0", false);
     public override SemRange SptVersion { get; init; } = new("~4.0.13", false);
     public override List<string>? Incompatibilities { get; init; } = [];
     public override Dictionary<string, SemRange>? ModDependencies { get; init; } = [];

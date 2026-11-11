@@ -28,6 +28,15 @@ internal static class LegendaryHollywoodFx
     private sealed class Lease { internal readonly List<Root> Roots = new(); }
     private static readonly Dictionary<object, Lease> Leases = new();
     private static readonly Dictionary<Component, object> Owners = new();
+    private static readonly Dictionary<Type, FieldInfo?> RadiusFields = new();
+    private static readonly Dictionary<Type, object> HierarchyModes = new();
+
+    private static object Hierarchy(object mode)
+    {
+        var type = mode.GetType();
+        if (!HierarchyModes.TryGetValue(type, out var value)) HierarchyModes[type] = value = Enum.Parse(type, "Hierarchy");
+        return value;
+    }
     private static readonly HashSet<string> Reports = new(StringComparer.Ordinal);
     private static bool Failed;
     private const string Bundle = "HollywoodFX.Particles.EffectBundle";
@@ -69,8 +78,10 @@ internal static class LegendaryHollywoodFx
         {
             // HFX 2.0.0's big-blast constructor supplies its authored radius
             // (6 metres). Impact procs use their absolute gameplay radius.
-            var radius = AccessTools.GetDeclaredFields(blast.GetType()).FirstOrDefault(f =>
-                f.FieldType == typeof(float) && f.Name.IndexOf("radius", StringComparison.OrdinalIgnoreCase) >= 0);
+            var type = blast.GetType();
+            if (!RadiusFields.TryGetValue(type, out var radius))
+                RadiusFields[type] = radius = AccessTools.GetDeclaredFields(type).FirstOrDefault(f =>
+                    f.FieldType == typeof(float) && f.Name.IndexOf("radius", StringComparison.OrdinalIgnoreCase) >= 0);
             reference = radius?.GetValue(blast) is float value && value > 0f ? value : 6f;
         }
         return LegendaryExplosionFx.Ratio(request.Radius, reference);
@@ -108,7 +119,7 @@ internal static class LegendaryHollywoodFx
                 root.Wrapper.transform.localScale = Vector3.one * scale;
                 foreach (var mode in root.Modes)
                     if (mode.Particle != null)
-                        Native.Set(Native.Get(mode.Particle, "main")!, "scalingMode", scale == 1f ? mode.Original : Enum.Parse(mode.Original.GetType(), "Hierarchy"));
+                        Native.Set(Native.Get(mode.Particle, "main")!, "scalingMode", scale == 1f ? mode.Original : Hierarchy(mode.Original));
             }
             if (scale != 1f)
             {

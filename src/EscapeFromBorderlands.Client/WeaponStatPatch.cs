@@ -20,7 +20,7 @@ internal static class WeaponRecoilDeltaPatch
 {
     private static void Postfix(Weapon __instance, ref float __result)
     {
-        var roll = RarityResolver.Resolve(__instance);
+        var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
         __result = WeaponStatMath.Compose(__result, roll.RecoilDeltaModifier, LegendaryRuntime.GetStatModifiers(__instance).RecoilDelta);
     }
@@ -31,7 +31,7 @@ internal static class WeaponErgonomicsDeltaPatch
 {
     private static void Postfix(Weapon __instance, ref float __result)
     {
-        var roll = RarityResolver.Resolve(__instance);
+        var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
         __result = WeaponStatMath.Compose(__result, roll.ErgonomicsDeltaModifier, LegendaryRuntime.GetStatModifiers(__instance).ErgonomicsDelta);
     }
@@ -42,7 +42,7 @@ internal static class WeaponAccuracyDeltaPatch
 {
     private static void Postfix(Weapon __instance, ref float __result)
     {
-        var roll = RarityResolver.Resolve(__instance);
+        var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
         __result = WeaponStatMath.Compose(__result, roll.CenterOfImpactDeltaModifier, LegendaryRuntime.GetStatModifiers(__instance).AccuracyDelta, 0.01f);
     }
@@ -53,7 +53,7 @@ internal static class WeaponVelocityDeltaPatch
 {
     private static void Postfix(Weapon __instance, ref float __result)
     {
-        var roll = RarityResolver.Resolve(__instance);
+        var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
         var runtimeVelocity = LegendaryRuntime.GetVelocityMultiplier(__instance);
         __result = Math.Max(0.05f, (1f + __result) * roll.VelocityMultiplier * runtimeVelocity) - 1f;
@@ -65,7 +65,7 @@ internal static class WeaponFireRatePatch
 {
     private static void Postfix(Weapon __instance, ref int __result)
     {
-        var roll = RarityResolver.Resolve(__instance);
+        var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
         __result = Math.Max(1, (int)Math.Round(
             __result * roll.FireRateMultiplier * LegendaryRuntime.GetStatModifiers(__instance).EffectiveFireRateMultiplier));
@@ -77,7 +77,7 @@ internal static class WeaponSingleFireRatePatch
 {
     private static void Postfix(Weapon __instance, ref int __result)
     {
-        var roll = RarityResolver.Resolve(__instance);
+        var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
         // EFT clamps this getter to 240 RPM; explicit EFB values bypass that
         // floor without modifying any other weapon's native limit.
@@ -108,7 +108,7 @@ internal static class WeaponReloadSpeedPatch
 {
     private static void Postfix(Player.FirearmController __instance, ref float __result)
     {
-        __result *= LegendaryRuntime.GetReloadSpeedMultiplier(__instance.Item) * ChestRigNative.Reload(__instance) * GrenadeBuffs.Reload(BackpackRuntime.Actor(__instance)) * EarpieceRuntime.Reload(BackpackRuntime.Actor(__instance));
+        __result *= LegendaryRuntime.GetReloadSpeedMultiplier(__instance.Item) * ChestRigNative.Reload(__instance) * GrenadeBuffs.Reload(BackpackRuntime.Actor(__instance)) * EarpieceRuntime.Reload(BackpackRuntime.Actor(__instance)) * Headwear.Factor(WeaponCombatState.Owner(__instance), HatStat.Reload);
     }
 }
 
@@ -123,7 +123,7 @@ internal static class WeaponReloadAnimatorPatch
             return;
         }
 
-        __instance.BuffInfo.ReloadSpeed = __state * LegendaryRuntime.GetReloadSpeedMultiplier(__instance.Item) * ChestRigNative.Reload(__instance) * GrenadeBuffs.Reload(BackpackRuntime.Actor(__instance)) * EarpieceRuntime.Reload(BackpackRuntime.Actor(__instance));
+        __instance.BuffInfo.ReloadSpeed = __state * LegendaryRuntime.GetReloadSpeedMultiplier(__instance.Item) * ChestRigNative.Reload(__instance) * GrenadeBuffs.Reload(BackpackRuntime.Actor(__instance)) * EarpieceRuntime.Reload(BackpackRuntime.Actor(__instance)) * Headwear.Factor(WeaponCombatState.Owner(__instance), HatStat.Reload);
     }
 
     private static void Postfix(Player.FirearmController __instance, float __state)

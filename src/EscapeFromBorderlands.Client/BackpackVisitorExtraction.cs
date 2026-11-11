@@ -20,6 +20,7 @@ internal static class BackpackVisitorExtraction
     private static AbstractGame? _game;
     private static ExfiltrationPoint? _point;
     private static bool _wearing, _usedPass;
+    private static readonly List<ExfiltrationPoint> SharedSnapshot = new();
 
     internal static float Duration(float seconds, Player? player) => BackpackRuntime.Is(player, Key) ? seconds * .5f : seconds;
     internal static ExitStatus Outcome(ExitStatus status, Player? player) =>
@@ -36,15 +37,24 @@ internal static class BackpackVisitorExtraction
             game.Status is not (GameStatus.Started or GameStatus.SoftStopping)) return;
         if (PendingField.GetValue(scenario) is not List<(Player, string, IEnumerable<IExfiltrationRequirement>)> pending ||
             SharedField.GetValue(scenario) is not List<ExfiltrationPoint> shared) return;
-        foreach (var point in shared.ToArray())
+        if (shared.Count == 0) return;
+        // Native requirement callbacks can mutate the monitored list; retain
+        // the snapshot and fall back to a private one on a nested callback.
+        var snapshot = SharedSnapshot.Count == 0 ? SharedSnapshot : new List<ExfiltrationPoint>();
+        snapshot.AddRange(shared);
+        try
         {
-            var elapsed = game.PastTime - point.ExfiltrationStartTime;
-            var normal = point.Settings.ExfiltrationTime;
-            if (point.Status != EExfiltrationStatus.Countdown || elapsed < Duration(normal, player) || elapsed > normal ||
-                !point.Entered.Contains(player) || player.HealthController?.IsAlive != true ||
-                point.UnmetRequirements(player).Any() || pending.Any(p => p.Item1 == player)) continue;
-            pending.Add((player, point.Settings.Name, point.Requirements));
+            foreach (var point in snapshot)
+            {
+                var elapsed = game.PastTime - point.ExfiltrationStartTime;
+                var normal = point.Settings.ExfiltrationTime;
+                if (point.Status != EExfiltrationStatus.Countdown || elapsed < Duration(normal, player) || elapsed > normal ||
+                    !point.Entered.Contains(player) || player.HealthController?.IsAlive != true ||
+                    point.UnmetRequirements(player).Any() || pending.Any(p => p.Item1 == player)) continue;
+                pending.Add((player, point.Settings.Name, point.Requirements));
+            }
         }
+        finally { snapshot.Clear(); }
     }
 
     internal static float UiDuration(float seconds, AbstractGame game, ExfiltrationPoint point)
@@ -80,8 +90,8 @@ internal static class BackpackVisitorExtraction
 
     internal static void Maintain(GameWorld? world)
     {
-        var player = world?.MainPlayer;
         if (_game is null || _point is null) return;
+        var player = world?.MainPlayer;
         if (player is null || player.HealthController?.IsAlive != true || player.ExfiltrationPoint != _point ||
             _game.Status is not (GameStatus.Started or GameStatus.SoftStopping)) { Reset(); return; }
         var wearing = BackpackRuntime.Is(player, Key);
