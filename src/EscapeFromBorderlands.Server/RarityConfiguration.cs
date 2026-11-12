@@ -8,6 +8,7 @@ namespace EscapeFromBorderlands.Server;
 public sealed class RarityConfiguration
 {
     public bool Enabled { get; set; } = true;
+    public bool EnableMeleeLooting { get; set; } = true;
     public bool AddToPmcWeapons { get; set; } = true;
     public bool CreateDefaultPresets { get; set; } = true;
     public bool AllowFleaMarketTrading { get; set; } = false;
@@ -177,6 +178,7 @@ public sealed class RarityConfiguration
                 foreach (var category in Categories)
                     if (rates[category] is null) rates[category] = config.FactionChance(method, name, category);
         if (node["addToNonScavFactions"] is null) node["addToNonScavFactions"] = config.AddToNonScavFactions;
+        if (node["enableMeleeLooting"] is null) node.Insert(Math.Min(1, node.Count), "enableMeleeLooting", JsonValue.Create(config.EnableMeleeLooting));
         if (node["allowFenceToSellEfbItems"] is null) node["allowFenceToSellEfbItems"] = config.AllowFenceToSellEfbItems;
         node["airdropLegendaryChancePercent"] = config.AirdropFraction * 100d;
         node["statRewardsLegendaryChancePercent"] = config.StatRewardsFraction * 100d;

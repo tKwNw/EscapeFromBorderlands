@@ -1,5 +1,6 @@
 {
   "enabled": true,
+  "enableMeleeLooting": true,
   "addToPmcWeapons": true,
   "addToBossWeapons": true,
   "addToNonScavFactions": true,
