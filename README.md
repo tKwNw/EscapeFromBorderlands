@@ -1,10 +1,10 @@
 # Escape From Borderlands — SPT 4.0.13
 
-**EFB 0.40.0 · Borderlands-inspired Legendary equipment for SPT.**
+**EFB 0.40.2 · Borderlands-inspired Legendary equipment for SPT.**
 
 ## Download and install
 
-[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.0-spt-4.0.13/EscapeFromBorderlands_0.40.0_SPT-4.0.13.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.0-spt-4.0.13)
+[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.2-spt-4.0.13/EscapeFromBorderlands_0.40.2_SPT-4.0.13.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.2-spt-4.0.13)
 
 For a fresh installation, close the game, launcher and server, then extract the installation ZIP into your **SPT game root**. The package installs:
 
@@ -15,10 +15,9 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 ## Latest changes
 
-- Added **106 Legendary headwear designs**, bringing the collection to **1,614** designs, with configurable abilities and headwear status visibility.
-- Fixed headwear inventory freezes, helmet ergonomics penalties and unwanted sprint-recovery status text while retaining the underlying bonuses.
-- Applied configured Legendary chances across supported bot factions and equipment categories, including with APBS modded gear disabled.
-- Reduced repeated equipment, weapon-stat and status-display work, and grouped server configuration toggles at the top.
+- Fixed unrevealed Legendary items showing `????` when acquired through the Cultist Circle and supported mod reward or loot paths.
+- Existing affected items are identified when the profile loads after restarting the client. Already-revealed items keep their rolls; shop previews stay hidden until acquired.
+- Preserved item identities, attachments, durability and stored contents. The collection remains at **1,614 Legendary designs**.
 
 ## Legendary equipment
 

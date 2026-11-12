@@ -39,6 +39,8 @@ Fence's setting is independent of the flea-market toggle and Legendary spawn cha
 
 Missing server options are added automatically when EFB starts. Keep existing values when updating; see the [upgrade guide](https://github.com/tKwNw/EscapeFromBorderlands/blob/main/UPGRADING.md).
 
+Owned Legendary items still showing `????` are identified when the profile loads after restarting the client. Covered item-delivery, Cultist Circle and raid-return paths also identify incoming items. Already-revealed rolls and shop previews remain unchanged. Identification does not run every frame or on each stash-tab click. Containers are left untouched if identification would shrink a grid or change its restrictions.
+
 ## Client settings
 
 EFB creates `BepInEx/config/com.tKwNw.escapefromborderlands.cfg`. Edit it with the game closed, or use an installed BepInEx configuration manager.

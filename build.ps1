@@ -35,7 +35,7 @@ if ($LASTEXITCODE -ne 0) { throw 'SPT 4.0.13 client build failed.' }
 
 foreach ($file in @($ServerOutput, $ClientOutput)) {
     if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Build output missing: $file" }
-    if ([Reflection.AssemblyName]::GetAssemblyName($file).Version -ne [Version]'0.40.0.0') {
+    if ([Reflection.AssemblyName]::GetAssemblyName($file).Version -ne [Version]'0.40.2.0') {
         throw "Unexpected assembly version in $file"
     }
 }
@@ -47,4 +47,4 @@ if (-not $ServerBytes.Contains('.NETCoreApp,Version=v9.0') -or $ServerBytes.Cont
 if (-not $ClientBytes.Contains('.NETStandard,Version=v2.1') -or $ClientBytes.Contains('com.SPT.core')) {
     throw 'Client DLL looks incompatible with SPT 4.0.13 (possibly a stale 4.1.6 DLL).'
 }
-Write-Host "PASS: EFB 0.40.0 client and server built for SPT 4.0.13 ($SptVersion), .NET 9 / .NET Standard 2.1." -ForegroundColor Green
+Write-Host "PASS: EFB 0.40.2 client and server built for SPT 4.0.13 ($SptVersion), .NET 9 / .NET Standard 2.1." -ForegroundColor Green

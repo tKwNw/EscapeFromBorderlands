@@ -221,6 +221,7 @@ public sealed class RarityMod(
 
         BackpackFleaMarket.Install(catalog.Variants.Where(v =>
             databaseService.GetItems().ContainsKey(new MongoId(v.TemplateId))), config.AllowFleaMarketTrading);
+        OwnedLegendaryIdentification.Install(catalog.Variants, databaseService.GetItems());
         if (config.AllowFleaMarketTrading)
             releaseLog.Info("[Escape From Borderlands] All Legendary categories use mystery flea stock. Four random bonuses are revealed separately for each purchased copy; existing owned items retain their rolls.");
 
