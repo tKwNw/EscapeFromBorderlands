@@ -1,4 +1,4 @@
-# Building Escape From Borderlands 0.40.1 — SPT 4.1.6
+# Building Escape From Borderlands 0.40.3 — SPT 4.1.6
 
 This branch contains the complete source code and Legendary item definitions for **SPT 4.1.6**. The GitHub Releases page provides compiled, ready-to-install downloads.
 

@@ -235,6 +235,7 @@ public sealed class RarityMod(
         releaseLog.Info($"[Escape From Borderlands] Shared airdrop legendary chance: {config.AirdropFraction * 100d:0.###}% per supported loot item, across all airdrop types.");
 
         BackpackFleaMarket.Install(registeredVariants, config.AllowFleaMarketTrading);
+        OwnedLegendaryIdentification.Install(registeredVariants, templateTable.Items);
         if (config.AllowFleaMarketTrading)
             releaseLog.Info("[Escape From Borderlands] All Legendary categories use mystery flea stock. Four random bonuses are revealed separately for each purchased copy; existing owned items retain their rolls.");
 
