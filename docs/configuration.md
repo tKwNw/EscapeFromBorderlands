@@ -9,6 +9,7 @@ On/off toggles are grouped at the top of `config.json`, followed by chances and 
 | Setting | Default | What it controls |
 | --- | --- | --- |
 | `enabled` | `true` | Enables EFB's server features. |
+| `enableMeleeLooting` | `true` | Enables EFB corpse looting for supported vanilla melee weapons and their Legendary variants. Set to `false` to retain native restrictions. Restart server and client. |
 | `addToPmcWeapons` | `true` | Enables Legendary equipment on PMCs across the supported categories. |
 | `addToBossWeapons` | `true` | Enables Legendary equipment on bosses. |
 | `addToNonScavFactions` | `true` | Enables Legendary equipment on raiders, rogues, followers, cultists, arena fighters and other non-Scav factions. |
@@ -55,3 +56,6 @@ EFB creates `BepInEx/config/com.tKwNw.escapefromborderlands.cfg`. Edit it with t
 The status display shows triggered and conditional effects while active, including conditions such as aiming or going prone. Permanent effects do not need an active-status entry. Recharge timers can appear while grenades are unequipped; unequipped charge counts appear only between empty and full, such as **1/3** or **2/3**.
 
 [← EFB home](../README.md) · [Legendary item catalog](README.md)
+
+
+`enableMeleeLooting` defaults to `true` for older configs too. Disabling it does not alter spawn chances, armband looting or other mods' looting rules. Chained Labrys and Superfors DB 2020 remain protected; zombie attacks and unrelated items are unchanged.

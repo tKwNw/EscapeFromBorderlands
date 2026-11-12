@@ -1,10 +1,10 @@
 # Escape From Borderlands — SPT 4.0.13
 
-**EFB 0.40.2 · Borderlands-inspired Legendary equipment for SPT.**
+**EFB 0.40.4 · Borderlands-inspired Legendary equipment for SPT.**
 
 ## Download and install
 
-[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.2-spt-4.0.13/EscapeFromBorderlands_0.40.2_SPT-4.0.13.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.2-spt-4.0.13)
+[Download the installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.4-spt-4.0.13/EscapeFromBorderlands_0.40.4_SPT-4.0.13.zip) · [Release notes](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.4-spt-4.0.13)
 
 For a fresh installation, close the game, launcher and server, then extract the installation ZIP into your **SPT game root**. The package installs:
 
@@ -15,9 +15,9 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 ## Latest changes
 
-- Fixed unrevealed Legendary items showing `????` when acquired through the Cultist Circle and supported mod reward or loot paths.
-- Existing affected items are identified when the profile loads after restarting the client. Already-revealed items keep their rolls; shop previews stay hidden until acquired.
-- Preserved item identities, attachments, durability and stored contents. The collection remains at **1,614 Legendary designs**.
+- Added `enableMeleeLooting` near the top of `config.json`, enabled by default to preserve existing behavior.
+- Set it to `false` to retain native melee looting restrictions. Melee spawn chances and armband looting remain unchanged.
+- Retained the owned Legendary identification fix and existing optimizations. The collection remains at **1,614 Legendary designs**.
 
 ## Legendary equipment
 

@@ -34,10 +34,12 @@ public sealed class RarityMod(
     private static readonly MongoId DefaultInventoryTemplateId = new("55d7217a4bdc2d86028b456d");
     private IReadOnlyCollection<SpawnVariant> _spawnVariants = [];
     private bool _spawnRegistrationFinalized;
+    private bool _enableMeleeLooting = true;
 
     public Task OnLoad()
     {
         var config = RarityConfiguration.Load();
+        _enableMeleeLooting = config.EnableMeleeLooting;
         releaseLog.Info("[Escape From Borderlands] Private Test 7 performance backport — SPT 4.0.13.");
         ServerPerformanceTrace.Bind(message => releaseLog.Info(message));
         using var startup = ServerPerformanceTrace.Measure("startup");
@@ -586,8 +588,8 @@ public sealed class RarityMod(
 
     private void EnableMeleeLooting(LegendaryCatalog catalog)
     {
-        MeleeLootingPolicy.Apply(catalog, databaseService.GetItems());
-        releaseLog.Info("[Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.");
+        MeleeLootingPolicy.Apply(catalog, databaseService.GetItems(), _enableMeleeLooting);
+        if (_enableMeleeLooting) releaseLog.Info("[Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.");
     }
 
     private int AddMeleeWeaponsToStandalonePools(RarityConfiguration config)

@@ -6,14 +6,15 @@ namespace EscapeFromBorderlands.Server;
 
 internal static class MeleeLootingPolicy
 {
-    public static void Apply(LegendaryCatalog catalog, IDictionary<MongoId, TemplateItem> items)
+    public static void Apply(LegendaryCatalog catalog, IDictionary<MongoId, TemplateItem> items, bool enableMeleeLooting = true)
     {
         var protectedSources = catalog.UnlootableMeleeTemplateIds.ToHashSet(StringComparer.Ordinal);
         var lootableIds = catalog.VanillaMeleeTemplateIds
             .Where(id => !protectedSources.Contains(id))
             .Concat(catalog.Variants.Where(variant => variant.MeleeEffect is not null &&
                 !protectedSources.Contains(variant.SourceTemplateId)).Select(variant => variant.TemplateId));
-        foreach (var id in lootableIds)
+        // Disabled leaves native protection intact, including on clones made from those templates.
+        foreach (var id in enableMeleeLooting ? lootableIds : Enumerable.Empty<string>())
         {
             if (!items.TryGetValue(new MongoId(id), out var item) || item.Properties is null) continue;
             // Native ItemFactory omits the Scabbard protection component when this flag is false.
