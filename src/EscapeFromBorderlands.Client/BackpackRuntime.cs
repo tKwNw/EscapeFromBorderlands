@@ -259,9 +259,21 @@ internal static class BackpackRuntime
     {
         // The from/to address still identifies the container after a move.
         // Walking parents avoids another full backpack scan in the event hook.
+        var visited = new HashSet<Item>(AncestorReferenceComparer.Instance);
         for (var parent = address?.Container?.ParentItem; parent is not null; parent = parent.CurrentAddress?.Container?.ParentItem)
+        {
             if (parent.Id == bag.Id) return true;
+            // Native equipment roots can parent themselves. Also stop malformed
+            // cycles without imposing a depth limit on legitimate nested bags.
+            if (parent is InventoryEquipment || !visited.Add(parent)) return false;
+        }
         return false;
+    }
+    private sealed class AncestorReferenceComparer : IEqualityComparer<Item>
+    {
+        internal static readonly AncestorReferenceComparer Instance = new();
+        public bool Equals(Item? x, Item? y) => ReferenceEquals(x, y);
+        public int GetHashCode(Item item) => System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(item);
     }
     private static void ObserveContents(State s)
     {

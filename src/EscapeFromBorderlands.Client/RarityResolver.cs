@@ -51,10 +51,10 @@ internal static class RarityResolver
 
     internal static ShotRoll Resolve(Item weapon, VariantDefinition definition)
     {
-        if (RollsByInstance.TryGetValue(weapon.Id, out var existing)) return existing;
+        if (RollsByInstance.TryGetValue(weapon.Id, out var existing) && existing.Definition.TemplateId == definition.TemplateId) return existing;
         lock (Sync)
         {
-            if (RollsByInstance.TryGetValue(weapon.Id, out var cached))
+            if (RollsByInstance.TryGetValue(weapon.Id, out var cached) && cached.Definition.TemplateId == definition.TemplateId)
             {
                 return cached;
             }

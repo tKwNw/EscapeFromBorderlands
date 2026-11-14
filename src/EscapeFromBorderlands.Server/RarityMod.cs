@@ -202,6 +202,7 @@ public sealed class RarityMod(
             }
         }
 
+        LegendaryGridExclusions.Apply(catalog, databaseService.GetItems(), cloner);
         EarpieceCompatibility.Apply(catalog.Variants, databaseService.GetItems());
         LootContainerLegendarySpawning.Install(catalog.Variants.Where(v => databaseService.GetItems().ContainsKey(new MongoId(v.TemplateId))),
             databaseService.GetItems(), config, message => releaseLog.Warning(message));
