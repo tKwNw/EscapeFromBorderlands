@@ -215,6 +215,7 @@ public sealed class RarityMod(
             }
         }
 
+        LegendaryGridExclusions.Apply(catalog, templateTable.Items, cloner);
         EarpieceCompatibility.Apply(catalog.Variants, templateTable.Items);
         var registeredVariants = catalog.Variants.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))).ToArray();
         var registeredAliases = catalog.LegacyAliases.Where(v => templateTable.Items.ContainsKey(new MongoId(v.TemplateId))).ToArray();

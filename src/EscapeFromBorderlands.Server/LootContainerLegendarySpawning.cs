@@ -126,7 +126,7 @@ internal sealed class LootContainerLegendaryRolls
         if (value is null) return "null";
         cache ??= new(ReferenceEqualityComparer.Instance);
         if (cache.TryGetValue(value, out var key)) return key;
-        return cache[value] = JsonSerializer.Serialize(value);
+        return cache[value] = LegendaryGridExclusions.FilterKey(value);
     }
 
     private bool Compatible(VariantDefinition variant, Item item, TemplateItem source, TemplateItem container,

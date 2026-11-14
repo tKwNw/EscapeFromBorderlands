@@ -267,7 +267,7 @@ internal static class CustomBotSpawning
             var replacement = grids.FirstOrDefault(g => g.Name == original.Name);
             if (replacement?.Properties is not { } next || original.Properties is not { } old ||
                 next.CellsH.GetValueOrDefault() < old.CellsH.GetValueOrDefault() || next.CellsV.GetValueOrDefault() < old.CellsV.GetValueOrDefault() ||
-                JsonSerializer.Serialize(next.Filters) != JsonSerializer.Serialize(old.Filters)) return Fits[key] = false;
+                LegendaryGridExclusions.FilterKey(next.Filters) != LegendaryGridExclusions.FilterKey(old.Filters)) return Fits[key] = false;
         }
         return Fits[key] = true;
     }
