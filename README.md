@@ -10,8 +10,8 @@ Choose the download that matches your installed SPT version.
 
 | SPT version | EFB version | Download | Release notes |
 | --- | --- | --- | --- |
-| 4.0.13 | 0.40.4 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.4-spt-4.0.13/EscapeFromBorderlands_0.40.4_SPT-4.0.13.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.4-spt-4.0.13) |
-| 4.1.6 | 0.40.5 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.5-spt-4.1.6/EscapeFromBorderlands_0.40.5_SPT-4.1.6.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.5-spt-4.1.6) |
+| 4.0.13 | 0.40.6 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.6-spt-4.0.13/EscapeFromBorderlands_0.40.6_SPT-4.0.13.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.6-spt-4.0.13) |
+| 4.1.6 | 0.40.7 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.7-spt-4.1.6/EscapeFromBorderlands_0.40.7_SPT-4.1.6.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.7-spt-4.1.6) |
 
 Source branches: [SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) · [SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6). Each includes its build instructions.
 
@@ -21,9 +21,10 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 ## Latest changes
 
-- Added `enableMeleeLooting` near the top of `config.json`, enabled by default to preserve existing behavior.
-- Set it to `false` to retain native melee looting restrictions. Melee spawn chances and armband looting remain unchanged.
-- Retained the owned Legendary identification fix and existing optimizations. The collection remains at **1,614 Legendary designs**.
+- Fixed an inventory loop that could freeze the client when equipping or moving loot-tracking Legendary backpacks.
+- Restored backpack exclusions for their Legendary equivalents while preserving storage layouts and configured bot/container loot chances.
+- Fixed cached `????` bonuses after identification and added safeguards against runaway Trailblazer smoke emissions.
+- Retained Legendary effects, headwear controls, integrations and performance optimizations. The collection remains at **1,614 Legendary designs**.
 
 ## Legendary equipment
 
