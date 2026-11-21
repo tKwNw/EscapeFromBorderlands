@@ -426,3 +426,16 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Local-only diagnostics and agent handoffs
+handoff/
+outputs/
+diagnostics/
+.codex/
+.agents/
+AGENTS.md
+CODEX_HANDOFF.md
+*.pdb
+*.log
+*.etl
+*.dmp

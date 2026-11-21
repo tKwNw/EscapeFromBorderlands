@@ -8,10 +8,10 @@ EFB adds Legendary versions of vanilla firearms, melee weapons, chest rigs, back
 
 Choose the download that matches your installed SPT version.
 
-| SPT version | EFB version | Download | Release notes |
-| --- | --- | --- | --- |
-| 4.0.13 | 0.40.6 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.6-spt-4.0.13/EscapeFromBorderlands_0.40.6_SPT-4.0.13.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.6-spt-4.0.13) |
-| 4.1.6 | 0.40.7 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.40.7-spt-4.1.6/EscapeFromBorderlands_0.40.7_SPT-4.1.6.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.40.7-spt-4.1.6) |
+| SPT version | EFB version | Full install | Upgrade | Release notes |
+| --- | --- | --- | --- | --- |
+| 4.0.13 | 0.41.0 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.41.0-spt-4.0.13/EscapeFromBorderlands_0.41.0_SPT-4.0.13.zip) | [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.41.0-spt-4.0.13/EscapeFromBorderlands_0.41.0_SPT-4.0.13_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.41.0-spt-4.0.13) |
+| 4.1.6 | 0.41.1 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.41.1-spt-4.1.6/EscapeFromBorderlands_0.41.1_SPT-4.1.6.zip) | [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.41.1-spt-4.1.6/EscapeFromBorderlands_0.41.1_SPT-4.1.6_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.41.1-spt-4.1.6) |
 
 Source branches: [SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) · [SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6). Each includes its build instructions.
 
@@ -21,10 +21,12 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 ## Latest changes
 
-- Fixed an inventory loop that could freeze the client when equipping or moving loot-tracking Legendary backpacks.
-- Restored backpack exclusions for their Legendary equivalents while preserving storage layouts and configured bot/container loot chances.
-- Fixed cached `????` bonuses after identification and added safeguards against runaway Trailblazer smoke emissions.
-- Retained Legendary effects, headwear controls, integrations and performance optimizations. The collection remains at **1,614 Legendary designs**.
+- Reduced repeated firearm-stat work, equipment lookups, movement calculations and temporary allocations.
+- Reduced bot checks for player-only actions and systems while retaining supported Legendary combat and movement effects.
+- Improved container navigation, quest-hit handling, grenade release and hit-impact processing.
+- Strengthened cleanup between raids and prevented delayed actions from carrying into a later raid.
+- Fixed grenade icon scaling, NVG state handling and passive effects remaining permanently visible as active statuses. The SPT 4.0.13 build also includes an optic exception safeguard.
+- Preserved Legendary IDs, signatures, rolls, settings and integrations. The collection remains at **1,614 Legendary designs**.
 
 ## Legendary equipment
 
