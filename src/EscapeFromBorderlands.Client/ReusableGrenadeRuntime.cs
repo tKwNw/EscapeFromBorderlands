@@ -38,7 +38,7 @@ internal static class ReusableGrenadeRuntime
             SessionCleanup.Run(nameof(GrenadeBuffs), GrenadeBuffs.Reset);
             SessionCleanup.Run(nameof(GrenadePackingSpeed), GrenadePackingSpeed.Reset);
         }
-        finally { Controllers = new(); CarriedGrenadeDisplay.Reset(); }
+        finally { Controllers = new(); GrenadeThrowSkill.Reset(); CarriedGrenadeDisplay.Reset(); GrenadeInventoryPath.Reset(); }
     }
     internal static void Maintain(GameWorld? world, RaidPlayerSnapshot live)
     {
@@ -48,64 +48,90 @@ internal static class ReusableGrenadeRuntime
     internal static void Select(InventoryController inventory, IList<ThrowWeap> available)
     {
         var priority = inventory.Inventory.Equipment.TopPriorityGrenade;
-        var hadReusable = available.Any(IsReusable) || IsReusable(priority);
+        var hadReusable = false;
+        for (var i = 0; i < available.Count && !hadReusable; i++) hadReusable = IsReusable(available[i]);
+        hadReusable |= IsReusable(priority);
         Filter(available);
         if (!hadReusable) return;
-        if (IsReusable(priority) && !available.Any(i => i.Id == priority!.Id)) priority = null;
+        if (IsReusable(priority))
+        {
+            var found = false;
+            for (var i = 0; i < available.Count; i++) if (available[i].Id == priority!.Id) { found = true; break; }
+            if (!found) priority = null;
+        }
         var actor = BackpackRuntime.Actor(inventory);
         if (actor is null) { inventory.Inventory.Equipment.TopPriorityGrenade = priority; return; }
         // The native key handler randomly chooses an item unless TopPriorityGrenade
         // is populated. Pin an individual copy until its last charge is spent.
-        var id = Charges.Select(actor.ProfileId, available.Select(i => i.Id), priority?.Id);
-        inventory.Inventory.Equipment.TopPriorityGrenade = available.FirstOrDefault(i => i.Id == id);
+        var id = Charges.Select(actor.ProfileId, available, static i => i.Id, priority?.Id);
+        ThrowWeap? selected = null;
+        for (var i = 0; i < available.Count; i++) if (available[i].Id == id) { selected = available[i]; break; }
+        inventory.Inventory.Equipment.TopPriorityGrenade = selected;
     }
     internal static void Selected(Item item, Player? actor)
     {
+        if (actor is not null && IsReusable(item)) _ = GrenadeThrowSkill.For(actor);
         if (actor is not null && item is ThrowWeap && (!IsReusable(item) || Remaining(item) > 0)) Charges.Pin(actor.ProfileId, item.Id);
     }
     internal static ThrowWeap ProjectileItem(ThrowWeap source)
     {
-        if (!IsReusable(source)) return source;
-        return LegendaryGrenadeEffects.Projectile(RarityResolver.Resolve(source)!);
+        if (!RarityResolver.TryGetDefinition(source, out var definition) || definition.GrenadeChargesPerRaid <= 0) return source;
+        return LegendaryGrenadeEffects.Projectile(RarityResolver.Resolve(source, definition));
     }
     internal static IExplosiveItem Explosion(IExplosiveItem source, Item original) => LegendaryGrenadeEffects.Explosion(source, original);
     internal static bool Release(Player.BaseGrenadeHandsController controller, float prewarm, Vector3 position, Quaternion rotation, Vector3 force, bool lowThrow)
     {
         var source = controller.Item;
-        if (!IsReusable(source)) return false;
+        if (source is not ThrowWeap || !RarityResolver.TryGetDefinition(source, out var definition) || definition.GrenadeChargesPerRaid <= 0) return false;
+        DiagnosticPathTrace trace = default;
+        DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.Grenade);
         var state = Controllers.GetValue(controller, _ => new ThrowState());
         if (state.Handled) return true;
         state.Handled = true;
-        var p = BackpackRuntime.Actor(controller);
+        var p = GrenadeControllerAccess.Owner(controller);
         if (!FactoryHookReady || p?.HealthController?.IsAlive != true || source!.CurrentAddress is null ||
-            !RarityResolver.TryGetDefinition(source, out var definition) ||
-            !BackpackNative.ContainsId(p.InventoryController.Inventory.Equipment.GetAllItems(), source.Id)) return true;
-        var token = Guid.NewGuid().ToString("N");
-        if (!Charges.Reserve(source.Id, definition.GrenadeChargesPerRaid, token, LegendaryGrenadeSettings.Interval(definition))) return true;
+            !GrenadeInventoryPath.Contains(p.InventoryController.Inventory.Equipment, source)) return true;
+        // The existing per-controller state is already unique for this throw.
+        // Reuse its identity for the private reservation; projectile/item IDs
+        // remain native and no reservation string or GUID needs allocating.
+        var token = state;
+        if (!Charges.ReserveToken(source.Id, definition.GrenadeChargesPerRaid, token, LegendaryGrenadeSettings.Interval(definition))) return true;
+        trace.Phase(0);
         var spawned = false;
         try
         {
             // Preserve the native trajectory, fuse/prewarm, factory registration,
             // hand animation and completion callbacks. Only discard is bypassed.
             var grenade = controller.CreateAndRegisterGrenade(position, rotation, force, prewarm);
+            trace.Phase(1);
             if (grenade is null) return true;
             // Bind the returned native projectile directly. Area effects must
             // not depend on a separate factory postfix being entered on Mono.
             LegendaryGrenadeEffects.Created(grenade, grenade.WeaponSource, p.ProfileId);
             spawned = true;
-            Charges.Finish(source.Id, token, true);
+            Charges.FinishToken(source.Id, token, true);
+            trace.Phase(2);
             LegendaryGrenadeEffects.BindSmoke(controller, grenade);
+            trace.Phase(3);
             Charges.Pin(p.ProfileId, source.Id);
             GrenadeBuffs.Thrown(p, definition);
-            p.ExecuteSkill((Action)(() => p.Skills.ThrowAction.Complete()));
+            p.ExecuteSkill(GrenadeThrowSkill.For(p));
+            trace.Phase(4);
             p.Physical.OnThrow(lowThrow);
-            if (Native.Get(controller, "ThrowingParts") is Transform[] parts)
+            if (GrenadeControllerAccess.Parts(controller) is Transform[] parts)
                 foreach (var part in parts) if (part != null) part.gameObject.SetActive(false);
+            trace.Phase(5);
             if (Singleton<GlobalEventDispatcher>.Instantiated)
-                Native.Call(Singleton<GlobalEventDispatcher>.Instance, "ThrowGrenade", grenade, position + Vector3.up, force, p.IsAI ? .5f : .6f);
+            {
+                var dispatcher = Singleton<GlobalEventDispatcher>.Instance;
+                if (dispatcher.GetType() == typeof(GlobalEventDispatcher))
+                    dispatcher.ThrowGrenade(grenade, position + Vector3.up, force, p.IsAI ? .5f : .6f);
+                else Native.Call(dispatcher, "ThrowGrenade", grenade, position + Vector3.up, force, p.IsAI ? .5f : .6f);
+            }
+            trace.Phase(6);
         }
         catch (Exception e) { Plugin.LogSource.LogError($"Reusable grenade throw failed: {e.Message}"); }
-        finally { if (!spawned) Charges.Finish(source!.Id, token, false); }
+        finally { if (!spawned) Charges.FinishToken(source!.Id, token, false); }
         return true;
     }
     internal static void AppendStatuses(Player p, List<EffectStatusModel.Status> statuses, ref RaidUpdateTrace trace)

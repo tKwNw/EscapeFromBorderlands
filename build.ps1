@@ -9,9 +9,10 @@ if ($CoreVersion.Major -ne 4 -or $CoreVersion.Minor -ne 1 -or $CoreVersion.Build
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) { throw 'Install the .NET 10 SDK before building.' }
 $Sdks = @(dotnet --list-sdks)
 if ($LASTEXITCODE -ne 0 -or -not @($Sdks | Where-Object { $_ -match '^(\d+)\.' -and [int]$Matches[1] -ge 10 }).Count) { throw 'The .NET 10 SDK is required; a runtime alone cannot build this project.' }
-Write-Host 'Building Escape From Borderlands 0.40.7 against native SPT 4.1.6 references.'
+Write-Host 'Building Escape From Borderlands 0.41.1 against native SPT 4.1.6 references.'
 $ProjectRoot = $PSScriptRoot
 $BuildOutput = Join-Path $ProjectRoot "output"
+$ClientFolder = 'Client'
 $ServerProject = Join-Path $ProjectRoot "src\EscapeFromBorderlands.Server\EscapeFromBorderlands.Server.csproj"
 $ClientProject = Join-Path $ProjectRoot "src\EscapeFromBorderlands.Client\EscapeFromBorderlands.Client.csproj"
 dotnet build $ServerProject -c $Configuration "-p:SptServerRoot=$ServerRoot" "-p:OutputPath=$(Join-Path $BuildOutput 'Server')"
@@ -20,6 +21,6 @@ if ($ServerOnly) {
     Write-Host "Server source built into $(Join-Path $BuildOutput 'Server'). Build the client as well to produce both installable components." -ForegroundColor Yellow
     exit 0
 }
-dotnet build $ClientProject -c $Configuration "-p:SptGameRoot=$GameRoot" "-p:OutputPath=$(Join-Path $BuildOutput 'Client')"
+dotnet build $ClientProject -c $Configuration "-p:SptGameRoot=$GameRoot" "-p:OutputPath=$(Join-Path $BuildOutput $ClientFolder)" "-p:EfbPerformanceDiagnostics=false"
 if ($LASTEXITCODE -ne 0) { throw "Client build failed." }
-Write-Host "Escape From Borderlands 0.40.7 build written to $BuildOutput" -ForegroundColor Green
+Write-Host "Escape From Borderlands 0.41.1 build written to $BuildOutput" -ForegroundColor Green

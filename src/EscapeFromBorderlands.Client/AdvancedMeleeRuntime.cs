@@ -102,15 +102,20 @@ internal static partial class AdvancedMeleeRuntime
     }
 
     internal static bool HasPendingHoldWork(Player player) => WeightReduced.Contains(player) || Flights.ContainsKey(player);
+    internal static bool HasAnyPendingHoldWork => WeightReduced.Count != 0 || Flights.Count != 0;
+    internal static void AddPendingHoldWork(RaidPlayerWorkset work) { work.Add(WeightReduced); work.Add(Flights); }
 
     internal static void MaintainPlayer(Player player, MeleeRuntime.HeldState? held)
     {
         if (held is null && WeightReduced.Count == 0 && Flights.Count == 0) return;
+        if (ActorCapabilities.IsHuman(player))
+        {
         var reduced = held?.Effect.WeightMultiplier < 1f;
         if (reduced != WeightReduced.Contains(player))
         {
             if (reduced) WeightReduced.Add(player); else WeightReduced.Remove(player);
             PlayerRefresh.Weight(player, "melee weight");
+        }
         }
         if (Flights.TryGetValue(player, out var flight))
         {
@@ -120,16 +125,19 @@ internal static partial class AdvancedMeleeRuntime
         }
         if (held is null) return;
         var s = held.Advanced; var effect = held.Effect; var now = Time.time;
+        var stationary = effect.StationarySeconds > 0f && (ActorCapabilities.IsHuman(player) || effect.StationaryHealPerSecond > 0f);
+        if (stationary || effect.Ability == "sprint_charge")
+        {
         var dt = Math.Max(0f, Math.Min(.25f, now - s.LastUpdate));
         var position = player.Position;
         var moved = position - s.LastPosition; moved.y = 0f;
         var still = player.InputDirection.sqrMagnitude < .0001f && moved.sqrMagnitude < .000001f;
         if (!still) s.StationarySince = now;
         var recoveryTime = still ? Math.Max(0f, Math.Min(dt, now - s.StationarySince - effect.StationarySeconds)) : 0f;
-        s.StationaryRecoveryActive = effect.StationarySeconds > 0f && recoveryTime > 0f;
-        if (effect.StationarySeconds > 0f && recoveryTime > 0f)
+        s.StationaryRecoveryActive = stationary && recoveryTime > 0f;
+        if (stationary && recoveryTime > 0f)
         {
-            if (effect.StationaryLegStaminaPerSecond > 0f)
+            if (ActorCapabilities.UsesStamina(player) && effect.StationaryLegStaminaPerSecond > 0f)
                 Restore(player.Physical.Stamina, effect.StationaryLegStaminaPerSecond * recoveryTime);
             MeleeRuntime.Heal(player, effect.StationaryHealPerSecond * recoveryTime);
         }
@@ -143,16 +151,19 @@ internal static partial class AdvancedMeleeRuntime
                 if (now - s.SprintSince >= effect.ChargeSeconds) s.Charged = true;
             }
         }
+        s.LastPosition = position;
+        }
         if (effect.HoldPainkiller)
         {
             if (s.HeldPainkiller?.Existing != true) s.HeldPainkiller = Painkiller(player, 2f);
             else s.HeldPainkiller.AddWorkTime(2f, true);
         }
-        s.LastPosition = position; s.LastUpdate = now;
+        s.LastUpdate = now;
     }
 
     internal static void MaintainExpired()
     {
+        if (WeightReduced.Count == 0 && Flights.Count == 0 && KillPainkillers.Count == 0) return;
         foreach (var player in WeightReduced.Where(p => p.HealthController?.IsAlive != true).ToArray()) WeightReduced.Remove(player);
         foreach (var player in Flights.Keys.Where(p => p.HealthController?.IsAlive != true).ToArray()) Flights.Remove(player);
         foreach (var player in KillPainkillers.Keys.Where(p => p.HealthController?.IsAlive != true || !KillPainkillers[p].Existing).ToArray())
@@ -186,7 +197,8 @@ internal static partial class AdvancedMeleeRuntime
         if (target is null) return;
         var s = held.Advanced; var e = held.Effect;
         if (!s.Connected.Add(target.ProfileId)) return;
-        s.BleedingBeforeHit[target.ProfileId] = Bleeding(target);
+        if (ActorCapabilities.UsesStamina(held.Player) && e.BleedingHitLegStaminaFraction > 0f)
+            s.BleedingBeforeHit[target.ProfileId] = Bleeding(target);
         s.PreviousAttackConnected = true;
         if (e.ChainPenetrationPerHit > 0f)
         {
@@ -275,7 +287,7 @@ internal static partial class AdvancedMeleeRuntime
         var e = held.Effect; var s = held.Advanced;
         if (s.Stab) s.FirstParts.Add(target.ProfileId + ":" + part);
         if (e.Ability == "combo" && !s.Stab) s.Charged = true;
-        if (s.BleedingBeforeHit.TryGetValue(target.ProfileId, out var bleeding) && bleeding) Restore(held.Player.Physical.Stamina, e.BleedingHitLegStaminaFraction);
+        if (ActorCapabilities.UsesStamina(held.Player) && s.BleedingBeforeHit.TryGetValue(target.ProfileId, out var bleeding) && bleeding) Restore(held.Player.Physical.Stamina, e.BleedingHitLegStaminaFraction);
         if (e.MarkedAttackerDamageMultiplier < 1f) s.MarkedEnemies.Add(target.ProfileId);
         if (!s.Stab && part == EBodyPart.Chest && e.ChestSlashStomachDamage > 0f && target.HealthController.IsAlive)
             {
@@ -287,7 +299,7 @@ internal static partial class AdvancedMeleeRuntime
     public static void Kill(MeleeRuntime.HeldState held)
     {
         var player = held.Player; var e = held.Effect;
-        if (e.KillArmStaminaFraction > 0f) Restore(player.Physical.HandsStamina, e.KillArmStaminaFraction);
+        if (ActorCapabilities.UsesStamina(player) && e.KillArmStaminaFraction > 0f) Restore(player.Physical.HandsStamina, e.KillArmStaminaFraction);
         if (e.KillClearsTremor || e.KillStopsBleeding)
             foreach (var effect in player.ActiveHealthController.GetAllEffects().OfType<ActiveHealthController.Effect>().ToArray())
                 if (e.KillClearsTremor && effect.GetType().Name == "Tremor" || e.KillStopsBleeding && effect is ActiveHealthController.Bleeding) effect.ForceRemove();
@@ -322,9 +334,9 @@ internal static partial class AdvancedMeleeRuntime
             player.MovementContext.CurrentState != flight.State || flight.State._jumpState != JumpPlayerState.EJumpState.Jump) return false;
         var effect = MeleeRuntime.Effect(player);
         if (player.Physical is not Physical physical) return false;
-        if (effect is null || effect.ExtraJumpHeightMultiplier <= 0f || !player.Physical.CanJump || !player.MovementContext.CanJump) return false;
+        if (effect is null || effect.ExtraJumpHeightMultiplier <= 0f || ActorCapabilities.UsesStamina(player) && !physical.CanJump || !player.MovementContext.CanJump) return false;
         flight.Available = false;
-        physical.Stamina.Consume(physical.Consumptions[Physical.EConsumptionType.Jump]);
+        if (ActorCapabilities.UsesStamina(player)) physical.Stamina.Consume(physical.Consumptions[Physical.EConsumptionType.Jump]);
         var state = flight.State;
         state._stateTime = state._liftDelay;
         state._liftForce = Vector3.up * (flight.LaunchVelocity * MeleeRules.JumpVelocityMultiplier(effect.ExtraJumpHeightMultiplier) / Math.Max(.01f, state._skilledBoost));
@@ -335,5 +347,5 @@ internal static partial class AdvancedMeleeRuntime
     internal static bool ExtraJumpReady(Player player) => Flights.TryGetValue(player, out var flight) && flight.Available &&
         !player.MovementContext.IsGrounded && player.MovementContext.CurrentState == flight.State &&
         flight.State._jumpState == JumpPlayerState.EJumpState.Jump && MeleeRuntime.Effect(player)?.ExtraJumpHeightMultiplier > 0f &&
-        player.Physical is Physical && player.Physical.CanJump && player.MovementContext.CanJump;
+        player.Physical is Physical && (!ActorCapabilities.UsesStamina(player) || player.Physical.CanJump) && player.MovementContext.CanJump;
 }

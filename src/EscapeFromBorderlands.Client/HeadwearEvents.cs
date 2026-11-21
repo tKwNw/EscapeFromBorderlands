@@ -100,20 +100,23 @@ internal static partial class Headwear
     }
     private static bool Boss(Player p) => p.Profile?.Info?.Settings?.Role.ToString() is { } role &&
         (role.StartsWith("boss", StringComparison.OrdinalIgnoreCase) || role is "sectantPriest" or "sectantOni");
-    internal static void Dead(Player victim)
+    internal static void Dead(Player victim, IPlayer? aggressor, in DamageInfo hit)
     {
         if (victim.InventoryController?.Inventory?.Equipment is { } gear) Corpses[gear.Id] = victim.ProfileId;
-        try { Killed(victim); } finally { Forget(victim); }
+        try { Killed(victim, aggressor, in hit); } finally { Forget(victim); }
     }
-    private static void Killed(Player victim)
+    private static void Killed(Player victim, IPlayer? aggressor, in DamageInfo hit)
     {
-        if (Native.Get(victim, "LastAggressor") is not Player p || !AdvancedMeleeRuntime.Enemy(p, victim) ||
-            Get(p) is not { } s || Native.Get(victim, "LastDamageInfo") is not DamageInfo hit || !Deaths.Add(victim.ProfileId)) return;
+        if (aggressor is not Player p || !AdvancedMeleeRuntime.Enemy(p, victim) ||
+            Get(p) is not { } s || !Deaths.Add(victim.ProfileId)) return;
+        if (!KillEffect(s.Key)) return;
         var head = victim.LastDamagedBodyPart == EBodyPart.Head;
         var firearm = hit.DamageType == EDamageType.Bullet && hit.Weapon is Weapon;
         var explosive = hit.DamageType is EDamageType.Explosion or EDamageType.GrenadeFragment or EDamageType.ThermobaricExplosion || hit.Weapon is ThrowWeap;
-        bool NATO() => firearm && (Singleton<ItemFactory>.Instance?.ItemTemplates.TryGetValue(hit.SourceId, out var ammo) == true && ammo is AmmoTemplate round
-            ? round.Caliber == "Caliber556x45NATO" : (hit.Weapon as Weapon)?.AmmoCaliber == "Caliber556x45NATO");
+        var sourceId = hit.SourceId;
+        var hitWeapon = hit.Weapon;
+        bool NATO() => firearm && (Singleton<ItemFactory>.Instance?.ItemTemplates.TryGetValue(sourceId, out var ammo) == true && ammo is AmmoTemplate round
+            ? round.Caliber == "Caliber556x45NATO" : (hitWeapon as Weapon)?.AmmoCaliber == "Caliber556x45NATO");
         switch (s.Key)
         {
             case "HW003-2" when Math.Abs(p.MovementContext.Tilt) > .05f && s.Ready: s.Buff(10, 20); break;
@@ -147,6 +150,10 @@ internal static partial class Headwear
             case "HW094-2" when head && TimeCondition(s) && s.Ready: RepairHat(s, 6); s.Cool(35); Notice(s, "Durability restored"); break;
         }
     }
+    private static bool KillEffect(string key) => key is
+        "HW003-2" or "HW014-1" or "HW018-2" or "HW019-2" or "HW035-2" or "HW039-1" or
+        "HW041-2" or "HW050-3" or "HW051-3" or "HW056-2" or "HW057-3" or "HW058-3" or
+        "HW060-3" or "HW064-3" or "HW069-3" or "HW074-3" or "HW082-3" or "HW092-3" or "HW094-2";
     internal static void Hit(Player victim, DamageInfo info, EBodyPart part)
     {
         if (info.DamageType != EDamageType.Bullet || info.Weapon is not Weapon w || info.Player?.iPlayer is not Player p ||

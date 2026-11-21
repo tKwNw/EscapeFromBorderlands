@@ -404,6 +404,9 @@ public sealed class RarityMod(
         root.Template = new MongoId(variant.TemplateId);
         root.ParentId = null;
         root.SlotId = null;
+        // This private clone intentionally becomes a Legendary preset. Match
+        // its root template before native ID remapping to avoid a mismatch warning.
+        if (ReferenceEquals(preset.Items[0], sourceRoot)) sourceRoot.Template = root.Template;
         preset.Items = itemHelper.ReparentItemAndChildren(root, preset.Items);
         if (variant.IsHeadwear) HeadwearTemplates.Complete(preset.Items);
         preset.Id = new MongoId(variant.PresetId);

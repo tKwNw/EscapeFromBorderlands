@@ -1,6 +1,6 @@
 # Legendary item catalog
 
-**SPT 4.1.6 · EFB 0.40.1 · 1,614 Legendary designs**
+**SPT 4.1.6 · EFB 0.41.1 · 1,614 Legendary designs**
 
 Each listing shows the item's fixed signature ability. Legendary items also roll 4 compatible random bonuses; inspect your copy in-game to see its rolls.
 

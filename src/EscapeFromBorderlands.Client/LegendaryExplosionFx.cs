@@ -232,9 +232,16 @@ internal static class LegendaryExplosionFx
     { if (!Reported) { Reported = true; Plugin.LogSource.LogWarning("Legendary explosion visual scaling unavailable: " + e.Message); } }
     internal static void Reset()
     {
-        foreach (var v in Visuals) if (v.Root != null) UnityEngine.Object.Destroy(v.Root);
-        LegendaryHollywoodFx.Reset();
-        Visuals.Clear(); Tagged = new(); Current = default; PlayingScale = 0f; World = null; Reported = false; Reports.Clear();
+        try
+        {
+            foreach (var v in Visuals.ToArray())
+                SessionCleanup.Run("explosion visual", v, static value => { if (value.Root != null) UnityEngine.Object.Destroy(value.Root); });
+        }
+        finally
+        {
+            Visuals.Clear(); Tagged = new(); Current = default; PlayingScale = 0f; World = null; Reported = false; Reports.Clear();
+            SessionCleanup.Run(nameof(LegendaryHollywoodFx), LegendaryHollywoodFx.Reset);
+        }
     }
 }
 [HarmonyPatch(typeof(Grenade), "Explosion", new Type[] { })]

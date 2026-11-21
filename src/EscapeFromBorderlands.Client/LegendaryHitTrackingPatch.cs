@@ -23,21 +23,28 @@ internal static class LegendaryHitTrackingPatch
             return;
         }
 
+        DiagnosticPathTrace trace = default;
+        DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.HitImpact);
         if (LegendaryRuntime.TryGetApplication(__instance, out var application))
         {
             if (__instance.Parent is null)
             {
                 ApplyLocationDamage(__instance, application);
                 ApplyPenetrationRetention(__instance, application);
+                trace.Phase(0);
                 TriggerExplosion(__instance, application);
+                trace.Phase(1);
             }
             foreach (var fragment in __instance.Fragments)
                 if (!LegendaryRuntime.TryGetApplication(fragment, out _)) LegendaryRuntime.Associate(fragment, application, bonusProjectile: true);
         }
-
+        trace.Phase(2);
         ChestRigBallistics.Impact(__instance);
+        trace.Phase(3);
         LegendaryRuntime.RecordImpact(__instance);
+        trace.Phase(4);
         LegendaryRuntime.Release(__instance);
+        trace.Phase(5);
     }
 
     private static void ApplyLocationDamage(Shot shot, EffectApplication application)
@@ -46,7 +53,7 @@ internal static class LegendaryHitTrackingPatch
             application.ConditionalDamageMultiplier == 1f && application.LimbDamageMultiplier == 1f) return;
         if (shot.HittedBallisticCollider is not BodyPartCollider body) return;
 
-        var bodyPart = body.BodyPartType.ToString();
+        var bodyPart = BodyPartText.Of(body.BodyPartType);
         shot.Damage *= bodyPart.IndexOf("Head", StringComparison.OrdinalIgnoreCase) >= 0
             ? application.HeadDamageMultiplier : application.BodyDamageMultiplier;
         if (application.ConditionalDamageMultiplier != 1f &&
@@ -155,7 +162,7 @@ internal static class LegendaryFleshHitPatch
             damageInfo.FireIndex,
             reachesFlesh,
             __instance.PlayerProfileID ?? string.Empty,
-            __instance.BodyPartType.ToString(),
+            BodyPartText.Of(__instance.BodyPartType),
             ref damageInfo.HeavyBleedingDelta);
     }
 }

@@ -51,8 +51,21 @@ internal static partial class LegendaryRuntime
             return delay.Seconds > 0f ? new EffectStatusModel.Status("gun:" + weapon.Id, definition.ShortName, false, ready: delay.Seconds, detail: delay.Label) : null;
         }
     }
-    internal static bool PermanentStatus(VariantDefinition definition) => definition.CustomEffect?.Trigger == "always" ||
-        definition.CustomEffect is null && definition.SpecialId is "bunker_buster" or "split_decision" or "mp7a2_volks_tribute" or "ak545_wall_pass" or "wave015_core_and_jacket" or "wave015_echo";
+    internal static bool PermanentStatus(VariantDefinition definition)
+    {
+        // The HUD reports changing readiness, not an always-on weapon trait.
+        // Keep this presentation-only: shot and live-stat evaluation still run.
+        if (definition.CustomEffect is { } custom) return custom.Trigger == "always";
+        if (!string.IsNullOrEmpty(definition.SpecialId))
+            return definition.SpecialId is "bunker_buster" or "split_decision" or "mp7a2_volks_tribute" or
+                "ak545_wall_pass" or "wave015_core_and_jacket" or "wave015_echo" or
+                "ak105_ammo_savant" or "frankenstein" or "mood_swing" or "ak105_alternating" or
+                "wave015_fifty_fifty" or "warranty_void";
+        // These families always grant a payoff. Conditional Ammo Savant
+        // variants (for example every tenth shot) retain their indicators.
+        return definition.EffectKind is "rocket" or "rocket_meme" or "launcher_meme" ||
+            definition.EffectKind == "ordinary" && definition.TriggerIndex == 11;
+    }
     private static (float Seconds, string Label) StatusDelay(VariantDefinition d, WeaponState s, Player p)
     {
         var now = Time.time;

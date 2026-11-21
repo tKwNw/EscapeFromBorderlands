@@ -18,20 +18,36 @@ internal static class LegendaryQuestItems
     private static readonly LegendaryCatalog Catalog = LegendaryCatalog.Load();
     internal static readonly QuestItemEquivalence Identity = new(Catalog.Variants.Concat(Catalog.LegacyAliases)
         .Select(d => new KeyValuePair<string, string>(d.TemplateId, d.SourceTemplateId)));
-    private static readonly MethodInfo Clone = AccessTools.Method(typeof(object), "MemberwiseClone");
+    internal static void Prepare() { _ = Identity; NativeShallowClone.Prepare(); }
     internal static bool Contains(IEnumerable<string> required, string actual) => Identity.Contains(required, actual);
     internal const string ProtectedMessage = "Legendary items cannot be handed in for quests, including items inside containers.";
     internal static bool HasProtectedItems(Item item) => Identity.IsVariant(item.StringTemplateId) ||
         item.GetAllItems().Any(child => Identity.IsVariant(child.StringTemplateId));
     internal static bool IsHandover(ConditionItem condition) => condition is ConditionHandoverItem or ConditionWeaponAssembly;
     internal static List<string> WithSources(List<string> items) => Identity.WithSources(items);
+    [ThreadStatic] private static QuestIdentityExpansion? ModsExpansion, EquipmentExpansion;
+    internal static void ResetHitIdentities() { ModsExpansion = null; EquipmentExpansion = null; }
 
     internal static object Hit(ConditionHit condition, object value)
     {
         if (value is not HitConditionCheck hit) return value;
+        if (hit.GetType() == typeof(HitConditionCheck) &&
+            (hit.TargetEquipment is null || hit.TargetEquipment.GetType() == typeof(List<string>)) && QuestHitCopyPolicy.CanShare)
+        {
+            var weapon = Identity.Source(hit.Weapon);
+            if (weapon != hit.Weapon && condition.weapon?.Contains(hit.Weapon) == true) weapon = hit.Weapon;
+            var mods = hit.WeaponMods is not null && (ModsExpansion ??= new()).Read(hit.WeaponMods, Identity);
+            var equipment = hit.TargetEquipment is not null && (EquipmentExpansion ??= new()).Read(hit.TargetEquipment, Identity);
+            if (weapon == hit.Weapon && !mods && !equipment) return hit;
+            var mapped = (HitConditionCheck)NativeShallowClone.Copy(hit);
+            mapped.Weapon = weapon;
+            if (mods) mapped.WeaponMods = ModsExpansion!.CopyArray();
+            if (equipment) mapped.TargetEquipment = EquipmentExpansion!.CopyList();
+            return mapped;
+        }
         // The native event is shared by multiple objectives. Only change a copy
         // of its identity data, retaining every health, distance, time and hit field.
-        var copy = (HitConditionCheck)Clone.Invoke(hit, null)!;
+        var copy = (HitConditionCheck)NativeShallowClone.Copy(hit);
         if (condition.weapon?.Contains(hit.Weapon) != true) copy.Weapon = Identity.Source(hit.Weapon);
         if (hit.WeaponMods != null) copy.WeaponMods = Identity.WithSources(hit.WeaponMods).ToArray();
         if (hit.TargetEquipment != null) copy.TargetEquipment = Identity.WithSources(hit.TargetEquipment);

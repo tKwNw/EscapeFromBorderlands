@@ -19,9 +19,9 @@ internal static class EffectStatusText
     internal static bool TryAssets(Component? source, out Assets assets)
     {
         assets = default;
-        if (source == null || Native.Get(source, "font") is not UnityEngine.Object font || font == null) return false;
-        if (Native.Get(font, "material") is not UnityEngine.Object material || material == null) return false;
-        var shared = Native.Get(source, "fontSharedMaterial") as UnityEngine.Object;
+        if (source == null || HudTextSource.Read(source, "font") is not UnityEngine.Object font || font == null) return false;
+        if (HudTextSource.Read(font, "material") is not UnityEngine.Object material || material == null) return false;
+        var shared = HudTextSource.Read(source, "fontSharedMaterial") as UnityEngine.Object;
         assets = new Assets(font, material, shared != null ? shared : material);
         return true;
     }

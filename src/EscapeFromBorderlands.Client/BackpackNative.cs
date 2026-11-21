@@ -201,6 +201,7 @@ internal static class BackpackNative
     }
     internal static void QueueDrop(Player p, Item item)
     {
+        if (!ActorCapabilities.IsHuman(p)) return;
         var s = BackpackRuntime.Get(p); if (s is null || !InBag(item, s.Bag)) return;
         Drops.Add(new Drop { Player = p, Item = item, State = s, Position = p.Position, Expires = Time.time + 10f });
     }

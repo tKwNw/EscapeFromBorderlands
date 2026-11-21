@@ -17,13 +17,23 @@ internal static class BackpackCachedValuePatch
     private static IEnumerable<MethodBase> TargetMethods() => new[] {
         AccessTools.PropertyGetter(typeof(Compute<float>), "Value"),
         AccessTools.PropertyGetter(typeof(Deferred<float>), "Value") };
-    private static void Postfix(Compute<float> __instance, ref float __result)
+    private static void Postfix(Compute<float> __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Compute<float> __instance, ref float __result)
     {
         if (!BackpackRuntime.Values.TryGetValue(__instance, out var value)) return;
         var (player, kind) = value;
+        if (!ActorCapabilities.UsesStamina(player)) return;
+        var recovery = kind is "legRecovery" or "armRecovery";
+        var aim = kind == "aimCost";
+        var grenadeRecovery = recovery ? GrenadeBuffs.Recovery(player, kind) : 1f;
+        if (!EquipmentPresence.Has(player, GearKind.Gear)) { __result *= grenadeRecovery; return; }
         var observed = PlayerRefresh.CanObserve(player);
-        __result *= BackpackRuntime.Value(player, kind, observed) * ChestRigRuntime.Value(player, kind, observed) *
-            GrenadeBuffs.Recovery(player, kind) * EarpieceRuntime.Value(player, kind, observed) * Headwear.Recovery(player, kind);
+        // Capacity and oxygen belong only to the backpack. Avoid entering
+        // other gear runtimes for stats they cannot modify.
+        __result *= BackpackRuntime.Value(player, kind, observed) *
+            (recovery || aim || kind == "sprintCost" ? ChestRigRuntime.Value(player, kind, observed) : 1f) *
+            grenadeRecovery * (recovery || aim ? EarpieceRuntime.Value(player, kind, observed) : 1f) *
+            (recovery ? Headwear.Recovery(player, kind) : 1f);
     }
 }
 internal static class BackpackWeightScope
@@ -33,30 +43,39 @@ internal static class BackpackWeightScope
 [HarmonyPatch(typeof(Physical), nameof(Physical.OnWeightUpdated))]
 internal static class BackpackPhysicalWeightPatch
 {
-    internal sealed class Snapshot
+    internal struct Snapshot
     {
         public Player? Previous;
         public Vector2 Base, Walk, Sprint, Speed;
+        public bool Applied;
     }
     private static void Prefix(Physical __instance, out Snapshot __state)
     {
-        __state = new Snapshot { Previous = BackpackWeightScope.Player, Base = __instance.BaseOverweightLimits, Walk = __instance.WalkOverweightLimits, Sprint = __instance.SprintOverweightLimits, Speed = __instance.WalkSpeedOverweightLimits };
-        var p = BackpackRuntime.Actor(__instance); BackpackWeightScope.Player = p;
+        __state = new Snapshot { Previous = BackpackWeightScope.Player };
+        var p = BackpackRuntime.Actor(__instance);
+        BackpackWeightScope.Player = ActorCapabilities.IsHuman(p) ? p : null;
+        if (BackpackWeightScope.Player is null) return;
+        __state.Applied = true; __state.Base = __instance.BaseOverweightLimits; __state.Walk = __instance.WalkOverweightLimits;
+        __state.Sprint = __instance.SprintOverweightLimits; __state.Speed = __instance.WalkSpeedOverweightLimits;
         var factor = BackpackRuntime.Get(p)?.Roll.Backpack.OverweightThreshold ?? 1f;
         __instance.BaseOverweightLimits *= factor; __instance.WalkOverweightLimits *= factor;
         __instance.SprintOverweightLimits *= factor; __instance.WalkSpeedOverweightLimits *= factor;
     }
     private static Exception? Finalizer(Physical __instance, Snapshot __state, Exception? __exception)
     {
-        __instance.BaseOverweightLimits = __state.Base; __instance.WalkOverweightLimits = __state.Walk;
-        __instance.SprintOverweightLimits = __state.Sprint; __instance.WalkSpeedOverweightLimits = __state.Speed;
+        if (__state.Applied)
+        {
+            __instance.BaseOverweightLimits = __state.Base; __instance.WalkOverweightLimits = __state.Walk;
+            __instance.SprintOverweightLimits = __state.Sprint; __instance.WalkSpeedOverweightLimits = __state.Speed;
+        }
         BackpackWeightScope.Player = __state.Previous; return __exception;
     }
 }
 [HarmonyPatch(typeof(Deferred<float>), "get_Value")]
 internal static class BackpackWeightValuePatch
 {
-    private static void Postfix(Deferred<float> __instance, ref float __result)
+    private static void Postfix(Deferred<float> __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Deferred<float> __instance, ref float __result)
     {
         var p = BackpackWeightScope.Player;
         var melee = MeleeWeightScope.Inventory;
@@ -213,7 +232,7 @@ internal static class BackpackEnergyPatch
     {
         value = BackpackMedicalRestoration.Adjust(__instance, value, false);
         var s = BackpackRuntime.Get(__instance.Player); if (s is null) return;
-        if (value < 0f && !BackpackMedicalRestoration.InScope && s.Key == "BP06-2" && __instance.Player.IsSprintEnabled && s.Bag.GetAllItems().Where(i => Native.Component<FoodDrinkComponent>(i) is not null && i.Template.ParentId != "5448e8d64bdc2dce718b4568").Select(i => i.StringTemplateId).Distinct().Count() >= 2) value *= .4f;
+        if (value < 0f && !BackpackMedicalRestoration.InScope && s.Key == "BP06-2" && __instance.Player.IsSprintEnabled && InventoryPredicates.HasFoodVariety(s.Bag)) value *= .4f;
     }
 }
 [HarmonyPatch(typeof(ActiveHealthController), nameof(ActiveHealthController.ChangeHydration))]
@@ -271,7 +290,8 @@ internal static class BackpackIncomingDamagePatch
 [HarmonyPatch(typeof(Weapon), "get_ErgonomicsDelta")]
 internal static class BackpackErgonomicsPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result)
+    private static void Postfix(Weapon __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref float __result)
     { var s = BackpackRuntime.Get(BackpackNative.WeaponOwner(__instance)); var factor = BackpackNative.ErgonomicsFactor(s); if (factor != 1f) __result = (__result + 1f) * factor - 1f; }
 }
 

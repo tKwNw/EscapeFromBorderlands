@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
 using HarmonyLib;
@@ -56,11 +57,16 @@ internal static class EarpieceFirearmSwitchPatch
         var transition = EarpieceSwitching.Take(BackpackRuntime.Actor(__instance), __instance.Item);
         if (transition is null) return;
         var original = animationSpeed; var completed = callback;
+        var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
+        var generation = PlayerRefresh.Generation;
         animationSpeed *= transition.Speed;
         callback = () =>
         {
-            if (transition.Speed != 1f) __instance.FirearmsAnimator.SetAnimationSpeed(original);
-            if (EarpieceRuntime.Get(transition.State.Player) == transition.State) transition.State.Effect.Switched(transition.Melee, true);
+            if (PlayerRefresh.IsCurrentSession(world, generation))
+            {
+                if (transition.Speed != 1f) __instance.FirearmsAnimator.SetAnimationSpeed(original);
+                if (EarpieceRuntime.Get(transition.State.Player) == transition.State) transition.State.Effect.Switched(transition.Melee, true);
+            }
             completed?.Invoke();
         };
     }

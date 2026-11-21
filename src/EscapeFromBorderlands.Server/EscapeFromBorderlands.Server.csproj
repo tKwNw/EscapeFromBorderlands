@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <Version>0.40.7</Version>
+    <Version>0.41.1</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <InformationalVersion>$(Version)</InformationalVersion>

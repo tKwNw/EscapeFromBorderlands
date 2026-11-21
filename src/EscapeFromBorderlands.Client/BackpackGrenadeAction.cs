@@ -24,6 +24,8 @@ internal static class BackpackGrenadeAction
     private static bool Disabled;
     private sealed class FreeThrow
     {
+        internal GameWorld World = null!;
+        internal int Generation;
         internal Player Player = null!;
         internal BackpackRuntime.State State = null!;
         internal ThrowWeap Item = null!;
@@ -35,6 +37,9 @@ internal static class BackpackGrenadeAction
         internal bool Released;
     }
     private static readonly Dictionary<string, FreeThrow> Throws = new(StringComparer.Ordinal);
+    private static bool Live(FreeThrow entry) => PlayerRefresh.IsCurrentSession(entry.World, entry.Generation) &&
+        Throws.TryGetValue(entry.Item.Id, out var current) && ReferenceEquals(current, entry) &&
+        PlayerRefresh.CanObserve(entry.Player) && PlayerRefresh.IsRegistered(entry.World, entry.Player);
     internal static bool IsTemporary(Item? item) => item is not null && Throws.ContainsKey(item.Id);
     internal static void Reset() { AssetLoad = null; World = null; Pending = false; PendingUntil = RetryAfter = 0f; Disabled = false; Throws.Clear(); }
     internal static void Preload(GameWorld world)
@@ -70,9 +75,11 @@ internal static class BackpackGrenadeAction
     }
     private static IEnumerator ThrowReady(GameWorld world, BackpackRuntime.State state)
     {
+        var generation = PlayerRefresh.Generation;
         var p = state.Player;
         var deadline = Time.time + 10f;
-        while (AssetLoad?.IsCompleted != true && Time.time < deadline && Singleton<GameWorld>.Instance == world) yield return null;
+        while (AssetLoad?.IsCompleted != true && Time.time < deadline && PlayerRefresh.IsCurrentSession(world, generation)) yield return null;
+        if (!PlayerRefresh.IsCurrentSession(world, generation)) yield break;
         if (Singleton<GameWorld>.Instance != world || p.HealthController?.IsAlive != true || AssetLoad?.Status != TaskStatus.RanToCompletion || BackpackRuntime.Get(p)?.Bag.Id != state.Bag.Id)
         { Pending = false; if (AssetLoad?.IsCompleted != true) Disabled = true; yield break; }
         string? id = null;
@@ -80,7 +87,7 @@ internal static class BackpackGrenadeAction
         {
             var item = (ThrowWeap)Singleton<ItemFactory>.Instance.CreateItem(Guid.NewGuid().ToString("N").Substring(0, 24), Rgn, null);
             id = item.Id;
-            var entry = new FreeThrow { Player = p, State = state, Item = item,
+            var entry = new FreeThrow { World = world, Generation = generation, Player = p, State = state, Item = item,
                 PreviousItem = p.HandsController?.Item, Deadline = PendingUntil };
             Throws[id] = entry;
             // Native quick-use hides the firearm, plays the overhand throw and
@@ -88,6 +95,7 @@ internal static class BackpackGrenadeAction
             // The temporary grenade never occupies or removes an inventory item.
             p.SetInHandsForQuickUse(item, result =>
             {
+                if (!Live(entry)) return;
                 if (result.Failed || result.Value is not Player.QuickGrenadeThrowHandsController)
                 { Fail(entry, $"Fireball quick throw could not start: {result.Error}"); return; }
                 entry.Ready = true;
@@ -107,7 +115,7 @@ internal static class BackpackGrenadeAction
         // Release is not completion: keep the temporary grenade registered until
         // the normal hand controller is back, including after the bag is removed.
         // Maintain also runs outside this coroutine to recover a missing finish event.
-        while (id is not null && Throws.ContainsKey(id) && Singleton<GameWorld>.Instance == world)
+        while (id is not null && Throws.ContainsKey(id) && PlayerRefresh.IsCurrentSession(world, generation))
         { Maintain(world); yield return null; }
     }
     internal static void Maintain(GameWorld? world)
@@ -160,6 +168,7 @@ internal static class BackpackGrenadeAction
     }
     private static void Restore(FreeThrow entry)
     {
+        if (!Live(entry)) return;
         var p = entry.Player;
         if (entry.Restoring || p.HealthController?.IsAlive != true || p.HandsController?.Item?.Id != entry.Item.Id) return;
         entry.Restoring = true;
@@ -172,10 +181,11 @@ internal static class BackpackGrenadeAction
         if (entry.PreviousItem?.CurrentAddress is not null)
             p.SetInHands(entry.PreviousItem, result =>
             {
+                if (!Live(entry)) return;
                 ClearActivity(entry);
                 if (result.Failed) { entry.Restoring = false; Plugin.LogSource.LogWarning($"Fireball could not restore the previous item: {result.Error}"); }
             });
-        else p.SetEmptyHands(result => { ClearActivity(entry); if (result.Failed) entry.Restoring = false; });
+        else p.SetEmptyHands(result => { if (!Live(entry)) return; ClearActivity(entry); if (result.Failed) entry.Restoring = false; });
         }
         catch (Exception e)
         {
@@ -223,10 +233,15 @@ internal static class BackpackGrenadeAction
             var grenade = controller.CreateAndRegisterGrenade(position, rotation, force, prewarm);
             entry.State.Record.Cooldown(entry.State.Key, 300f);
             entry.Player.Physical.OnThrow(lowThrow);
-            if (Native.Get(controller, "ThrowingParts") is Transform[] parts)
+            if (GrenadeControllerAccess.Parts(controller) is Transform[] parts)
                 foreach (var part in parts) if (part != null) part.gameObject.SetActive(false);
             if (Singleton<GlobalEventDispatcher>.Instantiated)
-                Native.Call(Singleton<GlobalEventDispatcher>.Instance, "ThrowGrenade", grenade, position + Vector3.up, force, entry.Player.IsAI ? .5f : .6f);
+            {
+                var dispatcher = Singleton<GlobalEventDispatcher>.Instance;
+                if (dispatcher.GetType() == typeof(GlobalEventDispatcher))
+                    dispatcher.ThrowGrenade(grenade, position + Vector3.up, force, entry.Player.IsAI ? .5f : .6f);
+                else Native.Call(dispatcher, "ThrowGrenade", grenade, position + Vector3.up, force, entry.Player.IsAI ? .5f : .6f);
+            }
         }
         catch (Exception e) { RetryAfter = Time.time + 5f; Plugin.LogSource.LogError($"Fireball quick throw failed: {e.Message}"); }
         finally { Pending = false; }

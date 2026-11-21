@@ -19,7 +19,7 @@ internal static class BackpackEffectStatus
         {
             case "BP02-1": active = p.MovementContext.IsSprintEnabled; break;
             case "BP05-2": active = p.ActiveHealthController.Hydration.Current <= 0f; break;
-            case "BP06-2": active = s.Bag.GetAllItems().Where(i => Native.Component<FoodDrinkComponent>(i) is not null && i.Template.ParentId != "5448e8d64bdc2dce718b4568").Select(i => i.StringTemplateId).Distinct().Count() >= 2; break;
+            case "BP06-2": active = InventoryPredicates.HasFoodVariety(s.Bag); break;
             case "BP07-3": active = BackpackRuntime.BlackLeg(p); break;
             case "BP08-3": active = new[] { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon }.All(slot => p.InventoryController.Inventory.Equipment.GetSlot(slot).ContainedItem is null); break;
             case "BP11-2": active = p.MovementContext.IsInPronePose && !moving; break;

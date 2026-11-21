@@ -9,7 +9,7 @@ internal static class BackpackUseAnimationPatch
 {
     private static void Prefix(FirearmsAnimator __instance, object[] __args)
     {
-        var p = Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => ReferenceEquals(p.HandsAnimator, __instance));
+        var p = ActorLookup.Find(__instance, ActorMember.HandsAnimator);
         if (p is null) return;
         var controller = ServiceWindow.MedicalController(p, __instance);
         EarpieceMedicalAnimation.Record(__instance, p, System.Convert.ToSingle(__args[0]));

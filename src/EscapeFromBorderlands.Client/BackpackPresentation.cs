@@ -30,8 +30,10 @@ internal static class BackpackPresentation
     }
     internal static bool FullCompartments(Item bag)
     {
-        var grids = Native.Items(Native.Get(bag, "Grids")).ToArray();
-        return grids.Length == 6 && grids.All(g => Native.Items(Native.Get(g, "Items")).Any());
+        var count = 0;
+        foreach (var grid in Native.Items(Native.Get(bag, "Grids")))
+            if (++count > 6 || !Native.Items(Native.Get(grid, "Items")).Any()) return false;
+        return count == 6;
     }
 }
 [HarmonyPatch(typeof(BreathEffector), nameof(BreathEffector.Process))]
@@ -63,7 +65,7 @@ internal static class BackpackAimPunchPatch
 {
     private static void Prefix(RootMotion.FinalIK.HitReaction __instance, ref Vector3 force)
     {
-        var p = Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => ReferenceEquals(p.HitReaction, __instance));
+        var p = ActorLookup.Find(__instance, ActorMember.HitReaction);
         if (BackpackRuntime.Is(p, "BP09-3")) force *= .5f;
     }
 }

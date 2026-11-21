@@ -16,6 +16,7 @@ internal static partial class LegendaryRuntime
     private static readonly HashSet<WeaponState> ActiveVolleyStates = new();
     private static readonly List<WeaponState> VolleyStateBuffer = new();
     private static readonly List<KeyValuePair<int, VolleyOutcome>> PendingVolleyBuffer = new();
+    private static readonly StableHistoryPruner<VolleyOutcome> HistoryPruner = new();
     private static readonly Dictionary<Shot, EffectApplication> ShotApplications = new();
     private static readonly Dictionary<(string Weapon, int FireIndex), EffectApplication> ShotApplicationsByKey = new();
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, string> HeldWeaponsByPlayer = new(StringComparer.Ordinal);
@@ -28,6 +29,8 @@ internal static partial class LegendaryRuntime
         public Ammo Ammo = null!;
         public EffectApplication Application = null!;
         public ShotScope? Previous;
+        internal RarityResolver.ShotRoll? Roll;
+        internal string? RollItemId;
     }
 
     public static ShotScope? BeginShot(Weapon weapon, Ammo ammo, string profileId, int? remainingBeforeShot = null)
@@ -43,6 +46,15 @@ internal static partial class LegendaryRuntime
     public static void EndShot(ShotScope? scope)
     {
         if (scope is not null && ReferenceEquals(_shotScope, scope)) _shotScope = scope.Previous;
+    }
+
+    internal static RarityResolver.ShotRoll? ResolveShotRoll(Item weapon)
+    {
+        var scope = _shotScope;
+        if (scope is null || !ReferenceEquals(scope.Weapon, weapon)) return RarityResolver.Resolve(weapon);
+        if (scope.Roll is { } roll && scope.RollItemId == weapon.Id && roll.Definition.TemplateId == weapon.StringTemplateId) return roll;
+        scope.RollItemId = weapon.Id;
+        return scope.Roll = RarityResolver.Resolve(weapon);
     }
 
     public static bool ReplaceNaturalPellets(Ammo ammo) =>
@@ -261,26 +273,34 @@ internal static partial class LegendaryRuntime
             if (volley.Generation != state.ReloadGeneration) return;
             if (shot.HittedBallisticCollider is BodyPartCollider body)
             {
+                var changed = !volley.AnyBodyHit || volley.ResolvedMiss;
                 volley.AnyBodyHit = true;
                 volley.ResolvedMiss = false;
                 if (volley.TargetId.Length == 0)
                 {
+                    changed |= volley.TargetId != (body.PlayerProfileID ?? string.Empty) || volley.BodyPart != BodyPartText.Of(body.BodyPartType);
                     volley.TargetId = body.PlayerProfileID ?? string.Empty;
-                    volley.BodyPart = body.BodyPartType.ToString();
+                    volley.BodyPart = BodyPartText.Of(body.BodyPartType);
                 }
                 state.PreviousMiss = false;
                 state.PreviousBodyHit = true;
                 state.PreviousSurfaceImpact = false;
                 state.PreviousArmorImpact |= body is ArmorPlateCollider;
-                state.PreviousLimbHit |= IsLimb(body.BodyPartType.ToString());
+                state.PreviousLimbHit |= IsLimb(BodyPartText.Of(body.BodyPartType));
                 if (body is ArmorPlateCollider && !volley.ArmorCounted)
                 {
                     state.ArmorHits++;
                     volley.ArmorCounted = true;
                 }
-                if (TryGetApplication(shot, out var application) && application.SpecialId == "compound_interest") volley.CompoundHit = true;
-                RecalculateStreaks(state);
-                if (TryGetApplication(shot, out var targetApplication) && targetApplication.SpecialId == "wave015_debt_collector" && state.SameTargetHits >= 4) state.DebtCollectorActive = true;
+                // Already inside Sync; retain the application across these
+                // state-only streak calculations instead of two nested locks.
+                ShotApplications.TryGetValue(shot, out var application);
+                if (application?.SpecialId == "compound_interest")
+                { changed |= !volley.CompoundHit; volley.CompoundHit = true; }
+                // Sibling pellets often repeat the same outcome. Preserve all
+                // per-impact flags/damage, but do not rescan unchanged history.
+                if (changed || !state.StreaksCurrent) RecalculateStreaks(state);
+                if (application?.SpecialId == "wave015_debt_collector" && state.SameTargetHits >= 4) state.DebtCollectorActive = true;
             }
             else volley.AnySurfaceImpact |= shot.HittedBallisticCollider is not null;
             state.PreviousRicochet |= shot.BulletState == Shot.EBulletState.RicochetHit;
@@ -350,9 +370,8 @@ internal static partial class LegendaryRuntime
                     PendingVolleyBuffer.Clear();
                     if (state.PendingVolleys.Count == 0) ActiveVolleyStates.Remove(state);
                     // Keep a bounded outcome history, not references to finished bullets.
-                    if (state.Volleys.Count > 1024)
-                        foreach (var pair in state.Volleys.Where(p => p.Value.Finalized).OrderBy(p => p.Value.Sequence).Take(state.Volleys.Count - 1024).ToArray())
-                            state.Volleys.Remove(pair.Key);
+                    if (HistoryPruner.Prune(state.Volleys, 1024, static v => v.Finalized, static v => v.Sequence) != 0)
+                        state.StreaksCurrent = false;
                 }
             }
             finally { PendingVolleyBuffer.Clear(); VolleyStateBuffer.Clear(); }
@@ -505,13 +524,13 @@ internal static partial class LegendaryRuntime
 
     public static void UpdateLiveState(Player? player, Weapon? weapon)
     {
-        if (player is null) return;
+        if (!ActorCapabilities.IsHuman(player)) return;
         RarityResolver.TryGetDefinition(weapon, out var definition);
         UpdateLiveState(player, weapon, definition);
     }
     internal static void UpdateLiveState(Player? player, Weapon? weapon, VariantDefinition? definition)
     {
-        if (player is null) return;
+        if (!ActorCapabilities.IsHuman(player)) return;
         var held = player.HandsController?.Item as Weapon;
         var profileId = player.ProfileId;
         var heldDefinition = definition;
@@ -556,6 +575,15 @@ internal static partial class LegendaryRuntime
         {
             return new EffectApplicationData();
         }
+
+        // Damage-only previews cannot affect these getters. Live human polling
+        // and real cartridges still maintain their own state at their boundaries.
+        if (_shotScope?.Weapon != weapon && statsOnly && !MayChangeLiveStats(definition)) return new EffectApplicationData();
+
+        // Bots keep rolled stats and the committed cartridge application. They
+        // do not build live conditional previews between shots.
+        if (_shotScope?.Weapon != weapon && WeaponStatReadBatch.ResolveOwner(weapon)?.IsAI == true)
+            return new EffectApplicationData();
 
         lock (Sync)
         {
@@ -1424,8 +1452,17 @@ internal static partial class LegendaryRuntime
 
     private static void UpdateContinuousState(WeaponState state, Player? player, Weapon weapon, VariantDefinition definition, float now)
     {
+        if (player?.IsAI == true) return;
         var hands = player?.HandsController;
-        var aiming = hands?.IsAiming ?? false;
+        var ordinary = definition.EffectKind == "ordinary";
+        var meme = definition.EffectKind == "meme";
+        var full = definition.CustomEffect is not null || !string.IsNullOrEmpty(definition.SpecialId) || !ordinary && !meme;
+        var trigger = definition.TriggerIndex;
+        var trackAim = full || ordinary && trigger is 14 or 15;
+        var trackStill = trackAim || ordinary && trigger == 19 || meme && trigger == 7;
+        var aiming = trackAim && (hands?.IsAiming ?? false);
+        if (trackAim)
+        {
         if (aiming && !state.LastAiming) state.AimStartTime = now;
         if (!aiming && state.LastAiming)
         {
@@ -1433,7 +1470,10 @@ internal static partial class LegendaryRuntime
             state.AdsEffectConsumed = false;
         }
         state.LastAiming = aiming;
+        }
 
+        if (trackStill)
+        {
         var speed = player?.Velocity.magnitude ?? 0f;
         if (speed <= 0.1f)
         {
@@ -1446,19 +1486,28 @@ internal static partial class LegendaryRuntime
             state.AdsEffectConsumed = false;
             if (aiming) state.AimStartTime = now;
         }
+        }
 
+        if (full)
+        {
         var moving = (player?.InputDirection.sqrMagnitude ?? 0f) > 0.0001f;
         if (!moving && state.LastMovingInput && definition.SpecialId is "wave015_running_start" or "wave015_walking_fire")
             state.TriggerHeldShots = 0;
         state.LastMovingInput = moving;
+        }
 
+        if (full || ordinary && trigger == 23)
+        {
         var pose = player?.Pose;
         if (state.LastPose.HasValue && state.LastPose != pose)
         {
             state.StanceChanged = true;
         }
         state.LastPose = pose;
+        }
 
+        if (full || meme && trigger == 6)
+        {
         var fireMode = LegendaryFireModePatch.LogicalFireMode(weapon);
         if (state.LastFireMode.HasValue && state.LastFireMode.Value != fireMode)
         {
@@ -1466,6 +1515,7 @@ internal static partial class LegendaryRuntime
             if (state.SelectorChanges >= 2) state.SelectorBuffActive = true;
         }
         state.LastFireMode = fireMode;
+        }
 
         var triggerPressed = hands is Player.FirearmController controller && LegendaryFireModePatch.IsHeld(controller);
         if (!triggerPressed && state.LastTriggerPressed)
@@ -1513,6 +1563,7 @@ internal static partial class LegendaryRuntime
     {
         if (!state.Volleys.TryGetValue(fireIndex, out var volley))
         {
+            state.StreaksCurrent = false;
             volley = new VolleyOutcome { Sequence = state.TotalShots, Generation = state.ReloadGeneration, CreatedTime = Time.time };
             state.Volleys[fireIndex] = volley;
             state.PendingVolleys[fireIndex] = volley;
@@ -1530,6 +1581,7 @@ internal static partial class LegendaryRuntime
 
     private static void RecalculateStreaks(WeaponState state)
     {
+        state.StreaksCurrent = false;
         state.ConsecutiveHits = 0;
         state.CompoundInterestStacks = 0;
         ResetTargetStreaks(state);
@@ -1570,6 +1622,7 @@ internal static partial class LegendaryRuntime
             }
         }
         finally { OrderedOutcomes.Clear(); }
+        state.StreaksCurrent = true;
     }
 
     private static void ResetTargetStreaks(WeaponState state)
@@ -1618,6 +1671,7 @@ internal static partial class LegendaryRuntime
 
     private static void CompleteReloadBoundary(WeaponState state, string magazineId, int remaining, bool emergency)
     {
+        state.StreaksCurrent = false;
         ClearMagazinePersistentEffects(state);
         state.HasReloadHistory = true;
         state.EmergencyReloadActive = emergency;
@@ -1683,6 +1737,7 @@ internal static partial class LegendaryRuntime
 
     private sealed class WeaponState
     {
+        internal bool StreaksCurrent;
         public WeaponStateData Data = new();
         public Dictionary<int, VolleyOutcome> Volleys { get; } = new();
         public Dictionary<int, VolleyOutcome> PendingVolleys { get; } = new();
@@ -1856,7 +1911,9 @@ internal static partial class LegendaryRuntime
             IsMovingInput = full && (player?.InputDirection.sqrMagnitude ?? 0f) > 0.0001f;
             IsTriggerPressed = full && hands is Player.FirearmController controller && LegendaryFireModePatch.IsHeld(controller);
             IsFolded = heldWeapon?.Folded == true;
-            Stamina = full || ordinary && trigger is 21 or 22 ? player?.Physical?.Stamina?.NormalValue ?? 1f : 1f;
+            // Bot weapon conditions use a stable full-stamina value; never
+            // poll AI stamina to decide a non-stamina Legendary bonus.
+            Stamina = ActorCapabilities.UsesStamina(player) && (full || ordinary && trigger is 21 or 22) ? player.Physical?.Stamina?.NormalValue ?? 1f : 1f;
             Suppressed = suppressed;
             Subsonic = subsonic;
             AboveCaliberAverageVelocity = aboveAverage;

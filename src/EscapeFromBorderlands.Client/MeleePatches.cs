@@ -133,6 +133,7 @@ internal static class MeleeAnimation
 [HarmonyPatch(typeof(Player.KnifeController), nameof(Player.KnifeController.Spawn))]
 internal static class LegendaryMeleeDrawPatch
 {
+    private static void Postfix(Player.KnifeController __instance) => MeleeRuntime.Drawn(__instance);
     private static void Prefix(Player.KnifeController __instance, ref float animationSpeed)
     {
         MeleeRuntime.Forget(MeleeRuntime.Owner(__instance));
@@ -186,19 +187,19 @@ internal static class LegendaryMeleeDestroyPatch
 internal static class LegendaryMeleeMovementPatch
 {
     [ThreadStatic] private static int _depth;
-    internal sealed class Snapshot
+    internal struct Snapshot
     {
         public int Depth;
         public float Limit;
         public bool Changed;
     }
-    private static void Prefix(MovementContext __instance, ref Vector3 motion, out Snapshot __state)
+    private static void Prefix(MovementContext __instance, Player? ____player, ref Vector3 motion, out Snapshot __state)
     {
         __state = new Snapshot { Depth = _depth };
         _depth++;
-        var player = MeleeRuntime.Owner(__instance);
+        var player = ____player;
         if (__state.Depth != 0 || player is null || player.InputDirection.sqrMagnitude <= 0.0001f && !__instance.IsSprintEnabled) return;
-        var factor = AdvancedMeleeRuntime.Movement(player) * BackpackRuntime.MotionFactor(player) * ChestRigRuntime.Movement(player) * GrenadeBuffs.Movement(player) * EarpieceRuntime.Movement(player) * Headwear.Factor(player, HatStat.Move);
+        var factor = LegendaryMovementFactors.Read(player);
         if (factor == 1f) return;
         // One scope composes melee and backpack movement. Scale the resolved
         // motion, including sprint's +1 term, instead of patching an inlined getter.
@@ -226,7 +227,8 @@ internal static class LegendaryMeleeSprintCostPatch
         public Physical.Consumption Consumption = null!;
         public Compute<float> Original = null!;
     }
-    private static void Prefix(Stamina __instance, out Snapshot? __state)
+    private static void Prefix(Stamina __instance, out Snapshot? __state) => Begin(__instance, out __state);
+    internal static void Begin(Stamina __instance, out Snapshot? __state)
     {
         __state = null;
         var factor = MeleeRuntime.Effect(MeleeRuntime.Owner(__instance))?.SprintStaminaMultiplier ?? 1f;
@@ -236,9 +238,12 @@ internal static class LegendaryMeleeSprintCostPatch
         var original = sprint.Delta;
         __state = new Snapshot { Consumption = sprint, Original = original };
         // Change only sprint consumption in this Leg Stamina update. Hands, oxygen, restoration, and other consumption types retain native values.
-        sprint.Delta = new Compute<float>(() => original.Value * factor);
+        sprint.Delta = Scale(original, factor);
     }
-    private static Exception? Finalizer(Snapshot? __state, Exception? __exception)
+    // Allocate captured providers only for active effects; neutral/bot entries remain allocation-free.
+    private static Compute<float> Scale(Compute<float> original, float factor) => new(() => original.Value * factor);
+    private static Exception? Finalizer(Snapshot? __state, Exception? __exception) => End(__state, __exception);
+    internal static Exception? End(Snapshot? __state, Exception? __exception)
     { if (__state != null) __state.Consumption.Delta = __state.Original; return __exception; }
 }
 
@@ -267,7 +272,7 @@ internal static class LegendaryMeleeFallPatch
 internal static class LegendaryMeleeMovementAudioPatch
 {
     private static void Postfix(Player __instance, ref float __result) =>
-        __result *= MeleeRuntime.Effect(__instance)?.NoiseMultiplier ?? 1f;
+        __result *= ActorCapabilities.IsHuman(__instance) ? MeleeRuntime.Effect(__instance)?.NoiseMultiplier ?? 1f : 1f;
 }
 
 [HarmonyPatch(typeof(GlobalEventDispatcher), nameof(GlobalEventDispatcher.PlaySound))]
@@ -275,7 +280,9 @@ internal static class LegendaryMeleeAiMovementNoisePatch
 {
     private static void Prefix(IPlayer person, ref float power, AISoundType type)
     {
-        if (type == AISoundType.step) power *= MeleeRuntime.Effect(MeleeRuntime.Actor(person))?.NoiseMultiplier ?? 1f;
+        if (type != AISoundType.step) return;
+        var player = MeleeRuntime.Actor(person);
+        if (ActorCapabilities.IsHuman(player)) power *= MeleeRuntime.Effect(player)?.NoiseMultiplier ?? 1f;
     }
 }
 

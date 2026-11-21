@@ -47,6 +47,7 @@ internal static class ChestRigInventory
     }
     internal static void Maintain(ChestRigRuntime.State s,float dt)
     {
+        if(!ActorCapabilities.IsHuman(s.Player))return;
         if(s.Key is not("TR17-1" or "TR05-2"))return;
         var id=s.Player.ProfileId;
         var sprinting=s.Player.MovementContext.IsSprintEnabled&&s.Player.InputDirection.sqrMagnitude>.0001f;
@@ -58,6 +59,9 @@ internal static class ChestRigInventory
     }
     private static async Task FillAll(ChestRigRuntime.State s,int generation)
     {
+        var world=PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
+        var session=PlayerRefresh.Generation;
+        if(!PlayerRefresh.IsCurrentSession(world,session))return;
         var id=s.Player.ProfileId;if(!Busy.Add(id))return;
         try
         {
@@ -84,6 +88,7 @@ internal static class ChestRigInventory
                     var op=mag.ApplyWithoutRestrictions(s.Player.InventoryController,round,1,simulate:true);
                     if(op.Failed)continue;
                     var result=await s.Player.InventoryController.TryRunNetworkTransaction(op);
+                    if(generation!=Generation||!PlayerRefresh.IsCurrentSession(world,session)||ChestRigRuntime.Get(s.Player)!=s)return;
                     view = null; carried = null; // Re-read before the next magazine after any real transaction.
                     if(!result.Failed){EffectStatusModel.Notify(s.Player.ProfileId,"rig:"+s.Key,s.Roll.Definition.ShortName,Time.time,"automatic magazine packing");break;}
                 }
@@ -94,12 +99,14 @@ internal static class ChestRigInventory
     }
     internal static void Packed(InventoryController inventory)
     {
-        var s=ChestRigRuntime.Get(BackpackRuntime.Actor(inventory));if(s?.Key!="TR15-1")return;
+        var player=BackpackRuntime.Actor(inventory);if(!ActorCapabilities.IsHuman(player))return;
+        var s=ChestRigRuntime.Get(player);if(s?.Key!="TR15-1")return;
         if(++s.Packing>=10){s.Packing=0;s.HandloadShots=5;}
     }
     internal static float LoadTime(InventoryController inventory,float seconds,bool unload)
     {
-        var s=ChestRigRuntime.Get(BackpackRuntime.Actor(inventory));if(s is null)return seconds;
+        var player=BackpackRuntime.Actor(inventory);if(!ActorCapabilities.IsHuman(player))return seconds;
+        var s=ChestRigRuntime.Get(player);if(s is null)return seconds;
         var speed=unload?1f:s.Roll.ChestRig.Packing;
         if(unload&&s.Key=="TR05-1")speed*=3f;
         if(s.Key=="TR04-1")speed*=1.5f;
@@ -108,6 +115,7 @@ internal static class ChestRigInventory
     }
     internal static void AutoReloadHolsteredPistol(ChestRigRuntime.State s)
     {
+        if(!ActorCapabilities.IsHuman(s.Player))return;
         var pistol=s.Player.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Holster).ContainedItem as Weapon;
         if(pistol is null)return;
         if(s.Player.HandsController?.Item?.Id==pistol.Id){LastHeld[pistol.Id]=Time.time;return;}
@@ -117,6 +125,7 @@ internal static class ChestRigInventory
     }
     internal static void Acquired(Player p,Item source,Item received,bool external)
     {
+        if(!ActorCapabilities.IsHuman(p))return;
         var s=ChestRigRuntime.Get(p);
         if(s?.Key=="TR22-1"&&external&&BackpackNative.Barter(source)&&Carried(s).Any(i=>i.Id==received.Id)&&s.Ready)
         {s.Arm("loot",8f);s.Cooldown(30f);}

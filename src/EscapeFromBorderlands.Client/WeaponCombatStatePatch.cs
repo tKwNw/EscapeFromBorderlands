@@ -65,8 +65,9 @@ internal static class WeaponCombatState
     internal static WeaponPerformanceTrace.Route Refresh(Player.FirearmController controller, Weapon? weapon, Player? player,
         VariantDefinition? definition, ref WeaponPerformanceTrace trace, bool forShot = false, bool livePoll = false)
     {
+        if (livePoll && !ActorCapabilities.IsHuman(player)) return WeaponPerformanceTrace.Route.Neutral;
         if (weapon is null) return WeaponPerformanceTrace.Route.Neutral;
-        var active = definition is not null || HasGearEffects(player ?? BackpackRuntime.Actor(controller));
+        var active = definition is not null || HasGearEffects(player ?? BackpackRuntime.Actor(controller), livePoll);
         var route = definition is not null ? WeaponPerformanceTrace.Route.Legendary :
             active ? WeaponPerformanceTrace.Route.Gear : WeaponPerformanceTrace.Route.Neutral;
         Inputs.TryGetValue(controller, out var previous);
@@ -82,7 +83,21 @@ internal static class WeaponCombatState
                 var statStart = trace.Stamp();
                 using (var attachments = new WeaponAttachmentReadBatch.Scope(weapon, active && livePoll && !forShot))
                 {
-                    inputs = (weapon.RecoilDelta, weapon.ErgonomicsDelta, weapon.CenterOfImpactDelta);
+                    // Only the already verified compatible poll shares these
+                    // live equipment entries; real shots/foreign getters retain
+                    // their usual boundaries. Never retain factors across polls.
+                    using var gear = WeaponAttachmentReadBatch.IsPolling(weapon) && player is not null
+                        ? new EquipmentPresence.ReadScope(player) : default;
+                    var readStart = trace.Stamp();
+                    var recoil = weapon.RecoilDelta;
+                    trace.StatPart(0, readStart);
+                    readStart = trace.Stamp();
+                    var ergonomics = weapon.ErgonomicsDelta;
+                    trace.StatPart(1, readStart);
+                    readStart = trace.Stamp();
+                    var accuracy = weapon.CenterOfImpactDelta;
+                    trace.StatPart(2, readStart);
+                    inputs = (recoil, ergonomics, accuracy);
                     trace.ReadStats(statStart, attachments.Used);
                 }
                 // These controller fields are read by the native cartridge
@@ -123,11 +138,14 @@ internal static class WeaponCombatState
         return route;
     }
 
-    private static bool HasGearEffects(Player? player)
+    private static bool HasGearEffects(Player? player, bool livePoll)
     {
         if (player is null) return false;
+        if (!EquipmentPresence.Has(player, GearKind.Headwear | GearKind.Rig | GearKind.Earpiece) &&
+            !GrenadeBuffs.ChangesFirearm(player)) return false;
         var observed = PlayerRefresh.CanObserve(player);
-        return Headwear.Get(player) is not null || ChestRigRuntime.Get(player, observed) is not null || GrenadeBuffs.ChangesFirearm(player, observed) ||
+        // Explicit refreshes and cartridge boundaries retain their full path.
+        return (livePoll ? Headwear.ChangesFirearm(player) : Headwear.Get(player) is not null) || ChestRigRuntime.Get(player, observed) is not null || GrenadeBuffs.ChangesFirearm(player, observed) ||
             EarpieceRuntime.ChangesFirearm(player, observed);
     }
 
@@ -173,7 +191,7 @@ internal static class WeaponCartridgePreparationPatch
         __state = LegendaryRuntime.BeginShot(weapon, ammo, player?.ProfileId ?? string.Empty, remaining);
         // Gear can change dispersion on an otherwise vanilla firearm as well.
         WeaponCombatState.Refresh(__instance, __instance.Item, player, forShot: true);
-        if (__state is not null) WeaponCombatState.RefreshPreparedSingleInterval(__instance, weapon);
+        WeaponCombatState.RefreshPreparedSingleInterval(__instance, weapon);
     }
 
     private static Exception? Finalizer(LegendaryRuntime.ShotScope? __state, Exception? __exception)
@@ -207,9 +225,16 @@ internal static class WeaponLiveCombatStatePatch
 {
     private static void Prefix(Player.FirearmController __instance, Player? ____player, out LegendaryFireModePatch.ModeScope? __state)
     {
-        var trace = WeaponPerformanceTrace.Begin();
         var weapon = __instance.Item;
         RarityResolver.TryGetDefinition(weapon, out var definition);
+        if (!ActorCapabilities.IsHuman(____player))
+        {
+            // Bot live polling is excluded; retain only its carrier fire-mode
+            // scope. Actual cartridge/shot refreshes still use their full route.
+            __state = weapon is not null && definition is not null ? LegendaryFireModePatch.BeginCarrier(weapon, definition) : null;
+            return;
+        }
+        var trace = WeaponPerformanceTrace.Begin();
         LegendaryRuntime.UpdateLiveState(____player, weapon, definition);
         trace.Observe();
         __state = weapon is not null && definition is not null ? LegendaryFireModePatch.BeginCarrier(weapon, definition) : null;

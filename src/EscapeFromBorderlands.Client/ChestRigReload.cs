@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using EFT;
+using Comfort.Common;
 using EFT.InventoryLogic;
 using UnityEngine;
 
@@ -12,6 +13,9 @@ internal static class ChestRigReload
 {
     internal static async void SwapHolstered(ChestRigRuntime.State s,Weapon pistol)
     {
+        var world=PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
+        var generation=PlayerRefresh.Generation;
+        if(!PlayerRefresh.IsCurrentSession(world,generation))return;
         if(!ChestRigInventory.BeginSwap(pistol.Id))return;
         try
         {
@@ -28,14 +32,15 @@ internal static class ChestRigReload
             }
             foreach (var next in candidates.Where(m => !installed.Contains(m) && !installedIds.Contains(m.Id)).OrderByDescending(m => m.Count))
             {
-                if(ChestRigRuntime.Get(s.Player)!=s||s.Player.HandsController?.Item?.Id==pistol.Id)return;
+                if(!PlayerRefresh.IsCurrentSession(world,generation)||ChestRigRuntime.Get(s.Player)!=s||s.Player.HandsController?.Item?.Id==pistol.Id)return;
                 var operation=ItemManipulator.Swap(current,next.CurrentAddress!,next,current.CurrentAddress!,s.Player.InventoryController,simulate:true);
                 if(operation.Failed)continue;
                 var result=await s.Player.InventoryController.TryRunNetworkTransaction(operation);
+                if(!PlayerRefresh.IsCurrentSession(world,generation)||ChestRigRuntime.Get(s.Player)!=s)return;
                 if(!result.Failed){s.Cooldown(30f);return;}
             }
         }
         catch(Exception e){Plugin.LogSource.LogWarning("Clean Hands magazine exchange was rejected: "+e.Message);}
-        finally{ChestRigInventory.EndSwap(pistol.Id);}
+        finally{if(generation==PlayerRefresh.Generation)ChestRigInventory.EndSwap(pistol.Id);}
     }
 }

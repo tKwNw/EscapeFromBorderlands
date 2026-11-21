@@ -131,6 +131,8 @@ internal static class LegendaryGrenadeFlashPatch
         var world = Singleton<GameWorld>.Instance;
         var immuneOwner = payload.Key == "GR47" ? payload.Owner : null;
         var radius = payload.Roll.GrenadeFlashRadiusMultiplier;
+        DiagnosticPathTrace trace = default;
+        DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.GrenadeFlash);
         foreach (var bridge in players)
         {
             var cache = playerEmitterCaches[bridge];
@@ -143,26 +145,35 @@ internal static class LegendaryGrenadeFlashPatch
             var target = world?.GetAlivePlayerByProfileID(profile);
             if (target == null) target = GrenadeBuffs.Find(world, profile);
             if (target?.ActiveHealthController is not { } health || !health.IsAlive) continue;
-            if (Physics.Linecast(emitterPosition, target.PlayerBones.Head.position, (int)LayersMaskController.GrenadeObstaclesColliderMask)) continue;
             var facing = Mathf.Clamp01(Vector3.Dot(cache.DirectionToEmitter, player.LookDirection));
             var sound = Mathf.InverseLerp(blindnessSettings.y / radius, blindnessSettings.x / radius, cache.Distance);
             var visual = Mathf.InverseLerp(blindnessSettings.y, blindnessSettings.x, cache.Distance) * facing;
+            var contusionDuration = cache.TryToApplyContusion && contusionSettings != Vector3.zero
+                ? Mathf.InverseLerp(contusionSettings.y, contusionSettings.x, cache.Distance) * contusionSettings.z : 0f;
+            var activeBot = bridge.IsAI && target.AIData?.BotOwner?.BotState == EBotState.Active;
+            if (!GrenadeFlashWork.HasEffect(visual, sound, contusionDuration, cache.TryToApplyStun, cache.TryToApplyBurnEyes, activeBot)) continue;
+            trace.Phase(0);
+            var blocked = Physics.Linecast(emitterPosition, target.PlayerBones.Head.position, (int)LayersMaskController.GrenadeObstaclesColliderMask);
+            trace.Phase(1);
+            if (blocked) continue;
             if (bridge.IsAI && target.AIData?.BotOwner is { } bot && bot.BotState == EBotState.Active)
             {
                 var duration = blindnessSettings.z * bot.Settings.FileSettings.Grenade.FLASH_GRENADE_TIME_COEF;
                 if (sound > 0f) bot.FlashGrenade.AddSoundEffect(duration * sound, emitterPosition);
                 if (visual > 0f) bot.FlashGrenade.AddBlindEffect(duration * visual, emitterPosition);
             }
+            trace.Phase(2);
             if (visual > 0f)
             {
                 if (cache.TryToApplyStun) health.DoStun(blindnessSettings.z, visual);
                 if (cache.TryToApplyBurnEyes) health.DoBurnEyes(emitterPosition, Mathf.InverseLerp(blindnessSettings.y, 0f, cache.Distance), visual, blindnessSettings.z);
             }
+            trace.Phase(3);
             if (cache.TryToApplyContusion && contusionSettings != Vector3.zero)
             {
-                var duration = Mathf.InverseLerp(contusionSettings.y, contusionSettings.x, cache.Distance) * contusionSettings.z;
-                if (duration > 2f) health.DoContusion(duration, 1f);
+                if (contusionDuration > 2f) health.DoContusion(contusionDuration, 1f);
             }
+            trace.Phase(4);
         }
         return false;
     }

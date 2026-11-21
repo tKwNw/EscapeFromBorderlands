@@ -11,8 +11,17 @@ using UnityEngine;
 namespace EscapeFromBorderlands.Client;
 internal static class BackpackSearch
 {
-    internal static Player? Owner(EFT.InventoryLogic.Operations.ActiveSearchContentOperation operation) => Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>()
-        .FirstOrDefault(p => p.ProfileId == operation._profile.Id);
+    internal static Player? Owner(EFT.InventoryLogic.Operations.ActiveSearchContentOperation operation)
+    {
+        var world = Singleton<GameWorld>.Instance;
+        if (world is null) return null;
+        var id = operation._profile.Id;
+        // Preserve registered-player order and dead-owner fallback, without
+        // allocating an OfType iterator, predicate and captured operation.
+        foreach (var candidate in world.RegisteredPlayers)
+            if (candidate is Player player && player.ProfileId == id) return player;
+        return null;
+    }
     internal static bool Corpse(Item item)
     {
         return CorpseRoot(item) is not null;
@@ -23,26 +32,32 @@ internal static class BackpackSearch
         var rigFactor = (ChestRigRuntime.Is(p,"TR19-2") ? 1f/1.75f : 1f) / Headwear.Factor(p, HatStat.Search);
         var s = BackpackRuntime.Get(p); if (s is null) return rigFactor;
         var time = s.Roll.Backpack.SearchTime;
-        if (s.Key == "BP08-3" && Corpse(searched) && new[] { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon }
-            .All(slot => p.InventoryController.Inventory.Equipment.GetSlot(slot).ContainedItem is null)) time /= 1.7f;
-        if (s.Key == "BP24-2" && searched.Template.ParentId == "5448e53e4bdc2d60728b4567") time /= 1f + .1f * Math.Min(6, s.Record.Categories.Count);
+        if (s.Key == "BP08-3" && Corpse(searched) &&
+            p.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.FirstPrimaryWeapon).ContainedItem is null &&
+            p.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.SecondPrimaryWeapon).ContainedItem is null) time /= 1.7f;
+        if (s.Key == "BP24-2") time /= 1f + .1f * Math.Min(6, s.Record.Categories.Count);
         if (s.Key == "BP38-1" && Corpse(searched)) time *= .5f;
         return time*rigFactor;
     }
     internal static async Task Search(EFT.InventoryLogic.Operations.ActiveSearchContentOperation operation, Player p)
     {
+        var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
+        var generation = PlayerRefresh.Generation;
+        if (!PlayerRefresh.IsCurrentSession(world, generation)) return;
         if (!operation._searchController.ContainsUnknownItems(operation.Item)) return;
         while (operation.TryFindUnknownItem(out _))
         {
+            if (!PlayerRefresh.IsCurrentSession(world, generation)) return;
             var skills = operation._profile.SkillsInfo;
             var speed = 1f + skills.AttentionLootSpeedValue + (Corpse(operation.Item) ? skills.SearchBuffSpeedValue : 0f);
             var seconds = operation.Instant ? 0f : UnityEngine.Random.Range(1, 3) / speed * TimeFactor(p, operation.Item);
             await Task.Delay((int)(seconds * 1000f), operation._cancellationToken.Token);
+            if (!PlayerRefresh.IsCurrentSession(world, generation)) return;
             if (operation.Terminated) return;
             if (!operation.TryFindUnknownItem(out var item)) break;
             operation.DiscoverItem(item);
         }
-        operation._searchController.OnItemFullySearched();
+        if (PlayerRefresh.IsCurrentSession(world, generation)) operation._searchController.OnItemFullySearched();
     }
 }
 [HarmonyPatch(typeof(EFT.InventoryLogic.Operations.ActiveSearchContentOperation), "SearchContent")]

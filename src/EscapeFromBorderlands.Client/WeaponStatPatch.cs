@@ -18,7 +18,8 @@ internal static class WeaponStatMath
 [HarmonyPatch(typeof(Weapon), nameof(Weapon.RecoilDelta), MethodType.Getter)]
 internal static class WeaponRecoilDeltaPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result)
+    private static void Postfix(Weapon __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref float __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
@@ -29,7 +30,8 @@ internal static class WeaponRecoilDeltaPatch
 [HarmonyPatch(typeof(Weapon), nameof(Weapon.ErgonomicsDelta), MethodType.Getter)]
 internal static class WeaponErgonomicsDeltaPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result)
+    private static void Postfix(Weapon __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref float __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
@@ -40,7 +42,8 @@ internal static class WeaponErgonomicsDeltaPatch
 [HarmonyPatch(typeof(Weapon), nameof(Weapon.CenterOfImpactDelta), MethodType.Getter)]
 internal static class WeaponAccuracyDeltaPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result)
+    private static void Postfix(Weapon __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref float __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
@@ -51,7 +54,8 @@ internal static class WeaponAccuracyDeltaPatch
 [HarmonyPatch(typeof(Weapon), nameof(Weapon.VelocityDelta), MethodType.Getter)]
 internal static class WeaponVelocityDeltaPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result)
+    private static void Postfix(Weapon __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref float __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
@@ -63,7 +67,8 @@ internal static class WeaponVelocityDeltaPatch
 [HarmonyPatch(typeof(Weapon), nameof(Weapon.FireRate), MethodType.Getter)]
 internal static class WeaponFireRatePatch
 {
-    private static void Postfix(Weapon __instance, ref int __result)
+    private static void Postfix(Weapon __instance, ref int __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref int __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;
@@ -75,7 +80,8 @@ internal static class WeaponFireRatePatch
 [HarmonyPatch(typeof(Weapon), nameof(Weapon.SingleFireRate), MethodType.Getter)]
 internal static class WeaponSingleFireRatePatch
 {
-    private static void Postfix(Weapon __instance, ref int __result)
+    private static void Postfix(Weapon __instance, ref int __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref int __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
         if (roll is null) return;

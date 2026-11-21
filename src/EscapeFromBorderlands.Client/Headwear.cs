@@ -43,7 +43,7 @@ internal static partial class Headwear
         internal float HealAt, ChargeAt, RepairAt, ErrorAt;
         internal int Charges, DrawCharges, Counter, Lean, LastLeanDirection, Motion;
         internal bool Permanent, Armed, Standing, Crouched, Prone, Sprint, Nvg, Visor, Still, NoRig, NoArmor, NoFace, NoEarpiece;
-        internal bool Dry, Smoke, Exfil, Green, Forward, Melee, Bolt, Marksman, Lmg, Smg, Suppressed, Cal762, Seal, Baton;
+        internal bool Dry, Smoke, Exfil, Green, Forward, Melee, Bolt, Marksman, Lmg, Suppressed, Cal762, Seal, Baton;
         internal float LastAim = 1, LastHip = 1;
         internal bool Drawing, HandsSprint;
         internal float DrawSpeed, SnapUntil, SnapSpeed, SnapApplied;
@@ -65,6 +65,7 @@ internal static partial class Headwear
     private static readonly EBodyPart[] Parts = (EBodyPart[])Enum.GetValues(typeof(EBodyPart));
     private static ConditionalWeakTable<Player, Entry> Players = new();
     private static readonly Dictionary<Player, State> Worn = new();
+    private static readonly Dictionary<Player, State> Sampled = new();
     private static readonly Dictionary<Item, State> Hats = new();
     private static readonly Dictionary<ProceduralWeaponAnimation, Player> Animations = new();
     private static readonly Dictionary<SkillManager, Player> Skills = new();
@@ -76,11 +77,16 @@ internal static partial class Headwear
 
     internal static void Reset()
     {
-        HeadwearDiagnostics.Reset();
-        foreach (var s in Worn.Values) RestoreSnap(s);
-        Players = new(); Worn.Clear(); Hats.Clear(); Animations.Clear(); Skills.Clear(); Work.Clear();
-        Local = null; NextTick = NextClock = 0; Hour = -1; Map = "";
-        ResetEvents(); ResetAbilities(); HatMedical.Reset();
+        try
+        {
+            foreach (var s in Worn.Values.ToArray()) SessionCleanup.Run("headwear animation", s, static value => RestoreSnap(value));
+        }
+        finally
+        {
+            Players = new(); Worn.Clear(); Sampled.Clear(); Hats.Clear(); Animations.Clear(); Skills.Clear(); Work.Clear();
+            Local = null; NextTick = NextClock = 0; Hour = -1; Map = "";
+            HeadwearDiagnostics.Reset(); ResetEvents(); ResetAbilities(); HatMedical.Reset();
+        }
     }
     internal static State? Get(Player? player)
     {
@@ -91,6 +97,7 @@ internal static partial class Headwear
     internal static State? Get(ProceduralWeaponAnimation animation) => Animations.TryGetValue(animation, out var p) ? Get(p) : null;
     internal static State? Get(SkillManager skills) => Skills.TryGetValue(skills, out var p) ? Get(p) : null;
     internal static bool Is(Player? p, string key) => Get(p)?.Key == key;
+    internal static bool ChangesFirearm(Player? p) => Get(p) is { } s && HeadwearWork.Firearm(s.Key);
     internal static void EquipmentChanged(Player p)
     {
         if (!PlayerRefresh.CanObserve(p)) return;
@@ -121,7 +128,7 @@ internal static partial class Headwear
         if (p.ProceduralWeaponAnimation is { } a) Animations[a] = p;
         if (p.Skills is { } skills) Skills[skills] = p;
         Gear(state, gear);
-        Sample(state, Time.time, true);
+        if (ActorCapabilities.IsHuman(p)) { Sampled[p] = state; Sample(state, Time.time, true); }
         return state;
     }
     internal static void Forget(Player p, bool discard = true)
@@ -129,7 +136,7 @@ internal static partial class Headwear
         if (Players.TryGetValue(p, out var e)) e.Current = null;
         if (discard) { Players.Remove(p); ClearPlayerEvents(p); }
         if (Worn.TryGetValue(p, out var s)) { Hats.Remove(s.Hat); RestoreSnap(s); }
-        Worn.Remove(p); RemovePain(p);
+        Worn.Remove(p); Sampled.Remove(p); RemovePain(p);
         if (p.ProceduralWeaponAnimation is { } a) Animations.Remove(a);
         if (p.Skills is { } skills) Skills.Remove(skills);
     }
@@ -150,7 +157,7 @@ internal static partial class Headwear
         if (Local != null) _ = Get(Local);
         MaintainAbilities();
         var now = Time.time;
-        if (Worn.Count == 0 || now < NextTick) return;
+        if (Sampled.Count == 0 || now < NextTick) return;
         NextTick = now + .10f;
         if (now >= NextClock)
         {
@@ -159,7 +166,7 @@ internal static partial class Headwear
             Hour = clock is null ? -1 : clock.Calculate().Hour;
             Map = world.LocationId ?? "";
         }
-        Work.Clear(); Work.AddRange(Worn.Values);
+        Work.Clear(); Work.AddRange(Sampled.Values);
         foreach (var s in Work)
         {
             if (!PlayerRefresh.CanObserve(s.Player)) { Forget(s.Player); continue; }
@@ -179,39 +186,45 @@ internal static partial class Headwear
     private static void Sample(State s, float now, bool initial)
     {
         var p = s.Player;
+        if (!ActorCapabilities.IsHuman(p)) return;
+        var inputs = HeadwearWork.Inputs(s.Key);
         var old = s.Weapon; var prone = s.Prone; var crouch = s.Crouched; var nvg = s.Nvg; var position = s.Position; var marksman = s.Marksman;
         s.Weapon = p.HandsController?.Item as Weapon;
         if (old is not null && old != s.Weapon) s.PreviousWeapon = old;
-        s.Position = p.Position;
-        s.Still = p.Velocity.sqrMagnitude < .01f && p.InputDirection.sqrMagnitude < .001f;
-        s.Sprint = p.MovementContext.IsSprintEnabled && p.Velocity.sqrMagnitude > .1f;
-        s.Prone = p.IsInPronePose; s.Crouched = !s.Prone && AdvancedMeleeRuntime.Crouched(p); s.Standing = !s.Prone && !s.Crouched;
-        s.Melee = p.HandsController is Player.BaseKnifeController;
-        s.Forward = p.IsForwardInputDirection && Math.Abs(p.InputDirection.x) < .10f && p.HandsController?.IsAiming != true;
-        if (!s.Still) { s.Rest = now; s.Motion++; }
-        if (!s.Sprint) s.Run = now;
-        if (!s.Melee) s.MeleeSince = now;
-        s.Lean = p.MovementContext.Tilt > .05f ? 1 : p.MovementContext.Tilt < -.05f ? -1 : 0;
+        if ((inputs & HeadwearInputs.Position) != 0) s.Position = p.Position;
+        if ((inputs & HeadwearInputs.Still) != 0)
+        {
+            s.Still = p.Velocity.sqrMagnitude < .01f && p.InputDirection.sqrMagnitude < .001f;
+            if (!s.Still) { s.Rest = now; s.Motion++; }
+        }
+        if ((inputs & HeadwearInputs.Sprint) != 0)
+        {
+            s.Sprint = p.MovementContext.IsSprintEnabled && p.Velocity.sqrMagnitude > .1f;
+            if (!s.Sprint) s.Run = now;
+        }
+        if ((inputs & HeadwearInputs.Posture) != 0)
+        { s.Prone = p.IsInPronePose; s.Crouched = !s.Prone && AdvancedMeleeRuntime.Crouched(p); s.Standing = !s.Prone && !s.Crouched; }
+        if ((inputs & HeadwearInputs.Melee) != 0)
+        { s.Melee = p.HandsController is Player.BaseKnifeController; if (!s.Melee) s.MeleeSince = now; }
+        if ((inputs & HeadwearInputs.Forward) != 0)
+            s.Forward = p.IsForwardInputDirection && Math.Abs(p.InputDirection.x) < .10f && p.HandsController?.IsAiming != true;
+        if ((inputs & HeadwearInputs.Lean) != 0)
+            s.Lean = p.MovementContext.Tilt > .05f ? 1 : p.MovementContext.Tilt < -.05f ? -1 : 0;
         if (s.Key is "HW001-2" or "HW044-1")
         {
-            s.Nvg = Native.Get(Native.Get(p.NightVisionObserver, "Component"), "IsOn") is true;
+            s.Nvg = p.NightVisionObserver?.Component?.Togglable?.On == true;
             if (s.Nvg && !nvg) s.NvgSince = now;
         }
         if (s.Key is "HW049-2" or "HW053-1" or "HW071-1" or "HW084-1")
             s.Visor = p.FaceShieldObserver?.Component?.Togglable.On == true;
-        s.AimSince = p.HandsController?.IsAiming == true && (s.Key != "HW049-2" || s.Visor) ? s.AimSince > 0 ? s.AimSince : now : 0;
+        if ((inputs & HeadwearInputs.Aim) != 0)
+            s.AimSince = p.HandsController?.IsAiming == true && (s.Key != "HW049-2" || s.Visor) ? s.AimSince > 0 ? s.AimSince : now : 0;
         if (s.Key is "HW006-2" or "HW078-1") s.Dry = p.ActiveHealthController.Hydration.Current <= 0;
         if (s.Key == "HW062-3") s.Suppressed = s.Weapon?.Mods.Any(m => m is Silencer) == true;
         if (s.Key == "HW085-2") s.Smoke = InSmoke(p);
         if (s.Key == "HW089-1") s.Exfil = Extracting(p);
         if (s.Key == "HW095-3") s.Green = Healthy(p);
-        s.Bolt = s.Weapon?.BoltAction == true && s.Weapon.WeapClass == "sniperRifle";
-        s.Marksman = s.Weapon?.WeapClass == "marksmanRifle";
-        s.Lmg = s.Weapon?.WeapClass == "machinegun";
-        s.Smg = s.Weapon?.WeapClass == "smg";
-        s.Cal762 = s.Weapon?.AmmoCaliber == "Caliber762x39";
-        s.Seal = s.Weapon is { } w && Seal(w.StringTemplateId);
-        s.Baton = s.Melee && p.HandsController?.Item is { } baton && Baton(baton.StringTemplateId);
+        SampleWeaponKind(s);
         if (initial)
         {
             s.Quiet = s.Rest = s.Run = s.MeleeSince = s.NvgSince = now;
@@ -252,6 +265,19 @@ internal static partial class Headwear
         if (!initial && (old != s.Weapon || aim != s.LastAim || hip != s.LastHip)) PlayerRefresh.Firearm(p, "headwear conditions");
         s.LastAim = aim; s.LastHip = hip;
         if (s.Snap is not null && (now >= s.SnapUntil || old != s.Weapon)) RestoreSnap(s);
+    }
+
+    private static void SampleWeaponKind(State s)
+    {
+        switch (s.Key)
+        {
+            case "HW008-1": case "HW045-1": s.Bolt = s.Weapon?.BoltAction == true && s.Weapon.WeapClass == "sniperRifle"; break;
+            case "HW063-1": s.Marksman = s.Weapon?.WeapClass == "marksmanRifle"; break;
+            case "HW080-1": s.Lmg = s.Weapon?.WeapClass == "machinegun"; break;
+            case "HW032-1": s.Cal762 = s.Weapon?.AmmoCaliber == "Caliber762x39"; break;
+            case "HW030-1": s.Seal = s.Weapon is { } w && Seal(w.StringTemplateId); break;
+            case "HW083-2": s.Baton = s.Melee && s.Player.HandsController?.Item is { } baton && Baton(baton.StringTemplateId); break;
+        }
     }
 
     private static float Travel(Vector3 from, Vector3 to)
@@ -321,10 +347,11 @@ internal static partial class Headwear
     internal static bool Baton(string id) => id is "3ef13605279d6076cc9d9433" or "9a82e88c9f27c9bf40f21b5b";
     internal static bool Amplifies(MeleeRuntime.HeldState held) => Baton(held.Item.StringTemplateId) && Is(held.Player, "HW083-2");
     internal static Player? Owner(Weapon weapon) => TemporaryOwner(weapon) ?? BackpackNative.WeaponOwner(weapon);
-    internal static float Factor(Player? p, HatStat stat) => Factor(Get(p), stat);
+    private static bool AudioStat(HatStat stat) => stat is HatStat.Noise or HatStat.Hearing or HatStat.ExternalSteps or HatStat.Gunshot;
+    internal static float Factor(Player? p, HatStat stat) => AudioStat(stat) && !ActorCapabilities.IsHuman(p) ? 1f : Factor(Get(p), stat);
     internal static float Factor(State? s, HatStat stat)
     {
-        if (s is null) return 1;
+        if (s is null || AudioStat(stat) && !ActorCapabilities.IsHuman(s.Player)) return 1;
         var roll = s.Roll.Headwear;
         var bonus = stat switch
         {
@@ -334,7 +361,7 @@ internal static partial class Headwear
         };
         return bonus * Signature(s, stat);
     }
-    internal static float Recovery(Player p, string stat) => stat == "legRecovery" ? Factor(p, HatStat.Leg) : stat == "armRecovery" ? Factor(p, HatStat.Arm) : 1f;
+    internal static float Recovery(Player p, string stat) => !ActorCapabilities.UsesStamina(p) ? 1f : stat == "legRecovery" ? Factor(p, HatStat.Leg) : stat == "armRecovery" ? Factor(p, HatStat.Arm) : 1f;
     private static float Signature(State s, HatStat stat)
     {
         var on = s.Active;

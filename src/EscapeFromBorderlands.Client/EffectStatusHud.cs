@@ -209,10 +209,10 @@ internal static class EffectStatusHud
                 EffectStatusModel.AppendNotices(statuses, player.ProfileId, now);
             }
             trace.Phase("HUD notices");
-            if (visibility.Rigs) statuses.AddRange(ChestRigRuntime.Statuses(player));
+            if (visibility.Rigs && ChestRigRuntime.Get(player) is not null) statuses.AddRange(ChestRigRuntime.Statuses(player));
             trace.Phase("HUD rig status");
-            if (visibility.Earpieces) statuses.AddRange(EarpieceRuntime.Statuses(player));
-            if (visibility.Headwear) statuses.AddRange(Headwear.Status(player));
+            if (visibility.Earpieces && EarpieceRuntime.Get(player) is not null) statuses.AddRange(EarpieceRuntime.Statuses(player));
+            if (visibility.Headwear && Headwear.Get(player) is not null) statuses.AddRange(Headwear.Status(player));
             trace.Phase("HUD headset status");
             EffectStatusModel.CopyVisible(statuses, Visible, StatusIndex);
             statuses = Visible;
@@ -349,8 +349,8 @@ internal static class EffectStatusHud
     }
     private static bool TryTextSource(out EffectStatusText.Assets assets)
     {
-        var template = Native.Get(Panel, "_effectIconTemplate");
-        var candidate = Native.Get(template, "_stackCount") as Component;
+        var template = HudTextSource.Read(Panel, "_effectIconTemplate");
+        var candidate = HudTextSource.Read(template, "_stackCount") as Component;
         if (EffectStatusText.TryAssets(candidate, out assets)) { TextTemplate = candidate; return true; }
         if (EffectStatusText.TryAssets(TextTemplate, out assets)) return true;
         var type = AccessTools.TypeByName("TMPro.TMP_Text");

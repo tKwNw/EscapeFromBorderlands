@@ -21,7 +21,13 @@ internal static class BallisticEffectPatch
             return;
         }
 
-        var roll = RarityResolver.Resolve(weapon);
+        var roll = LegendaryRuntime.ResolveShotRoll(weapon);
+        // Ordinary bullets have no EFB work when no cartridge or fragment
+        // context can affect them. Launcher and grenade payload paths survive.
+        if (roll is null && ChestRigRuntime.CurrentShot is null && HatCartridge.Current is null &&
+            EarpieceRuntime.CurrentShot is null && !ChestRigCombat.HasFragmentFactors &&
+            !(LegendaryGrenadeEffects.HasPayloads && LegendaryGrenadeEffects.Try(weapon, out _)) &&
+            __result.Weapon is not Launcher) return;
         var application = roll is not null && weapon is Weapon firearm
             ? LegendaryRuntime.RegisterShot(firearm, ammo, player, fireIndex, roll.Definition)
             : EffectApplication.Empty;

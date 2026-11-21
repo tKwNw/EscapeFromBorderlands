@@ -57,9 +57,7 @@ internal static class BackpackConcreteInventorySearchPatch
 {
     private static IEnumerable<MethodBase> TargetMethods() => new[] {
         AccessTools.Method(typeof(EFT.PlayerInputTranslator), "vmethod_1"),
-        AccessTools.Method(typeof(EFT.FirearmHandsInputTranslator), "ReloadExternalMagazine"),
-        AccessTools.Method(typeof(BotReload), "GetMagazineForReload"),
-        AccessTools.Method(typeof(BotReload), "AddAmmoToMagazines") };
+        AccessTools.Method(typeof(EFT.FirearmHandsInputTranslator), "ReloadExternalMagazine") };
     private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
     {
         var replacements = 0;

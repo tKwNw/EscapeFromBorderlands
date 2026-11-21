@@ -12,7 +12,7 @@ internal sealed class GrenadeChargeLedger
     {
         internal int Capacity, Spent;
         internal double Interval = 180, NextCharge;
-        internal string? Reservation;
+        internal object? Reservation;
     }
     private readonly Func<double> Clock;
     internal GrenadeChargeLedger(Func<double>? clock = null) => Clock = clock ?? (() => DateTime.UtcNow.Ticks / (double)TimeSpan.TicksPerSecond);
@@ -85,8 +85,10 @@ internal sealed class GrenadeChargeLedger
         }
     }
     internal bool Reserve(string itemId, int capacity, string token, double interval = 180)
+        => ReserveToken(itemId, capacity, token, interval);
+    internal bool ReserveToken(string itemId, int capacity, object token, double interval = 180)
     {
-        if (string.IsNullOrEmpty(token)) throw new ArgumentException("A throw needs a reservation token.");
+        if (token is null || token is string text && text.Length == 0) throw new ArgumentException("A throw needs a reservation token.");
         lock (Sync)
         {
             var e = Get(itemId, capacity, interval);
@@ -96,10 +98,13 @@ internal sealed class GrenadeChargeLedger
         }
     }
     internal bool Finish(string itemId, string token, bool spawned)
+        => FinishToken(itemId, token, spawned);
+    internal bool FinishToken(string itemId, object token, bool spawned)
     {
         lock (Sync)
         {
-            if (!Items.TryGetValue(itemId, out var e) || e.Reservation != token) return false;
+            if (!Items.TryGetValue(itemId, out var e) ||
+                !(ReferenceEquals(e.Reservation, token) || e.Reservation is string previous && token is string text && previous == text)) return false;
             Advance(e);
             e.Reservation = null;
             if (spawned)
@@ -136,6 +141,29 @@ internal sealed class GrenadeChargeLedger
             var ids = available.ToArray();
             if (Selected.TryGetValue(actorId, out var pinned) && ids.Contains(pinned, StringComparer.Ordinal)) return pinned;
             var chosen = preferred is not null && ids.Contains(preferred, StringComparer.Ordinal) ? preferred : ids.FirstOrDefault();
+            if (chosen is null) Selected.Remove(actorId); else Selected[actorId] = chosen;
+            return chosen;
+        }
+    }
+    // Native grenade selectors already own an indexed list. Read it directly
+    // instead of allocating a projected ID sequence and a copied ID array.
+    internal string? Select<T>(string actorId, IList<T> available, Func<T, string> idOf, string? preferred)
+    {
+        lock (Sync)
+        {
+            Selected.TryGetValue(actorId, out var pinned);
+            string? first = null;
+            var hasPinned = false;
+            var hasPreferred = false;
+            for (var i = 0; i < available.Count; i++)
+            {
+                var id = idOf(available[i]);
+                if (i == 0) first = id;
+                hasPinned |= pinned is not null && string.Equals(id, pinned, StringComparison.Ordinal);
+                hasPreferred |= preferred is not null && string.Equals(id, preferred, StringComparison.Ordinal);
+            }
+            if (hasPinned) return pinned;
+            var chosen = hasPreferred ? preferred : first;
             if (chosen is null) Selected.Remove(actorId); else Selected[actorId] = chosen;
             return chosen;
         }

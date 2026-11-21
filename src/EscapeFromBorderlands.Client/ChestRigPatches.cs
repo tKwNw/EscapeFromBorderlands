@@ -29,32 +29,37 @@ internal static class ChestRigNative
 [HarmonyPatch(typeof(Weapon),"get_RecoilDelta")]
 internal static class ChestRigRecoilPatch
 {
-    private static void Postfix(Weapon __instance,ref float __result)
+    private static void Postfix(Weapon __instance,ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance,ref float __result)
     {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Recoil-1f;}
 }
 [HarmonyPatch(typeof(Weapon),"get_ErgonomicsDelta")]
 internal static class ChestRigErgonomicsPatch
 {
-    private static void Postfix(Weapon __instance,ref float __result)
+    private static void Postfix(Weapon __instance,ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance,ref float __result)
     {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Ergonomics-1f;}
 }
 [HarmonyPatch(typeof(Weapon),"get_CenterOfImpactDelta")]
 internal static class ChestRigAccuracyPatch
 {
-    private static void Postfix(Weapon __instance,ref float __result)
+    private static void Postfix(Weapon __instance,ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance,ref float __result)
     {if(WeaponStatReadBatch.ResolveStatRig(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Accuracy-1f;}
 }
 [HarmonyPatch(typeof(Weapon),"get_VelocityDelta")]
 internal static class ChestRigVelocityPatch
 {
-    private static void Postfix(Weapon __instance,ref float __result)
+    private static void Postfix(Weapon __instance,ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance,ref float __result)
     {if(ChestRigNative.For(__instance) is { } s)__result=(1f+__result)*ChestRigRuntime.Stats(s,__instance).Velocity-1f;}
 }
 [HarmonyPatch]
 internal static class ChestRigFireRatePatch
 {
     private static IEnumerable<MethodBase> TargetMethods()=>new[]{AccessTools.PropertyGetter(typeof(Weapon),"FireRate"),AccessTools.PropertyGetter(typeof(Weapon),"SingleFireRate")};
-    private static void Postfix(Weapon __instance,ref int __result)
+    private static void Postfix(Weapon __instance,ref int __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance,ref int __result)
     {if(ChestRigNative.For(__instance) is { } s)__result=Math.Max(1,(int)Math.Round(__result*ChestRigRuntime.Stats(s,__instance).FireRate));}
 }
 [HarmonyPatch(typeof(BreathEffector),nameof(BreathEffector.Process))]
@@ -74,6 +79,7 @@ internal static class ChestRigDrawSpeedPatch
 internal static class ChestRigUtilitySpeedPatch
 {
     internal static readonly Dictionary<object,float> Speeds=new();
+    internal static void Reset() => Speeds.Clear();
     private static void Postfix(Player.FirearmController.UtilityOperation __instance)
     {
         if(ChestRigNative.For(__instance.Weapon) is not { } s)return;
@@ -132,7 +138,7 @@ internal static class ChestRigSurgeryPatch
 internal static class ChestRigBleedPatch
 {
     private static MethodBase TargetMethod()=>AccessTools.Method(typeof(ActiveHealthController),"DoBleed",new[]{typeof(bool),typeof(EBodyPart)});
-    private static void Prefix(ActiveHealthController __instance,bool isHeavy,EBodyPart bodyPart,out bool __state)=>__state=__instance.GetAllEffects().Any(e=>e.Existing&&e.BodyPart==bodyPart&&e.GetType().Name==(isHeavy?"HeavyBleeding":"LightBleeding"));
+    private static void Prefix(ActiveHealthController __instance,bool isHeavy,EBodyPart bodyPart,out bool __state)=>__state=!ActorCapabilities.IsHuman(__instance.Player)||__instance.GetAllEffects().Any(e=>e.Existing&&e.BodyPart==bodyPart&&e.GetType().Name==(isHeavy?"HeavyBleeding":"LightBleeding"));
     private static void Postfix(ActiveHealthController __instance,bool isHeavy,EBodyPart bodyPart,bool __state)
     {if(!__state)ChestRigMedical.NewBleed(__instance,isHeavy,bodyPart);}
 }
