@@ -39,15 +39,18 @@ internal static class EarpieceRuntime
     [ThreadStatic] internal static Shot? CurrentShot;
     private static bool Resetting;
     private static float NextTick;
+    private static readonly RaidPlayerWorkset TickPlayers = new(static work => { work.Add(States); work.Add(Changed); });
     internal static State? Get(Player? player, bool observed = false)
     {
+        State? old = null;
+        if (player is not null && !States.TryGetValue(player, out old) && !EquipmentPresence.Has(player, GearKind.Earpiece)) return null;
         if (Resetting || player is null || !observed && !PlayerRefresh.CanObserve(player))
         {
             if (player is not null) Forget(player);
             return null;
         }
-        var item = player.InventoryController?.Inventory?.Equipment.GetSlot(EquipmentSlot.Earpiece)?.ContainedItem;
-        if (States.TryGetValue(player, out var old) && item?.Id == old.Item.Id) return old;
+        var item = EquipmentPresence.Worn(player, GearKind.Earpiece);
+        if (old is not null && (ReferenceEquals(old.Item, item) || item?.Id == old.Item.Id)) return old;
         if (old is not null) { States.Remove(player); Changed.Add(player); }
         if (item is null || RarityResolver.Resolve(item) is not { Definition.IsEarpiece: true } roll) return null;
         if (!Cooldowns.TryGetValue(player.ProfileId, out var cooldowns)) Cooldowns[player.ProfileId] = cooldowns = new(StringComparer.Ordinal);
@@ -76,6 +79,7 @@ internal static class EarpieceRuntime
     }
     internal static void Reset()
     {
+        TickPlayers.Clear();
         Resetting = true;
         try
         {
@@ -96,6 +100,11 @@ internal static class EarpieceRuntime
         if (PlayerRefresh.ActiveWorld(world) is null || Time.time < NextTick) return;
         NextTick = Time.time + .05f;
         snapshot.Capture(world!);
+        if (States.Count == 0 && Changed.Count == 0 && Cooldowns.Count == 0 && !EquipmentPresence.AnyEarpiece)
+        {
+            EarpieceAudio.Maintain(snapshot); EarpieceMedicalAnimation.Maintain();
+            return;
+        }
         try
         {
             foreach (var p in States.Keys) if (!snapshot.Contains(p) || !PlayerRefresh.CanObserve(p)) Stale.Add(p);
@@ -105,7 +114,7 @@ internal static class EarpieceRuntime
             foreach (var id in StaleCooldowns) Cooldowns.Remove(id);
         }
         finally { Stale.Clear(); StaleCooldowns.Clear(); }
-        foreach (var p in snapshot)
+        foreach (var p in TickPlayers.Select(snapshot, GearKind.Earpiece))
         {
             var s = Get(p);
             var changed = Changed.Remove(p);
@@ -114,8 +123,8 @@ internal static class EarpieceRuntime
                 // Only these signatures consume the sampled movement/timer
                 // inputs. Other signatures respond to discrete events.
                 var restore = TickSignature(s, p);
-                if (restore.Legs > 0f) { BackpackRuntime.RestoreLeg(p, restore.Legs); s.StatusNoticeUntil = Time.time + 2f; s.StatusNotice = "Triggered · Leg Stamina recovery"; }
-                if (restore.Arms > 0f) { ChestRigRuntime.RestoreArms(p, restore.Arms); s.StatusNoticeUntil = Time.time + 2f; s.StatusNotice = "Triggered · Arm Stamina recovery"; }
+                if (ActorCapabilities.UsesStamina(p) && restore.Legs > 0f) { BackpackRuntime.RestoreLeg(p, restore.Legs); s.StatusNoticeUntil = Time.time + 2f; s.StatusNotice = "Triggered · Leg Stamina recovery"; }
+                if (ActorCapabilities.UsesStamina(p) && restore.Arms > 0f) { ChestRigRuntime.RestoreArms(p, restore.Arms); s.StatusNoticeUntil = Time.time + 2f; s.StatusNotice = "Triggered · Arm Stamina recovery"; }
                 var held = p.HandsController?.Item; var id = held?.Id ?? "";
                 if (id != s.HeldId)
                 { s.HeldId = id; s.PreviousKind = Kind(held); changed = true; }
@@ -139,13 +148,18 @@ internal static class EarpieceRuntime
         switch (s.Key)
         {
             case "EP01-1":
+                // This timer only controls the human listener's ambient mix.
+                // AI hearing is not driven by the local BetterAudio listener.
+                if (!ActorCapabilities.AmbientListener(p)) return default;
+                return s.Effect.Tick(Moving(p), false, false, false, 0f, 0f);
             case "EP04-4": return s.Effect.Tick(Moving(p), false, false, false, 0f, 0f);
             case "EP02-5": return s.Effect.Tick(false, false, p.MovementContext.IsInPronePose, false, 0f, 0f);
             case "EP10-1": return s.Effect.Tick(false, false, false, p.HandsController?.IsAiming == true, 0f, 0f);
-            case "EP03-2": return s.Effect.Tick(false, false, false, false, 0f, p.Physical.HandsStamina.Current);
+            case "EP03-2": return ActorCapabilities.UsesStamina(p) ? s.Effect.Tick(false, false, false, false, 0f, p.Physical.HandsStamina.Current) : default;
             case "EP04-1":
                 return s.Effect.Tick(false, Moving(p) && p.MovementContext.IsSprintEnabled, false, false, 0f, 0f);
             case "EP02-3":
+                if (!ActorCapabilities.UsesStamina(p)) return default;
                 var position = p.Position;
                 var motion = position - s.Previous; s.Previous = position;
                 var moving = Moving(p); var sprint = moving && p.MovementContext.IsSprintEnabled;
@@ -169,6 +183,7 @@ internal static class EarpieceRuntime
         if (!Deaths.Add(victim.ProfileId)) return;
         if (Native.Get(victim, "LastAggressor") is not Player killer ||
             Get(killer) is not { Key: "EP05-3" or "EP10-2" or "EP06-4" } s ||
+            s.Key == "EP05-3" && !ActorCapabilities.IsHuman(killer) ||
             !AdvancedMeleeRuntime.Enemy(killer, victim)) return;
         if (Native.Get(victim, "LastDamageInfo") is not DamageInfoStruct info) return;
         var firearm = info.DamageType == EDamageType.Bullet && info.Weapon is Weapon;
@@ -239,6 +254,7 @@ internal static class EarpieceRuntime
     }
     internal static float Value(Player p, string kind, bool observed = false)
     {
+        if (!ActorCapabilities.UsesStamina(p)) return 1f;
         var s = Get(p, observed); if (s is null) return 1f;
         return kind switch
         {
@@ -251,7 +267,11 @@ internal static class EarpieceRuntime
     internal static float Movement(Player p)
     {
         var s = Get(p); if (s is null) return 1f;
-        return EarpieceEffectRules.Movement(s.Key, s.Effect.Active, p.MovementContext.IsSprintEnabled, p.HandsController is Player.BaseKnifeController);
+        var key = s.Key;
+        if (key == "EP06-1") return .8f;
+        if (key is not ("EP04-5" or "EP05-4" or "EP07-1" or "EP07-5")) return 1f;
+        return EarpieceEffectRules.Movement(key, s.Effect.Active, p.MovementContext.IsSprintEnabled,
+            key == "EP05-4" && p.HandsController is Player.BaseKnifeController);
     }
     internal static float MeleeSpeed(Player? p) => Is(p, "EP05-4") ? 1.25f : 1f;
     internal static float MedicalSpeed(Player p, Item? item = null)
@@ -261,7 +281,7 @@ internal static class EarpieceRuntime
     }
     internal static bool UsingMedicine(Player p) => p.HandsController is Player.MedsController meds && Native.Component<MedKitComponent>(meds.Item) is not null;
     internal static float Incoming(Player p, DamageInfoStruct info) => info.DamageType == EDamageType.Bullet && info.Weapon is Weapon && Is(p, "EP09-5") && UsingMedicine(p) ? .7f : 1f;
-    internal static float EmittedStep(Player? p) => Is(p, "EP08-2") && AdvancedMeleeRuntime.Crouched(p!) && Moving(p!) && !p!.MovementContext.IsSprintEnabled ? .6f : 1f;
+    internal static float EmittedStep(Player? p) => ActorCapabilities.IsHuman(p) && Is(p, "EP08-2") && AdvancedMeleeRuntime.Crouched(p) && Moving(p) && !p.MovementContext.IsSprintEnabled ? .6f : 1f;
     internal static float Contusion(Player? p) => Get(p) is { } s ? EarpieceEffectRules.Contusion(s.Key, s.Roll.Earpiece.Contusion) : 1f;
     internal static IEnumerable<EffectStatusModel.Status> Statuses(Player? p)
     {
@@ -298,7 +318,7 @@ internal static class EarpieceRuntime
             "EP09-5" => UsingMedicine(p),
             "EP10-1" => HighFidelity(p),
             "EP11-2" => p.MovementContext.IsInPronePose,
-            "EP11-3" => p.Physical.HandsStamina.Current >= p.Physical.HandsStamina.TotalCapacity * .8f,
+            "EP11-3" => !ActorCapabilities.UsesStamina(p) || p.Physical.HandsStamina.Current >= p.Physical.HandsStamina.TotalCapacity * .8f,
             _ => false
         };
     }

@@ -18,7 +18,11 @@ internal static class ProjectileEffectSpawner
     public static void ResetSession()
     {
         SessionGeneration++;
-        foreach (var shot in DelayedProjectiles.ToArray()) ReleaseDelayed(shot);
+        try
+        {
+            foreach (var shot in DelayedProjectiles.ToArray()) SessionCleanup.Run("delayed projectile", shot, static value => ReleaseDelayed(value));
+        }
+        finally { DelayedProjectiles.Clear(); }
     }
 
     public static void Spawn(BallisticsCalculator calculator, EftBulletClass primary, EffectApplication application)
@@ -30,15 +34,18 @@ internal static class ProjectileEffectSpawner
             SpawnOne(calculator, primary, application, 1, shellCenter);
             return;
         }
-        var axis = RotationAxis(center, application.ProjectilePattern);
         if (string.Equals(application.ProjectilePattern, "random_cone", StringComparison.OrdinalIgnoreCase))
         {
+            var forward = center.normalized;
+            var upAxis = Math.Abs(Vector3.Dot(forward, Vector3.up)) > 0.95f ? Vector3.right : Vector3.up;
+            var rightAxis = Vector3.Cross(upAxis, forward).normalized;
             for (var index = 1; index < application.ProjectileCount; index++)
             {
-                SpawnOne(calculator, primary, application, index, RandomConeDirection(center, application.ProjectileSpreadDegrees));
+                SpawnOne(calculator, primary, application, index, RandomConeDirection(forward, rightAxis, upAxis, application.ProjectileSpreadDegrees));
             }
             return;
         }
+        var axis = RotationAxis(center, application.ProjectilePattern);
 
         if (application.ProjectileCount % 2 == 0 && application.ProjectileSpreadDegrees > 0f)
         {
@@ -173,16 +180,13 @@ internal static class ProjectileEffectSpawner
         EftBulletClass.Release(projectile);
     }
 
-    private static Vector3 RandomConeDirection(Vector3 center, float degrees)
+    private static Vector3 RandomConeDirection(Vector3 forward, Vector3 rightAxis, Vector3 upAxis, float degrees)
     {
         if (degrees <= 0f)
         {
-            return center.normalized;
+            return forward;
         }
 
-        var forward = center.normalized;
-        var upAxis = Math.Abs(Vector3.Dot(forward, Vector3.up)) > 0.95f ? Vector3.right : Vector3.up;
-        var rightAxis = Vector3.Cross(upAxis, forward).normalized;
         var yaw = UnityEngine.Random.Range(-degrees, degrees);
         var pitchLimit = Mathf.Sqrt(Math.Max(0f, degrees * degrees - yaw * yaw));
         var pitch = UnityEngine.Random.Range(-pitchLimit, pitchLimit);

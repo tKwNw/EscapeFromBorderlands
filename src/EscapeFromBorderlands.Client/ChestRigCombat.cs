@@ -15,6 +15,7 @@ internal static class ChestRigCombat
 {
     private static readonly Dictionary<string,(string Owner,float Until)> Flashes=new(StringComparer.Ordinal);
     private static readonly Dictionary<string,(float Factor,float Until)> FragmentFactors=new(StringComparer.Ordinal);
+    internal static bool HasFragmentFactors => FragmentFactors.Count != 0;
     internal static float? FragmentFactor(AmmoItemClass ammo)=>FragmentFactors.TryGetValue(ammo.Id,out var v)&&v.Until>Time.time?v.Factor:null;
     internal static void Fragment(AmmoItemClass ammo,float factor)=>FragmentFactors[ammo.Id]=(factor,Time.time+30f);
     private sealed class DoorAction
@@ -27,6 +28,7 @@ internal static class ChestRigCombat
     {if(Doors.TryGetValue(action,out var entry))entry.Complete=true;Maintain();}
     internal static void Maintain()
     {
+        if (FragmentFactors.Count == 0 && Doors.Count == 0 && Throws.Count == 0) return;
         foreach(var key in FragmentFactors.Where(kv=>kv.Value.Until<Time.time).Select(kv=>kv.Key).ToArray())FragmentFactors.Remove(key);
         foreach(var pair in Doors.ToArray())
         {

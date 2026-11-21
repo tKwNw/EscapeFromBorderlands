@@ -48,6 +48,7 @@ internal static class LegendaryGrenadeEffects
         internal SmokeParticleScale[] Particles = Array.Empty<SmokeParticleScale>();
     }
     private static readonly Dictionary<string, Payload> Payloads = new(StringComparer.Ordinal);
+    internal static bool HasPayloads => Payloads.Count != 0;
     private static readonly Dictionary<string, List<Payload>> SmokePayloads = new(StringComparer.Ordinal);
     private static readonly List<string> ExpiredPayloads = new();
     private static float NextPayloadExpiry = float.PositiveInfinity;
@@ -61,6 +62,7 @@ internal static class LegendaryGrenadeEffects
         {
             if (!SmokePayloads.TryGetValue(payload.Key, out var list)) SmokePayloads[payload.Key] = list = new();
             list.Add(payload);
+            SmokeRevision++;
         }
     }
 
@@ -68,9 +70,16 @@ internal static class LegendaryGrenadeEffects
     {
         if (!SmokePayloads.TryGetValue(payload.Key, out var list)) return;
         list.Remove(payload);
+        SmokeRevision++;
         if (list.Count == 0) SmokePayloads.Remove(payload.Key);
     }
     internal static bool HasSmokePayload(string key) => SmokePayloads.ContainsKey(key);
+    internal static int SmokeRevision { get; private set; }
+    internal static void AddRecoilSmokeOwners(RaidPlayerWorkset work)
+    {
+        if (!SmokePayloads.TryGetValue("GR58", out var candidates)) return;
+        foreach (var payload in candidates) work.AddProfile(payload.Owner);
+    }
     internal static bool HasOwnedSmoke(string owner, string key)
     {
         if (!SmokePayloads.TryGetValue(key, out var candidates)) return false;
@@ -84,7 +93,6 @@ internal static class LegendaryGrenadeEffects
     private static int Generation;
     private const string F1 = "5710c24ad2720bc3458b45a3";
     private const string M18 = "617aa4dd8166f034d57de9c5";
-    private static readonly MethodInfo Clone = AccessTools.Method(typeof(object), "MemberwiseClone");
     [ThreadStatic] internal static Payload? CurrentExplosion;
     internal static bool Try(Item? item, out Payload p) => Payloads.TryGetValue(item?.Id ?? "", out p!);
     internal static bool HasRecoilSmoke
@@ -112,6 +120,7 @@ internal static class LegendaryGrenadeEffects
         finally
         {
             Payloads.Clear(); SmokePayloads.Clear(); ExpiredPayloads.Clear(); NextPayloadExpiry = float.PositiveInfinity;
+            SmokeRevision++;
             Emissions.Clear(); World = null; Assets = null;
             RetryAssetsAt = 0f; CurrentExplosion = null;
         }
@@ -141,20 +150,31 @@ internal static class LegendaryGrenadeEffects
             if (Payloads.Remove(id, out var payload)) RemoveSmokePayload(payload);
         ExpiredPayloads.Clear();
     }
-    private static string NewId() => Guid.NewGuid().ToString("N").Substring(0, 24);
+    private static string NewId()
+    {
+        Span<char> formatted = stackalloc char[32];
+        Guid.NewGuid().TryFormat(formatted, out _, "N");
+        return new string(formatted.Slice(0, 24));
+    }
     internal static ThrowWeap Projectile(RarityResolver.ShotRoll roll, bool secondary = false)
     {
+        DiagnosticPathTrace trace = default;
+        DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.GrenadeFactory);
         var baseItem = (ThrowWeap)Singleton<ItemFactory>.Instance.CreateItem(NewId(), roll.Definition.SourceTemplateId, null);
+        trace.Phase(0);
         // Clone only the template for this projectile. Never alter the native database
         // template, or a saved inventory item's stats, to adjust a fuse or smoke life.
-        var template = (ThrowWeapTemplateClass)Clone.Invoke(baseItem.Template, null)!;
+        var template = (ThrowWeapTemplateClass)NativeShallowClone.Copy(baseItem.Template);
         template.ExplDelay = LegendaryGrenadeStats.FuseDelay(template.ExplDelay, roll);
         if (GrenadeEffectRules.ImpactFlash(roll.Definition.RuntimeKey)) template.MinTimeToContactExplode = .3f;
         if (GrenadeEffectRules.FlashPulseCount(roll.Definition.RuntimeKey) > 1)
         { template.Strength = 0f; template.FragmentsCount = 0; }
         if (roll.Definition.GrenadeCategory == "smoke") template.EmitTime = LegendaryGrenadeStats.SmokeDuration(template.EmitTime, roll);
+        trace.Phase(1);
         var proxy = new ThrowWeap(baseItem.Id, template);
+        trace.Phase(2);
         StorePayload(proxy.Id, new Payload { Roll = roll.GrenadeSnapshot(), Expires = Time.time + 900f, Secondary = secondary });
+        trace.Phase(3);
         return proxy;
     }
     internal static void Created(Grenade grenade, ThrowWeap item, string owner)
@@ -195,11 +215,11 @@ internal static class LegendaryGrenadeEffects
         if (p.DeferredEmission) return;
         try
         {
-            var emission = Native.Get(controller, "grenadeEmission_0") as GrenadeEmission;
+            var emission = GrenadeControllerAccess.Emission(controller) as GrenadeEmission;
             if (emission == null)
             {
                 Native.Call(controller, "vmethod_0");
-                emission = Native.Get(controller, "grenadeEmission_0") as GrenadeEmission;
+                emission = GrenadeControllerAccess.Emission(controller) as GrenadeEmission;
             }
             if (emission == null) throw new InvalidOperationException("Native smoke emission was not created.");
             emission.AttachTo(grenade.transform, Vector3.zero);

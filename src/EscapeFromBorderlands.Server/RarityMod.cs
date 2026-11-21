@@ -15,7 +15,6 @@ using SPTarkov.Server.Core.Utils.Cloners;
 
 namespace EscapeFromBorderlands.Server;
 
-#pragma warning disable CS0618 // SPT 4.0.13 exposes RagfairConfig through the registered ConfigServer service.
 [Injectable(InjectionType.Singleton, null, OnLoadOrder.PostDBModLoader + 100)]
 public sealed class RarityMod(
     ISptLogger<RarityMod> logger,
@@ -388,6 +387,9 @@ public sealed class RarityMod(
         root.Template = new MongoId(variant.TemplateId);
         root.ParentId = null;
         root.SlotId = null;
+        // This private clone intentionally becomes a Legendary preset. Match
+        // its root template before native ID remapping to avoid a mismatch warning.
+        if (ReferenceEquals(preset.Items[0], sourceRoot)) sourceRoot.Template = root.Template;
         preset.Items = itemHelper.ReparentItemAndChildren(root, preset.Items);
         preset.Id = new MongoId(variant.PresetId);
         preset.Parent = root.Id;
@@ -751,4 +753,3 @@ public sealed class RarityMod(
     private sealed record SpawnVariant(VariantDefinition Variant, EquipmentSlots[] EquipmentSlots);
     private sealed record BossRegistrationResult(int Entries, int Pools, int Bosses);
 }
-#pragma warning restore CS0618

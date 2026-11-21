@@ -15,15 +15,54 @@ internal sealed class QuestItemEquivalence
     internal string Source(string id) => id != null && Sources.TryGetValue(id, out var source) ? source : id!;
     internal bool IsVariant(string id) => id != null && Sources.ContainsKey(id);
     internal bool Matches(string actual, string required) => actual == required || Source(actual) == required;
-    internal bool Contains(IEnumerable<string> required, string actual) => required.Any(id => Matches(actual, id));
+    internal bool Contains(IEnumerable<string> required, string actual)
+    {
+        if (required is null) throw new ArgumentNullException("source");
+        var source = Source(actual);
+        if (required is string[] array)
+        {
+            for (var i = 0; i < array.Length; i++) if (actual == array[i] || source == array[i]) return true;
+            return false;
+        }
+        foreach (var id in required) if (actual == id || source == id) return true;
+        return false;
+    }
+    // Null means no identity needs appending. Never modify the event's lists:
+    // multiple quest objectives consume the same hit in sequence.
+    internal List<string>? ExpandedSources(IReadOnlyList<string> actual)
+    {
+        List<string>? expanded = null;
+        for (var i = 0; i < actual.Count; i++)
+        {
+            var id = actual[i];
+            var source = Source(id);
+            if (source == id) continue;
+            var values = (IReadOnlyList<string>?)expanded ?? actual;
+            var exists = false;
+            for (var j = 0; j < values.Count; j++)
+                if (values[j] == source) { exists = true; break; }
+            if (exists) continue;
+            if (expanded is null)
+            {
+                expanded = new List<string>(actual.Count + 1);
+                for (var j = 0; j < actual.Count; j++) expanded.Add(actual[j]);
+            }
+            expanded.Add(source);
+        }
+        return expanded;
+    }
     internal List<string> WithSources(IEnumerable<string> actual)
     {
         var values = actual.ToList();
-        var known = new HashSet<string>(values, StringComparer.Ordinal);
-        foreach (var id in values.ToArray())
+        HashSet<string>? known = null;
+        var originalCount = values.Count;
+        for (var i = 0; i < originalCount; i++)
         {
+            var id = values[i];
             var source = Source(id);
-            if (source != id && known.Add(source)) values.Add(source);
+            if (source == id) continue;
+            known ??= new HashSet<string>(values, StringComparer.Ordinal);
+            if (known.Add(source)) values.Add(source);
         }
         return values;
     }

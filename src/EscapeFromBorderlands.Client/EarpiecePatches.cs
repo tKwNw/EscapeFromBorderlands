@@ -22,7 +22,8 @@ internal static class EarpieceCartridgePatch
     {
         var p = BackpackRuntime.Actor(__instance);
         __state = p is null ? null : EarpieceRuntime.Begin(p, weapon);
-        WeaponCombatState.Refresh(__instance); WeaponCombatState.RefreshPreparedSingleInterval(__instance, weapon);
+        // The cartridge preparation hook refreshes once after this priority-
+        // first effect commit, including ordinary firearms modified by gear.
     }
     private static Exception? Finalizer(EarpieceRuntime.Shot? __state, Exception? __exception) { EarpieceRuntime.End(__state); return __exception; }
 }
@@ -34,25 +35,29 @@ internal static class EarpieceKillPatch
 [HarmonyPatch(typeof(Weapon), "get_RecoilDelta")]
 internal static class EarpieceRecoilPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result)
+    private static void Postfix(Weapon __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref float __result)
     { var owner = Headwear.Owner(__instance); __result = (1f + __result) * EarpieceRuntime.StatRecoil(__instance) * Headwear.Factor(owner, HatStat.Recoil) - 1f; }
 }
 [HarmonyPatch(typeof(Weapon), "get_CenterOfImpactDelta")]
 internal static class EarpieceAccuracyPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result)
+    private static void Postfix(Weapon __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref float __result)
     { var owner = Headwear.Owner(__instance); __result = (1f + __result) * EarpieceRuntime.StatAccuracy(__instance) * Headwear.Factor(owner, HatStat.Dispersion) - 1f; }
 }
 [HarmonyPatch(typeof(Weapon), "get_VelocityDelta")]
 internal static class EarpieceVelocityPatch
 {
-    private static void Postfix(Weapon __instance, ref float __result) => __result = (1f + __result) * EarpieceRuntime.Velocity(BackpackNative.WeaponOwner(__instance)) - 1f;
+    private static void Postfix(Weapon __instance, ref float __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref float __result) => __result = (1f + __result) * EarpieceRuntime.Velocity(BackpackNative.WeaponOwner(__instance)) - 1f;
 }
 [HarmonyPatch]
 internal static class EarpieceFireRatePatch
 {
     private static IEnumerable<MethodBase> TargetMethods() => new[] { AccessTools.PropertyGetter(typeof(Weapon), "FireRate"), AccessTools.PropertyGetter(typeof(Weapon), "SingleFireRate") };
-    private static void Postfix(Weapon __instance, ref int __result)
+    private static void Postfix(Weapon __instance, ref int __result) => Apply(__instance, ref __result);
+    internal static void Apply(Weapon __instance, ref int __result)
     { var owner = Headwear.Owner(__instance); __result = Math.Max(1, (int)Math.Round(__result * EarpieceRuntime.FireRate(owner) * Headwear.Factor(owner, HatStat.FireRate))); }
 }
 [HarmonyPatch(typeof(Player.FirearmController), nameof(Player.FirearmController.GetWeaponDrawSpeedMultiplier))]
@@ -66,7 +71,7 @@ internal static class EarpieceAimPatch
     private static readonly FieldInfo Speed = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_aimingSpeed");
     private static void Postfix(ProceduralWeaponAnimation __instance)
     {
-        var player = Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => ReferenceEquals(p.ProceduralWeaponAnimation, __instance));
+        var player = ActorLookup.Find(__instance, ActorMember.Animation);
         var factor = EarpieceRuntime.Aim(player) * Headwear.Factor(Headwear.Get(__instance), HatStat.Aim); if (factor == 1f) return;
         var speed = (float)Speed.GetValue(__instance)! * factor; Speed.SetValue(__instance, speed);
         if (Native.Get(__instance, "_aimSwayBlender") is Player.ValueBlender blend) blend.Speed = __instance.SwayFalloff / speed;
@@ -101,9 +106,8 @@ internal static class EarpieceRecoilRecoveryPatch
         .SelectMany(t => t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly)).Where(m => m.Name == "CalculateRecoil");
     private static void Prefix(RecoilProcessBase __instance, out Snapshot __state)
     {
-        var player = EarpieceRuntime.States.Keys.FirstOrDefault(p => p.ProceduralWeaponAnimation?.Shootingg?.CurrentRecoilEffect is { } effect &&
-            (ReferenceEquals(effect.HandPositionRecoilEffect, __instance) || ReferenceEquals(effect.HandRotationRecoilEffect, __instance) || ReferenceEquals(effect.CameraRotationRecoilEffect, __instance)));
-        var factor = EarpieceRuntime.Is(player, "EP11-3") && player!.Physical.HandsStamina.Current >= player.Physical.HandsStamina.TotalCapacity * .8f ? 1.4f : 1f;
+        var player = RecoilOwnerLookup.Find(__instance);
+        var factor = EarpieceRuntime.Is(player, "EP11-3") && (!ActorCapabilities.UsesStamina(player) || player.Physical.HandsStamina.Current >= player.Physical.HandsStamina.TotalCapacity * .8f) ? 1.4f : 1f;
         __state = new Snapshot(__instance.ReturnSpeed, factor);
         __instance.ReturnSpeed *= factor;
         if (__instance is NewRotationRecoilProcess rotation && rotation.AutoFireOn) rotation.AutoFireSpeed *= factor;

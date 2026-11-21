@@ -1,4 +1,4 @@
-# Building Escape From Borderlands 0.40.6 — SPT 4.0.13
+# Building Escape From Borderlands 0.41.0 — SPT 4.0.13
 
 This branch contains the complete source code and Legendary item definitions for **SPT 4.0.13**. The GitHub Releases page provides compiled, ready-to-install downloads.
 
@@ -22,4 +22,4 @@ For an installation package, use the SPT-specific paths described in [README.md]
 
 **Important:** Always build against the correct SPT version. Never reuse binary outputs after switching branches; stale DLLs from another SPT version are not compatible.
 
-The production source and build scripts are included. Historical test suites and internal validation tools are preserved in Git history rather than tracked at the current branch head.
+The public source contains the release gameplay code and inert compatibility interfaces. Private recorders, capture tools and test evidence are excluded. Upgrade packages omit the default config so existing settings can be retained.

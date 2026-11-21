@@ -11,7 +11,7 @@ internal static class WeaponStatReadBatch
     private struct State
     {
         internal Weapon? Weapon;
-        internal bool HasRoll, HasOwner, HasDefinition, HasStatRig, HasStatEarpiece;
+        internal bool HasRoll, HasOwner, HasDefinition, HasStatRig, HasStatEarpiece, ShareStatEquipment;
         internal VariantDefinition? Definition;
         internal RarityResolver.ShotRoll? Roll;
         internal Player? Owner, ControllerOwner;
@@ -23,6 +23,22 @@ internal static class WeaponStatReadBatch
     }
 
     [ThreadStatic] private static State _current;
+
+    // A consolidated callback contains only EFB modifiers in their verified
+    // original order. Join an existing poll, or share its owner/gear lookup
+    // just for this callback; never retain these observations across getters.
+    internal readonly struct Join : IDisposable
+    {
+        private readonly State _previous;
+        private readonly bool _owns;
+        internal Join(Weapon weapon)
+        {
+            _owns = !IsReading(weapon);
+            _previous = _owns ? _current : default;
+            if (_owns) _current = new State { Weapon = weapon, ShareStatEquipment = true };
+        }
+        public void Dispose() { if (_owns) _current = _previous; }
+    }
 
     internal readonly struct Scope : IDisposable
     {
@@ -77,22 +93,24 @@ internal static class WeaponStatReadBatch
     internal static bool IsReading(Weapon weapon) => ReferenceEquals(_current.Weapon, weapon);
     internal static ChestRigRuntime.State? ResolveStatRig(Weapon weapon)
     {
-        if (!IsReading(weapon) || !WeaponAttachmentReadBatch.IsPolling(weapon))
+        if (!IsReading(weapon) || !(_current.ShareStatEquipment || WeaponAttachmentReadBatch.IsPolling(weapon)))
             return ChestRigRuntime.Get(ResolveOwner(weapon));
         if (!_current.HasStatRig)
         {
-            _current.StatRig = ChestRigRuntime.Get(ResolveOwner(weapon));
+            // FindWeaponOwner has already validated the live actor. Reuse
+            // that verdict only within the compatible synchronous poll.
+            _current.StatRig = ChestRigRuntime.Get(ResolveOwner(weapon), observed: true);
             _current.HasStatRig = true;
         }
         return _current.StatRig;
     }
     internal static EarpieceRuntime.State? ResolveStatEarpiece(Weapon weapon)
     {
-        if (!IsReading(weapon) || !WeaponAttachmentReadBatch.IsPolling(weapon))
+        if (!IsReading(weapon) || !(_current.ShareStatEquipment || WeaponAttachmentReadBatch.IsPolling(weapon)))
             return EarpieceRuntime.Get(ResolveOwner(weapon));
         if (!_current.HasStatEarpiece)
         {
-            _current.StatEarpiece = EarpieceRuntime.Get(ResolveOwner(weapon));
+            _current.StatEarpiece = EarpieceRuntime.Get(ResolveOwner(weapon), observed: true);
             _current.HasStatEarpiece = true;
         }
         return _current.StatEarpiece;

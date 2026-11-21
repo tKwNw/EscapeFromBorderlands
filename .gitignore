@@ -15,3 +15,16 @@ output/
 *.7z
 
 # Intentionally do not ignore validation/*.log; they are release audit evidence.
+
+# Local-only diagnostics and agent handoffs
+handoff/
+outputs/
+diagnostics/
+.codex/
+.agents/
+AGENTS.md
+CODEX_HANDOFF.md
+*.pdb
+*.log
+*.etl
+*.dmp

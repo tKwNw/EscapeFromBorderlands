@@ -4,7 +4,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
-    <Version>0.40.6</Version>
+    <Version>0.41.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <FileVersion>$(Version)</FileVersion>
     <InformationalVersion>$(Version)</InformationalVersion>
@@ -20,6 +20,7 @@
       <HintPath>$(EftManagedRoot)/Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="ItemTemplate.Types"><HintPath>$(EftManagedRoot)/ItemTemplate.Types.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="BepInEx">
       <HintPath>$(BepInExCoreRoot)/BepInEx.dll</HintPath>
       <Private>false</Private>
@@ -39,6 +40,8 @@
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule"><HintPath>$(EftManagedRoot)/UnityEngine.PhysicsModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UI"><HintPath>$(EftManagedRoot)/UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UIModule"><HintPath>$(EftManagedRoot)/UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Comfort">
       <HintPath>$(EftManagedRoot)/Comfort.dll</HintPath>
       <Private>false</Private>

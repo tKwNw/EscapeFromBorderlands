@@ -31,10 +31,8 @@ internal static class BackpackRaidRewards
         _installed = true;
         // SPT runs this supported callback immediately before serialization.
         // Both PMC and scav raid handlers already await that native save.
-        #pragma warning disable CS0618 // Supported by this 4.0.13 target; runs before profile JSON serialization.
-        saves.AddBeforeSaveCallback("EscapeFromBorderlands.Backpacks", BeforeSave);
-        #pragma warning restore CS0618
-        new Harmony("com.tkw.escapefromborderlands.server.backpacks").Patch(
+                saves.AddBeforeSaveCallback("EscapeFromBorderlands.Backpacks", BeforeSave);
+                new Harmony("com.tkw.escapefromborderlands.server.backpacks").Patch(
             AccessTools.Method(typeof(LocationLifecycleService), nameof(LocationLifecycleService.EndLocalRaid)),
             prefix: new HarmonyMethod(typeof(BackpackRaidRewards), nameof(Before)),
             finalizer: new HarmonyMethod(typeof(BackpackRaidRewards), nameof(Finished)));

@@ -54,10 +54,20 @@ internal static class AdvancedLegendaryActions
     public static void ResetSession()
     {
         SessionGeneration++;
-        AssetCancellation?.Cancel(); AssetCancellation?.Dispose(); AssetCancellation = null;
-        AssetLoad = null; AssetWorld = null;
-        foreach (var smoke in Smokes.ToArray()) RemoveSmoke(smoke);
-        lock (Sync) { PendingMisses.Clear(); PendingShotCleanups.Clear(); PendingTransfers.Clear(); }
+        try
+        {
+            if (AssetCancellation is { } cancellation)
+            {
+                SessionCleanup.Run("smoke asset cancellation", cancellation, static value => value.Cancel());
+                SessionCleanup.Run("smoke asset disposal", cancellation, static value => value.Dispose());
+            }
+            foreach (var smoke in Smokes.ToArray()) SessionCleanup.Run("short smoke", smoke, static value => RemoveSmoke(value));
+        }
+        finally
+        {
+            AssetCancellation = null; AssetLoad = null; AssetWorld = null; Smokes.Clear();
+            lock (Sync) { PendingMisses.Clear(); PendingShotCleanups.Clear(); PendingTransfers.Clear(); }
+        }
     }
 
     public static void Maintain(GameWorld? world)

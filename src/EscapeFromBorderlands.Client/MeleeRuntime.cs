@@ -20,6 +20,12 @@ internal static class MeleeRuntime
     private static readonly FieldInfo HandsPlayer = AccessTools.Field(typeof(Player.ItemHandsController), "_player");
     private static readonly FieldInfo MovementPlayer = AccessTools.Field(typeof(MovementContext), "_player");
     private static readonly Dictionary<Player, HeldState> States = new();
+    private static readonly HashSet<Player> DrawnPlayers = new();
+    private static int DrawRevision;
+    private static readonly RaidPlayerWorkset TickPlayers = new(static work =>
+    { EquipmentPresence.AddHeldMelee(work); work.Add(States); work.Add(DrawnPlayers); AdvancedMeleeRuntime.AddPendingHoldWork(work); }, () => DrawRevision);
+    internal static void Drawn(Player.BaseKnifeController controller)
+    { if (Owner(controller) is { } player && DrawnPlayers.Add(player)) DrawRevision++; }
     private static System.Runtime.CompilerServices.ConditionalWeakTable<Stamina, Player> LegStaminaOwners = new();
     private static readonly List<Player> Stale = new();
     private static readonly EquipmentSlot[] PrimarySlots = { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon };
@@ -34,13 +40,14 @@ internal static class MeleeRuntime
     public static Player? Owner(Stamina stamina)
     {
         if (BackpackRuntime.StaminaOwners.TryGetValue(stamina, out var owner) &&
-            owner != null && !owner.Destroyed && ReferenceEquals(stamina, owner.Physical?.Stamina)) return owner;
+            ActorCapabilities.UsesStamina(owner) && !owner.Destroyed && ReferenceEquals(stamina, owner.Physical?.Stamina)) return owner;
         return LegStaminaOwners.TryGetValue(stamina, out var player) &&
-            player != null && !player.Destroyed && ReferenceEquals(stamina, player.Physical?.Stamina) ? player : null;
+            ActorCapabilities.UsesStamina(player) && !player.Destroyed && ReferenceEquals(stamina, player.Physical?.Stamina) ? player : null;
     }
 
     private static void ObserveEndpoint(Player player, Stamina stamina)
     {
+        if (!ActorCapabilities.UsesStamina(player)) { LegStaminaOwners.Remove(stamina); return; }
         if (BackpackRuntime.StaminaOwners.TryGetValue(stamina, out var shared) && ReferenceEquals(shared, player)) return;
         if (LegStaminaOwners.TryGetValue(stamina, out var old))
         {
@@ -50,20 +57,26 @@ internal static class MeleeRuntime
         LegStaminaOwners.Add(stamina, player);
     }
 
-    public static void Maintain(GameWorld? world)
+    public static void Maintain(GameWorld? world, RaidPlayerSnapshot snapshot)
     {
         if (world is null) return;
-        foreach (var player in world.AllAlivePlayersList)
+        if (!EquipmentPresence.AnyHeldMelee && DrawnPlayers.Count == 0 && States.Count == 0 && !AdvancedMeleeRuntime.HasAnyPendingHoldWork)
+        { AdvancedMeleeRuntime.MaintainExpired(); return; }
+        snapshot.Capture(world);
+        foreach (var player in snapshot.Humans)
         {
-            if (player == null) continue;
             // Keep the first-frame stamina fallback before the 20 Hz
             // equipment registry has bound a newly spawned actor.
             if (player.Physical?.Stamina is Stamina stamina) ObserveEndpoint(player, stamina);
+        }
+        foreach (var player in TickPlayers.Select(snapshot, GearKind.None))
+        {
             var holdsKnife = player.HandsController is Player.BaseKnifeController;
             if (!holdsKnife && !States.ContainsKey(player) && !AdvancedMeleeRuntime.HasPendingHoldWork(player)) continue;
             if (!PlayerRefresh.CanObserve(player)) { Forget(player); continue; }
             AdvancedMeleeRuntime.MaintainPlayer(player, HeldLive(player));
         }
+        DrawnPlayers.Clear();
         try
         {
             foreach (var player in States.Keys)
@@ -76,7 +89,7 @@ internal static class MeleeRuntime
 
     public static void Reset()
     {
-        States.Clear(); Stale.Clear(); LegStaminaOwners = new();
+        States.Clear(); Stale.Clear(); DrawnPlayers.Clear(); DrawRevision++; TickPlayers.Clear(); LegStaminaOwners = new();
         SessionCleanup.Run(nameof(MeleeWeaponSwitch), MeleeWeaponSwitch.Reset);
         SessionCleanup.Run(nameof(AdvancedMeleeRuntime), AdvancedMeleeRuntime.Reset);
     }
@@ -88,6 +101,7 @@ internal static class MeleeRuntime
         if (!PlayerRefresh.CanObserve(player)) { Forget(player); return null; }
         return HeldLive(player);
     }
+    internal static bool HasMovementWork(Player player) => player.HandsController is Player.BaseKnifeController || States.ContainsKey(player);
     private static HeldState? HeldLive(Player player)
     {
         if (player.HandsController is not Player.BaseKnifeController controller || controller.Destroyed)
@@ -103,7 +117,7 @@ internal static class MeleeRuntime
         if (held != null) AdvancedMeleeRuntime.EndHold(held);
         held = new HeldState(player, controller, roll);
         States[player] = held;
-        if (player.Physical?.Stamina is Stamina stamina) ObserveEndpoint(player, stamina);
+        if (ActorCapabilities.UsesStamina(player) && player.Physical?.Stamina is Stamina stamina) ObserveEndpoint(player, stamina);
         return held;
     }
 
@@ -247,7 +261,7 @@ internal static class MeleeRuntime
             if (effect.KillPainkillerSeconds <= 0f && (effect.HealOnKill > 0f || effect.KillLegStaminaFraction > 0f || effect.KillArmStaminaFraction > 0f || effect.KillClearsTremor || effect.KillStopsBleeding))
                 EffectStatusModel.Notify(attacker.ProfileId, "melee:" + held.Item.Id, held.Roll.Definition.ShortName, Time.time, "melee kill effect");
             AdvancedMeleeRuntime.Kill(held);
-            if (effect.KillLegStaminaFraction > 0f)
+            if (ActorCapabilities.UsesStamina(attacker) && effect.KillLegStaminaFraction > 0f)
             {
                 var stamina = attacker.Physical.Stamina;
                 var restored = MeleeRules.RestoreStamina(stamina.Current, stamina.TotalCapacity, effect.KillLegStaminaFraction * (Headwear.Amplifies(held) ? 2f : 1f));

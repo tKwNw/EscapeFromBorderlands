@@ -14,7 +14,8 @@ internal static class BackpackMovementExperiencePatch
 {
     private static void Prefix(AbstractSkillClass __instance, SkillManager.SkillActionClass skillAction, ref float val)
     {
-        var p = Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p => ReferenceEquals(p.Skills.Strength, __instance) || ReferenceEquals(p.Skills.Endurance, __instance));
+        if (val <= 0f) return;
+        var p = ActorLookup.Find(__instance, ActorMember.MovementSkill);
         if (p is not null && BackpackRuntime.Is(p, "BP08-1") && ReferenceEquals(skillAction, p.Skills.MovementAction) && p.InputDirection.sqrMagnitude > .0001f && val > 0f) val *= 1.75f;
     }
 }

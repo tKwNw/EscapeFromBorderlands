@@ -62,15 +62,18 @@ internal static class BackpackRuntime
     private static float ScanTime;
     internal static bool Resetting;
     private static readonly Dictionary<Player, ActiveHealthController.GClass3008> MilkPainkillers = new();
+    private static readonly RaidPlayerWorkset TickPlayers = new(static work =>
+    { work.Add(States); work.Add(EquipmentChanges); work.Add(MilkPainkillers); work.Add(RegisteredEndpoints); });
     private static readonly MethodInfo PainkillerFactory = typeof(ActiveHealthController.GClass3008).GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
         .Single(m => m.Name == "Create" && m.IsGenericMethodDefinition && m.GetParameters().Length == 8)
         .MakeGenericMethod(typeof(ActiveHealthController).GetNestedType("PainKiller", BindingFlags.Public | BindingFlags.NonPublic)!);
     internal static Item? Worn(Player? p) => p?.InventoryController?.Inventory?.Equipment.GetSlot(EquipmentSlot.Backpack)?.ContainedItem;
     internal static State? Get(Player? p, bool observed = false)
     {
+        State? previous = null;
+        if (p is not null && !States.TryGetValue(p, out previous) && !EquipmentPresence.Has(p, GearKind.Backpack)) return null;
         if (Resetting || p is null || !observed && !PlayerRefresh.CanObserve(p)) return null;
-        var bag = Worn(p);
-        States.TryGetValue(p, out var previous);
+        var bag = EquipmentPresence.Worn(p, GearKind.Backpack);
         if (previous is not null && ReferenceEquals(previous.Bag, bag)) return previous;
         if (previous is not null && previous.Bag.Id != bag?.Id)
         {
@@ -81,10 +84,10 @@ internal static class BackpackRuntime
             EquipmentChanges.Add(p);
         }
         if (bag is null || !RarityResolver.TryGetDefinition(bag, out var d) || d.BackpackEffect is null) return null;
-        if (States.TryGetValue(p, out var s) && s.Bag.Id == bag.Id) return s;
+        if (previous is not null && previous.Bag.Id == bag.Id) return previous;
         var record = Records.TryGetValue(p.ProfileId, out var r) ? r : Records[p.ProfileId] = new Ledger();
-        s = new State { Player = p, Bag = bag, Roll = RarityResolver.Resolve(bag)!, Record = record, Previous = p.Position, LastTick = Time.time };
-        if (s.TracksLoot)
+        var s = new State { Player = p, Bag = bag, Roll = RarityResolver.Resolve(bag)!, Record = record, Previous = p.Position, LastTick = Time.time };
+        if (ActorCapabilities.IsHuman(p) && s.TracksLoot)
             foreach (var item in bag.GetAllItems()) s.Contents.Add(item.Id);
         States[p] = s;
         return s;
@@ -95,7 +98,8 @@ internal static class BackpackRuntime
         if (value is Player p) return p;
         if (value is ActiveHealthController h) return h.Player;
         if (value is MovementContext m) return MeleeRuntime.Owner(m);
-        if (value is GClass774 stamina) return StaminaOwners.TryGetValue(stamina, out var owner) ? owner : null;
+        if (value is GClass774 stamina) return StaminaOwners.TryGetValue(stamina, out var owner) && ActorCapabilities.UsesStamina(owner) ? owner : null;
+        if (value is Physical) return ActorLookup.Find(value, ActorMember.Physical);
         if (value is null) return null;
         var direct = Native.Get(value, "Player") ?? Native.Get(value, "_player") ?? Native.Get(value, "Player_0") ?? Native.Get(value, "player_0");
         if (direct is Player player) return player;
@@ -104,6 +108,7 @@ internal static class BackpackRuntime
     }
     internal static void Reset()
     {
+        TickPlayers.Clear();
         Resetting = true;
         try
         {
@@ -137,7 +142,7 @@ internal static class BackpackRuntime
             foreach (var p in RemovedPlayers) ForgetEndpoints(p);
         }
         finally { RemovedPlayers.Clear(); }
-        foreach (var player in snapshot)
+        foreach (var player in TickPlayers.Select(snapshot, GearKind.Backpack, humans: true, humansOnly: true))
         {
             if (!PlayerRefresh.CanObserve(player)) continue;
             Register(player);
@@ -169,7 +174,7 @@ internal static class BackpackRuntime
                 if (distance > 15f || input < .0001f) distance = 0f;
             }
             var moving = input > .0001f;
-            var sprint = player.MovementContext.IsSprintEnabled && moving && player.Physical.Stamina.Current > 0f;
+            var sprint = player.MovementContext.IsSprintEnabled && moving && (!ActorCapabilities.UsesStamina(player) || player.Physical.Stamina.Current > 0f);
             var previousSprintSeconds = s.SprintSeconds;
             s.SprintSeconds = sprint ? s.SprintSeconds + dt : 0f;
             s.SprintDistance = sprint ? s.SprintDistance + distance : 0f;
@@ -181,13 +186,13 @@ internal static class BackpackRuntime
                 s.ProneSeconds = player.MovementContext.IsInPronePose ? s.ProneSeconds + dt : 0f;
                 if (s.ProneSeconds >= 5f) s.ColdCharge = true;
             }
-            if (s.Key == "BP03-3" && BackpackRules.FreightBrake(s.PreviousSprint, previousSprintSeconds, sprint) && s.Record.Ready(s.Key))
+            if (s.Key == "BP03-3" && ActorCapabilities.UsesStamina(player) && BackpackRules.FreightBrake(s.PreviousSprint, previousSprintSeconds, sprint) && s.Record.Ready(s.Key))
             { RestoreLeg(player, .2f); s.Record.Cooldown(s.Key, 30f); }
             if (!sprint) s.SprintCostObserved = false;
             s.PreviousSprint = sprint;
             // The native ground-check hook observes flight/landing in order with
             // HandleFall. Polling here could clear protection before that call.
-            if (s.Key == "BP43-3" && player.Physical.Stamina.Current <= .01f && s.Record.Ready(s.Key))
+            if (s.Key == "BP43-3" && ActorCapabilities.UsesStamina(player) && player.Physical.Stamina.Current <= .01f && s.Record.Ready(s.Key))
             { RestoreLeg(player, .75f); s.Record.Cooldown(s.Key, 180f); }
             if (s.Key == "BP37-2" && s.Record.Active("milk"))
             {
@@ -210,6 +215,7 @@ internal static class BackpackRuntime
     }
     private static void Register(Player p)
     {
+        if (!ActorCapabilities.UsesStamina(p)) { ForgetEndpoints(p); return; }
         var physical = p.Physical;
         if (physical is null) return;
         var leg = physical.Stamina; var arm = physical.HandsStamina;
@@ -252,6 +258,7 @@ internal static class BackpackRuntime
     }
     internal static void InventoryChanged(Player player, ItemAddress? address)
     {
+        if (!ActorCapabilities.IsHuman(player)) return;
         if (States.TryGetValue(player, out var state) && state.TracksLoot && !state.ContentsChanged &&
             AddressInBag(address, state.Bag)) state.ContentsChanged = true;
     }
@@ -288,10 +295,11 @@ internal static class BackpackRuntime
         }
         s.Contents.Clear(); foreach (var item in current) s.Contents.Add(item.Id);
     }
-    internal static float Movement(Player p)
+    internal static float Movement(Player p) => Movement(p, Get(p));
+    private static float Movement(Player p, State? s)
     {
-        var s = Get(p); if (s is null) return 1f;
-        var sprint = p.MovementContext.IsSprintEnabled;
+        if (s is null) return 1f;
+        var sprint = (s.Key is "BP02-1" or "BP07-3" or "BP34-1" or "BP44-3") && p.MovementContext.IsSprintEnabled;
         switch (s.Key)
         {
             case "BP02-1": return BackpackRules.RushHour(sprint);
@@ -310,10 +318,12 @@ internal static class BackpackRuntime
     }
     internal static float MotionFactor(Player p)
     {
-        return Movement(p) * (Get(p)?.Roll.Backpack.Movement ?? 1f);
+        var s = Get(p);
+        return Movement(p, s) * (s?.Roll.Backpack.Movement ?? 1f);
     }
     internal static float Value(Player p, string kind, bool observed = false)
     {
+        if (!ActorCapabilities.UsesStamina(p)) return 1f;
         var s = Get(p, observed); if (s is null) return 1f;
         if (kind is "legCapacity" or "armCapacity") return s.Roll.Backpack.StaminaCapacity * (s.Key == "BP22-3" && Woods(p) ? 1.25f : 1f) * (kind == "legCapacity" ? BackpackRules.LegCapacity(s.Key) : 1f);
         if (kind == "oxygenCapacity") return s.Key == "BP22-3" && Woods(p) ? 1.5f : 1f;
@@ -329,10 +339,11 @@ internal static class BackpackRuntime
         }
         return 1f;
     }
-    internal static float Weight(Player p,float original) => BagWeight(p,original);
-    internal static float Noise(Player p,string kind) => BagNoise(p,kind)*ChestRigRuntime.Noise(p,kind);
+    internal static float Weight(Player p,float original) => ActorCapabilities.IsHuman(p) ? BagWeight(p,original) : original;
+    internal static float Noise(Player p,string kind) => ActorCapabilities.IsHuman(p) ? BagNoise(p,kind)*ChestRigRuntime.Noise(p,kind) : 1f;
     internal static float CarriedWeightFactor(Player p,Item item)
     {
+        if(!ActorCapabilities.IsHuman(p))return 1f;
         var s=Get(p);if(s is null||!BackpackNative.InBag(item,s.Bag))return 1f;
         return item.Id==s.Bag.Id?s.Roll.Backpack.FrameWeight:s.Roll.Backpack.ContentsWeight;
     }
@@ -357,7 +368,7 @@ internal static class BackpackRuntime
         if (s.Key == "BP45-1" && kind == "inventory") factor *= .5f;
         return factor;
     }
-    internal static void RestoreLeg(Player p, float fraction) { var st = p.Physical.Stamina; st.UpdateStamina(Math.Min(st.TotalCapacity, st.Current + st.TotalCapacity * fraction)); }
+    internal static void RestoreLeg(Player p, float fraction) { if (!ActorCapabilities.UsesStamina(p)) return; var st = p.Physical.Stamina; st.UpdateStamina(Math.Min(st.TotalCapacity, st.Current + st.TotalCapacity * fraction)); }
     internal static bool BlackLeg(Player p) => p.ActiveHealthController.IsBodyPartDestroyed(EBodyPart.LeftLeg) || p.ActiveHealthController.IsBodyPartDestroyed(EBodyPart.RightLeg);
     internal static bool Woods(Player p)
     {
@@ -368,7 +379,7 @@ internal static class BackpackRuntime
     internal static bool Daytime()
     {
         var clock = Singleton<GameWorld>.Instance?.GameDateTime;
-        var date = clock is null ? DateTime.MinValue : (DateTime)(Native.Call(clock, "Calculate") ?? DateTime.MinValue);
+        var date = clock is null ? DateTime.MinValue : BackpackMovementInputs.Date(clock);
         return date.Hour >= 6 && date.Hour < 20;
     }
     internal static bool Milestone(State s) => s.Record.Distance.TryGetValue(s.Key, out var d) && d >= 1000f;
@@ -377,6 +388,7 @@ internal static class BackpackRuntime
         new[] { EquipmentSlot.FirstPrimaryWeapon, EquipmentSlot.SecondPrimaryWeapon }.Any(slot => p.InventoryController.Inventory.Equipment.GetSlot(slot).ContainedItem?.Id == held.Weapon.Id);
     internal static void Acquired(Player p, Item source, Item received, bool external)
     {
+        if (!ActorCapabilities.IsHuman(p)) return;
         var s = Get(p); if (s is null) return;
         if (external || s.Record.NewLoot.Contains(source.Id))
             foreach (var item in received.GetAllItems()) s.Record.NewLoot.Add(item.Id);
@@ -394,6 +406,7 @@ internal static class BackpackRuntime
     }
     internal static bool MainGridFull(Item bag)
     {
+        if (BackpackMovementInputs.TryMainGridFull(bag, out var full)) return full;
         var grid = Native.Items(Native.Get(bag, "Grids")).FirstOrDefault();
         if (grid is null) return false;
         var free = Native.Call(grid, "GetFreeSpace") ?? Native.Get(grid, "FreeSpace");

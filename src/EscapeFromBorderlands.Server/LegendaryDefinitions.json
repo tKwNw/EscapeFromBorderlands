@@ -43802,7 +43802,7 @@
       "shortName": "A Fine Addition",
       "description": "A simple and reliable 14-liter backpack in MultiCam Black camouflage. Manufactured by London Bridge Trading.",
       "effectKind": "backpack",
-      "effectText": "The 1st Found in Raid item of each different barter category placed in this bag speeds up searching other backpacks by 10%, up to 60%. Records reset each raid; only the wearer receives the bonus.",
+      "effectText": "The 1st Found in Raid item of each different barter category placed in this bag speeds up all searching by 10%, up to 60%. Records reset each raid; only the wearer receives the bonus.",
       "runtimeKey": "BP24-2",
       "backpackEffect": {
         "key": "BP24-2",

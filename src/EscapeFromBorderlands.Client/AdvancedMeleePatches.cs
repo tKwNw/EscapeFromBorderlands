@@ -38,7 +38,7 @@ internal static class MeleeWeightScope
 internal static class LegendaryMeleeWeightPatch
 {
     private static readonly FieldInfo PlayerField = AccessTools.Field(typeof(PlayerPhysicalClass), "Player_0");
-    internal sealed class Snapshot
+    internal struct Snapshot
     {
         public Inventory? Inventory;
         public float Multiplier;
@@ -47,6 +47,7 @@ internal static class LegendaryMeleeWeightPatch
     {
         __state = new Snapshot { Inventory = MeleeWeightScope.Inventory, Multiplier = MeleeWeightScope.Multiplier };
         var player = PlayerField.GetValue(__instance) as Player;
+        if (!ActorCapabilities.IsHuman(player)) { MeleeWeightScope.Inventory = null; MeleeWeightScope.Multiplier = 1f; return; }
         MeleeWeightScope.Inventory = player?.InventoryController?.Inventory;
         MeleeWeightScope.Multiplier = AdvancedMeleeRuntime.Resetting ? 1f : MeleeRuntime.Effect(player)?.WeightMultiplier ?? 1f;
     }

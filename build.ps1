@@ -20,7 +20,8 @@ $BuildOutput = Join-Path $ProjectRoot 'output'
 $ServerProject = Join-Path $ProjectRoot 'src\EscapeFromBorderlands.Server\EscapeFromBorderlands.Server.csproj'
 $ClientProject = Join-Path $ProjectRoot 'src\EscapeFromBorderlands.Client\EscapeFromBorderlands.Client.csproj'
 $ServerOutput = Join-Path $BuildOutput 'Server\EscapeFromBorderlands.Server.dll'
-$ClientOutput = Join-Path $BuildOutput 'Client\EscapeFromBorderlands.Client.dll'
+$ClientFolder = 'Client'
+$ClientOutput = Join-Path $BuildOutput "$ClientFolder\EscapeFromBorderlands.Client.dll"
 
 # output/ is ignored by Git; a branch switch does not remove older binaries.
 # Fail safely on build errors rather than repackaging a prior 4.1.6 build.
@@ -30,12 +31,12 @@ foreach ($file in @($ServerOutput, $ClientOutput)) {
 
 dotnet build $ServerProject -c $Configuration --no-incremental "-p:SptServerRoot=$ServerRoot" "-p:OutputPath=$(Join-Path $BuildOutput 'Server')"
 if ($LASTEXITCODE -ne 0) { throw 'SPT 4.0.13 server build failed.' }
-dotnet build $ClientProject -c $Configuration --no-incremental "-p:EftManagedRoot=$(Join-Path $GameRoot 'EscapeFromTarkov_Data\Managed')" "-p:BepInExCoreRoot=$(Join-Path $GameRoot 'BepInEx\core')" "-p:OutputPath=$(Join-Path $BuildOutput 'Client')"
+dotnet build $ClientProject -c $Configuration --no-incremental "-p:EftManagedRoot=$(Join-Path $GameRoot 'EscapeFromTarkov_Data\Managed')" "-p:BepInExCoreRoot=$(Join-Path $GameRoot 'BepInEx\core')" "-p:OutputPath=$(Join-Path $BuildOutput $ClientFolder)" "-p:EfbPerformanceDiagnostics=false"
 if ($LASTEXITCODE -ne 0) { throw 'SPT 4.0.13 client build failed.' }
 
 foreach ($file in @($ServerOutput, $ClientOutput)) {
     if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Build output missing: $file" }
-    if ([Reflection.AssemblyName]::GetAssemblyName($file).Version -ne [Version]'0.40.6.0') {
+    if ([Reflection.AssemblyName]::GetAssemblyName($file).Version -ne [Version]'0.41.0.0') {
         throw "Unexpected assembly version in $file"
     }
 }
@@ -47,4 +48,4 @@ if (-not $ServerBytes.Contains('.NETCoreApp,Version=v9.0') -or $ServerBytes.Cont
 if (-not $ClientBytes.Contains('.NETStandard,Version=v2.1') -or $ClientBytes.Contains('com.SPT.core')) {
     throw 'Client DLL looks incompatible with SPT 4.0.13 (possibly a stale 4.1.6 DLL).'
 }
-Write-Host "PASS: EFB 0.40.6 client and server built for SPT 4.0.13 ($SptVersion), .NET 9 / .NET Standard 2.1." -ForegroundColor Green
+Write-Host "PASS: EFB 0.41.0 client and server built for SPT 4.0.13 ($SptVersion), .NET 9 / .NET Standard 2.1." -ForegroundColor Green

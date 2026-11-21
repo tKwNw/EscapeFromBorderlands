@@ -48,9 +48,7 @@ internal static class BackpackConcreteInventorySearchPatch
 {
     private static IEnumerable<MethodBase> TargetMethods() => new[] {
         AccessTools.Method(typeof(Class1725), "vmethod_1"),
-        AccessTools.Method(typeof(Class1730), "method_17"),
-        AccessTools.Method(typeof(BotReload), "GetMagazineForReload"),
-        AccessTools.Method(typeof(BotReload), "method_1") };
+        AccessTools.Method(typeof(Class1730), "method_17") };
     private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, MethodBase original)
     {
         var replacements = 0;

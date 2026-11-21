@@ -6,6 +6,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using CommonAssets.Scripts.Game;
+using Comfort.Common;
 using EFT;
 using EFT.Animations;
 using EFT.HealthSystem;
@@ -29,9 +30,9 @@ internal static class HatEquipment
 [HarmonyPatch(typeof(Player), nameof(Player.OnDead))]
 internal static class HatDeath
 {
-    private static void Prefix(Player __instance)
+    private static void Prefix(Player __instance, IPlayer? ___LastAggressor, ref DamageInfoStruct ___LastDamageInfo)
     {
-        try { Headwear.Dead(__instance); }
+        try { Headwear.Dead(__instance, ___LastAggressor, in ___LastDamageInfo); }
         catch (Exception e) { Plugin.LogSource.LogWarning($"EFB headwear kill processing: {e.Message}"); }
     }
 }
@@ -384,7 +385,10 @@ internal static class HatCorpseSearch
     }
     private static async Task Wait(Task search, GClass3515 op, Player p, InventoryEquipment root)
     {
+        var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
+        var generation = PlayerRefresh.Generation;
         await search;
+        if (!PlayerRefresh.IsCurrentSession(world, generation)) return;
         if (!op.Boolean_0 && !op.IplayerSearchController_0.ContainsUnknownItems(op.Item) &&
             !root.GetAllItems().OfType<SearchableItemItemClass>().Any(i => op.IplayerSearchController_0.ContainsUnknownItems(i))) Headwear.Searched(p, root);
     }

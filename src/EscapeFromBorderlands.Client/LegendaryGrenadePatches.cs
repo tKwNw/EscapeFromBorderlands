@@ -94,10 +94,10 @@ internal static class LegendaryGrenadeFalloffPatch
 internal static class LegendaryGrenadeDamagePatch
 {
     [ThreadStatic] private static int Depth;
-    internal sealed class Hit { internal int Depth; internal float Before; internal bool Bleed; }
+    internal struct Hit { internal int Depth; internal float Before; internal bool Bleed; }
     private static void Prefix(ActiveHealthController __instance, EBodyPart bodyPart, ref float damage, DamageInfoStruct damageInfo, out Hit __state)
     {
-        __state = new Hit { Depth = Depth++, Before = __instance.GetBodyPartHealth(bodyPart, false).Current };
+        __state = new Hit { Depth = Depth++ };
         if (__state.Depth != 0) return;
         var target = __instance.Player;
         if (damageInfo.DamageType == EDamageType.Bullet && damageInfo.Weapon is Weapon && damageInfo.Player?.iPlayer is Player shooter && GrenadeBuffs.MarkedBy(target, shooter)) damage *= 1.3f;
@@ -111,6 +111,7 @@ internal static class LegendaryGrenadeDamagePatch
         if (blast) damage *= GrenadeEffectRules.BlastMultiplier(p.Key, Vector3.Distance(target.Position, damageInfo.MasterOrigin),
             bodyPart is EBodyPart.LeftLeg or EBodyPart.RightLeg, target.ProfileId == p.DirectTarget, p.PistolOnly);
         __state.Bleed = !blast && p.Key == "GR07" && !damageInfo.Blunt && damage > 0f;
+        if (__state.Bleed) __state.Before = __instance.GetBodyPartHealth(bodyPart, false).Current;
     }
     private static void Postfix(ActiveHealthController __instance, EBodyPart bodyPart, Hit __state)
     {
@@ -121,38 +122,49 @@ internal static class LegendaryGrenadeDamagePatch
 [HarmonyPatch(typeof(GClass2080), nameof(GClass2080.ApplyLightAndSoundHealthEffects))]
 internal static class LegendaryGrenadeFlashPatch
 {
-    private static readonly MethodInfo Linecast = AccessTools.Method(AccessTools.TypeByName("UnityEngine.Physics"), "Linecast", new[] { typeof(Vector3), typeof(Vector3), typeof(int) });
     private static bool Prefix(List<IPlayerOwner> players, Dictionary<IPlayerOwner, GStruct230> playerEmitterCaches, Vector3 emitterPosition, Vector3 blindnessSettings, Vector3 contusionSettings)
     {
         var payload = LegendaryGrenadeEffects.CurrentExplosion;
         if (payload == null) return true;
+        DiagnosticPathTrace trace = default;
+        DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.GrenadeFlash);
         foreach (var bridge in players)
         {
             var target = GrenadeBuffs.Find(bridge.iPlayer.ProfileId);
             if (target?.ActiveHealthController is not { } health || !health.IsAlive || payload.Key == "GR47" && target.ProfileId == payload.Owner) continue;
             var cache = playerEmitterCaches[bridge];
             if (!cache.TryToApplyStun && !cache.TryToApplyBurnEyes && !cache.TryToApplyContusion) continue;
-            if ((bool)Linecast.Invoke(null, new object[] { emitterPosition, target.PlayerBones.Head.position, (int)LayerMaskClass.GrenadeObstaclesColliderMask })!) continue;
             var facing = Mathf.Clamp01(Vector3.Dot(cache.DirectionToEmitter, bridge.iPlayer.LookDirection));
             var radius = payload.Roll.GrenadeFlashRadiusMultiplier;
             var sound = Mathf.InverseLerp(blindnessSettings.y / radius, blindnessSettings.x / radius, cache.Distance);
             var visual = Mathf.InverseLerp(blindnessSettings.y, blindnessSettings.x, cache.Distance) * facing;
+            var contusionDuration = cache.TryToApplyContusion && contusionSettings != Vector3.zero
+                ? Mathf.InverseLerp(contusionSettings.y, contusionSettings.x, cache.Distance) * contusionSettings.z : 0f;
+            var activeBot = bridge.IsAI && target.AIData?.BotOwner?.BotState == EBotState.Active;
+            if (!GrenadeFlashWork.HasEffect(visual, sound, contusionDuration, cache.TryToApplyStun, cache.TryToApplyBurnEyes, activeBot)) continue;
+            trace.Phase(0);
+            // Same native overload and query policy, without reflection/boxing.
+            var blocked = Physics.Linecast(emitterPosition, target.PlayerBones.Head.position, (int)LayerMaskClass.GrenadeObstaclesColliderMask);
+            trace.Phase(1);
+            if (blocked) continue;
             if (bridge.IsAI && target.AIData?.BotOwner is { } bot && bot.BotState == EBotState.Active)
             {
                 var duration = blindnessSettings.z * bot.Settings.FileSettings.Grenade.FLASH_GRENADE_TIME_COEF;
                 if (sound > 0f) bot.FlashGrenade.AddSoundEffect(duration * sound, emitterPosition);
                 if (visual > 0f) bot.FlashGrenade.AddBlindEffect(duration * visual, emitterPosition);
             }
+            trace.Phase(2);
             if (visual > 0f)
             {
                 if (cache.TryToApplyStun) health.DoStun(blindnessSettings.z, visual);
                 if (cache.TryToApplyBurnEyes) health.DoBurnEyes(emitterPosition, Mathf.InverseLerp(blindnessSettings.y, 0f, cache.Distance), visual, blindnessSettings.z);
             }
+            trace.Phase(3);
             if (cache.TryToApplyContusion && contusionSettings != Vector3.zero)
             {
-                var duration = Mathf.InverseLerp(contusionSettings.y, contusionSettings.x, cache.Distance) * contusionSettings.z;
-                if (duration > 2f) health.DoContusion(duration, 1f);
+                if (contusionDuration > 2f) health.DoContusion(contusionDuration, 1f);
             }
+            trace.Phase(4);
         }
         return false;
     }

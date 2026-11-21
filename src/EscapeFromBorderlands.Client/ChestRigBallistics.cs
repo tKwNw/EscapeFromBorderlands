@@ -16,10 +16,10 @@ namespace EscapeFromBorderlands.Client;
 internal static class ChestRigCartridgePatch
 {
     [HarmonyPriority(Priority.First)]
-    private static void Prefix(Player.FirearmController __instance,Weapon weapon,Ammo ammo,out ChestRigRuntime.ShotScope? __state)
+    private static void Prefix(Player.FirearmController __instance,Player? ____player,Weapon weapon,Ammo ammo,out ChestRigRuntime.ShotScope? __state)
     {
         __state = null;
-        var rig = ChestRigRuntime.Get(BackpackRuntime.Actor(__instance));
+        var rig = ChestRigRuntime.Get(____player);
         if (rig is null) return;
         __state=ChestRigRuntime.Begin(weapon,ammo,rig,WeaponCombatState.PreparedRemaining(__instance,weapon,ammo));
         if(__state is not null){WeaponCombatState.Refresh(__instance);WeaponCombatState.RefreshPreparedSingleInterval(__instance,weapon);}
@@ -35,7 +35,7 @@ internal static class ChestRigBallistics
         var scope=ChestRigRuntime.CurrentShot;
         if(scope is null)
         {
-            if(shot.Weapon is LauncherItemClass&&ChestRigRuntime.Get(Singleton<GameWorld>.Instance?.RegisteredPlayers.OfType<Player>().FirstOrDefault(p=>p.ProfileId==playerId))?.Key=="AR21-2")
+            if(shot.Weapon is LauncherItemClass&&ChestRigRuntime.Get(FindRegisteredPlayer(playerId))?.Key=="AR21-2")
             {shot.Damage*=1.3f;shot.InitialSpeed*=1.4f;shot.Speed*=1.4f;shot.StartVelocity*=1.4f;shot.Vector3_1=shot.StartVelocity;shot.TrajectoryInfo.Initialize(shot.StartPosition,shot.StartVelocity,shot.BulletMassGram,shot.BulletDiameterMilimeters,shot.BallisticCoefficient,shot.Player?.IsAI==true);}
             return;
         }
@@ -46,6 +46,11 @@ internal static class ChestRigBallistics
         application.ProjectileCount=Math.Max(1,application.ProjectileCount)*2;
         application.ProjectileDamageMultiplier=application.ProjectileCount>2?.7f:1f;
         if(application.ProjectileCount==2){application.ProjectilePattern="paired_horizontal";application.ProjectileSpreadDegrees=.2f;}
+    }
+    private static Player? FindRegisteredPlayer(string id)
+    {
+        if (Singleton<GameWorld>.Instance is not { } world) return null;
+        return CombatActorLookup.Find(world, id);
     }
     internal static void Impact(Shot shot)
     {
@@ -62,8 +67,8 @@ internal static class ChestRigBallistics
 [HarmonyPatch]
 internal static class ChestRigFleshHitPatch
 {
-    internal sealed class Hit
-    {internal Player Target=null!;internal EBodyPart Part;internal float Before;internal ChestRigRuntime.ShotScope Scope=null!;}
+    internal struct Hit
+    {internal Player Target;internal EBodyPart Part;internal float Before;internal ChestRigRuntime.ShotScope Scope;}
     private static IEnumerable<System.Reflection.MethodBase> TargetMethods()=>new[]{AccessTools.Method(typeof(BodyPartCollider),nameof(BodyPartCollider.ApplyHit)),AccessTools.Method(typeof(ArmorPlateCollider),nameof(ArmorPlateCollider.ApplyHit))};
     private static void Prefix(BodyPartCollider __instance,ref DamageInfoStruct damageInfo,out Hit? __state)
     {
@@ -73,9 +78,7 @@ internal static class ChestRigFleshHitPatch
         var shot=ChestRigRuntime.FindScope(weapon,damageInfo.FireIndex);
         if(shot is null || Singleton<GameWorld>.Instance is not { } world) return;
         var profile = __instance.PlayerProfileID;
-        Player? target = null;
-        foreach (var candidate in world.RegisteredPlayers)
-            if (candidate is Player player && player.ProfileId == profile) { target = player; break; }
+        var target = CombatActorLookup.Find(world, profile);
         if(target is null)return;
         var part=__instance.BodyPartType;
         __state=new Hit{Target=target,Part=part,Before=target.ActiveHealthController.GetBodyPartHealth(part,false).Current,Scope=shot};

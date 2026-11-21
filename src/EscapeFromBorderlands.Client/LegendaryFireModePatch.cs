@@ -81,8 +81,11 @@ internal static class LegendaryFireModePatch
     public static void ResetSession()
     {
         SessionGeneration++;
-        foreach (var scope in ModeScopes.Values.ToArray()) EndCarrier(scope);
-        Inputs.Clear(); CallDepth.Clear(); Synthetic.Clear(); ActiveSequences.Clear();
+        try
+        {
+            foreach (var scope in ModeScopes.Values.ToArray()) SessionCleanup.Run("fire-mode carrier", scope, static value => EndCarrier(value));
+        }
+        finally { ModeScopes.Clear(); Inputs.Clear(); CallDepth.Clear(); Synthetic.Clear(); ActiveSequences.Clear(); }
     }
 
     private static void Prefix(Player.FirearmController __instance, bool pressed, out TriggerCall __state)

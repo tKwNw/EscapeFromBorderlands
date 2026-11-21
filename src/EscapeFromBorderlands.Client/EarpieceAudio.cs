@@ -33,11 +33,18 @@ internal static class EarpieceAudio
     private static readonly Dictionary<GClass890, Player> Queues = new();
     private static readonly List<GClass890> StaleQueues = new();
     private static readonly List<KeyValuePair<BetterSource, Source>> SourceSnapshot = new();
+    private static readonly Dictionary<(Player? Owner, string Kind), (float Volume, float Range)> MaintenanceFactors = new();
+    private static readonly Dictionary<Player, float> DiscoveryAt = new();
+    private static readonly List<Player> StaleActors = new();
     private static readonly HashSet<string> Reports = new(StringComparer.Ordinal);
     private static readonly HashSet<(string Item, string Stage, string Kind, bool Own)> FactorReports = new();
     private static readonly Dictionary<Type, MethodInfo> VolumeUpdates = new();
     [ThreadStatic] internal static Scope Current;
     private static float LastAmbient = 1f;
+    private static int ObservedAudioRevision = -1;
+    private static Player? ObservedListener;
+    private static bool Affects(Player? owner) => EquipmentPresence.Has(Singleton<GameWorld>.Instance?.MainPlayer, GearKind.Audio) ||
+        ActorCapabilities.IsHuman(owner) && EquipmentPresence.Has(owner, GearKind.Audio);
     private static void RefreshHeadphones() => MonoBehaviourSingleton<BetterAudio>.Instance.ApplyCurrentHeadphonesTemplate();
     internal static float Ambient => EarpieceRuntime.Listener is { } s
         ? EarpieceEffectRules.Ambient(s.Key, s.Roll.Earpiece.Ambient, EarpieceRuntime.Moving(s.Player), s.Effect.StillSeconds) : 1f;
@@ -46,7 +53,10 @@ internal static class EarpieceAudio
     internal static Scope BeginQueue(GClass890 queue)
     {
         var old = Current;
-        if (Queues.TryGetValue(queue, out var owner)) { Current = new Scope(owner, "gun"); RegisterQueue(queue); }
+        // Native enqueue/fire/rolloff hooks register source membership changes.
+        // Retain only ownership while neutral, allowing a mid-tail gear change.
+        if (!EquipmentPresence.AnyAudio && Sources.Count == 0) return old;
+        if (Queues.TryGetValue(queue, out var owner)) Current = new Scope(owner, "gun");
         return old;
     }
     internal static void Capture(BetterSource source)
@@ -80,6 +90,7 @@ internal static class EarpieceAudio
     internal static void Register(BetterSource? source, Player? owner, string kind)
     {
         if (source == null || owner is null) return;
+        if (!Affects(owner)) { if (Sources.ContainsKey(source)) Forget(source, true); return; }
         if (Sources.TryGetValue(source, out var known) && known.Owner == owner && known.Kind == kind) return;
         Forget(source, true);
         Sources[source] = new Source { Owner = owner, Kind = kind };
@@ -101,27 +112,27 @@ internal static class EarpieceAudio
     {
         var listener = EarpieceRuntime.Listener;
 
-        return Hearing(owner, kind, listener, Map(listener));
+        return Hearing(owner, kind, listener, Map(listener), Headwear.Listener);
     }
-    private static float Hearing(Player? owner, string kind, EarpieceRuntime.State? listener, string? map)
+    private static float Hearing(Player? owner, string kind, EarpieceRuntime.State? listener, string? map, Headwear.State? hat)
     {
-        var hat = Headwear.Listener;
         var hearing = hat?.Player != owner ? Headwear.Factor(hat, HatStat.Hearing) : 1f;
         return hearing * (listener is null || owner == listener.Player ? 1f :
             EarpieceEffectRules.Hearing(listener.Key, listener.Roll.Earpiece.Hearing, listener.Effect.Hearing, false, kind, map));
     }
-    internal static float Volume(Player? owner, string kind) => Volume(owner, kind, EarpieceRuntime.Listener);
-    private static float Volume(Player? owner, string kind, EarpieceRuntime.State? listener)
+    internal static float Volume(Player? owner, string kind) => Volume(owner, kind, EarpieceRuntime.Listener, Headwear.Listener);
+    private static float Volume(Player? owner, string kind, EarpieceRuntime.State? listener, Headwear.State? hat)
     {
         var emitted = kind == "step" ? EarpieceRuntime.EmittedStep(owner) : 1f;
         if (kind == "step" && owner != Headwear.Local)
-            emitted *= Headwear.Factor(owner, HatStat.Noise) * Headwear.Factor(Headwear.Listener, HatStat.ExternalSteps);
+            emitted *= Headwear.Factor(owner, HatStat.Noise) * Headwear.Factor(hat, HatStat.ExternalSteps);
         var factor = listener is null ? emitted : EarpieceEffectRules.Volume(listener.Key, listener.Roll.Earpiece.SelfNoise,
             owner == listener.Player, kind, listener.Key == "EP11-2" && listener.Player.MovementContext.IsInPronePose, emitted);
         return kind == "gun" ? factor * Headwear.Factor(owner, HatStat.Gunshot) : factor;
     }
     internal static float SourceVolume(BetterSource source)
     {
+        if (Sources.Count == 0 && Current.Owner is null) return 1f;
         Capture(source);
         if (!Sources.TryGetValue(source, out var s)) return 1f;
         var factor = s.VolumeFactor = TargetVolume(s);
@@ -139,10 +150,12 @@ internal static class EarpieceAudio
     {
         var local = Singleton<GameWorld>.Instance?.MainPlayer;
         if (owner != local) return;
+        if (!Affects(owner) && !Sources.ContainsKey(source)) return;
         Register(source, owner, kind);
+        if (!Sources.TryGetValue(source, out var state)) return;
         var factor = LocalVolume(owner, kind);
-        Sources[source].BakedLocalVolume = factor;
-        Sources[source].CachedLocalInput = source is not SimpleSource || !oneShot;
+        state.BakedLocalVolume = factor;
+        state.CachedLocalInput = source is not SimpleSource || !oneShot;
         volume *= factor;
         if (factor != 1f && EarpieceRuntime.Listener is { } s && FactorReports.Add((s.Item.Id, "input", kind, true)))
             Plugin.LogSource.LogInfo($"EFB local audio {s.Roll.Definition.ShortName}: native {kind} input multiplier {factor:F3}.");
@@ -151,6 +164,7 @@ internal static class EarpieceAudio
     {
         var player = Singleton<GameWorld>.Instance?.MainPlayer;
         if (player is null) return;
+        if (!Affects(player) && Sources.Count == 0) return;
         var known = Sources.TryGetValue(source, out var s) && s.Owner == player && s.Kind == "step";
         var secondary = Native.Get(Native.Get(player, "_specificStepAudioController"), "BetterSource_0");
         if (Current.Owner == player && Current.Kind == "step" || known ||
@@ -210,18 +224,44 @@ internal static class EarpieceAudio
     {
         if (Current.Owner is not { } owner) return;
         Queues[queue] = owner;
+        if (!Affects(owner)) return;
         foreach (var source in queue.AudioSources) Register(source, owner, "gun");
     }
     internal static void Maintain(RaidPlayerSnapshot live)
     {
+        if (!EquipmentPresence.AnyAudio)
+        {
+            try
+            {
+                foreach (var pair in Queues) if (!live.Contains(pair.Value)) StaleQueues.Add(pair.Key);
+                foreach (var queue in StaleQueues) Queues.Remove(queue);
+                if (Sources.Count != 0 || LastAmbient != 1f) RestoreSources();
+            }
+            finally { StaleQueues.Clear(); DiscoveryAt.Clear(); ObservedAudioRevision = -1; }
+            return;
+        }
+        var mainPlayer = Singleton<GameWorld>.Instance?.MainPlayer;
+        var audioChanged = ObservedAudioRevision != EquipmentPresence.AudioRevision || !ReferenceEquals(mainPlayer, ObservedListener);
+        if (audioChanged)
+        {
+            foreach (var pair in Queues)
+                if (live.Contains(pair.Value) && Affects(pair.Value))
+                    foreach (var source in pair.Key.AudioSources) Register(source, pair.Value, "gun");
+            ObservedAudioRevision = EquipmentPresence.AudioRevision;
+            ObservedListener = mainPlayer;
+        }
         var listener = EarpieceRuntime.Listener;
         // Playback hooks still capture newly playing sounds. Background
         // discovery only serves an affected listener or step emitter.
         if (listener is not null || EarpieceRuntime.States.Count != 0)
-            foreach (var p in live)
+            foreach (var p in live.Humans)
             {
                 if (listener is null && (!EarpieceRuntime.States.TryGetValue(p, out var active) || active.Key != "EP08-2")) continue;
                 if (!PlayerRefresh.CanObserve(p)) continue;
+                // Bot playback is captured only when needed by the human listener.
+                // Do not poll bot source fields or bot-owned audio effects.
+                if (!audioChanged && DiscoveryAt.TryGetValue(p, out var next) && UnityEngine.Time.unscaledTime < next) continue;
+                DiscoveryAt[p] = UnityEngine.Time.unscaledTime + .05f;
                 if (listener is not null)
                 {
                     Register(p.SpeechSource, p, "voice");
@@ -232,11 +272,15 @@ internal static class EarpieceAudio
             }
         try
         {
+            foreach (var p in DiscoveryAt.Keys) if (!live.Contains(p)) StaleActors.Add(p);
+            foreach (var p in StaleActors) DiscoveryAt.Remove(p);
             foreach (var pair in Queues)
                 if (!live.Contains(pair.Value)) StaleQueues.Add(pair.Key);
             foreach (var queue in StaleQueues) Queues.Remove(queue);
             SourceSnapshot.AddRange(Sources);
             var map = Map(listener);
+            var hat = Headwear.Listener;
+            var revision = EquipmentPresence.AudioRevision;
             var now = UnityEngine.Time.unscaledTime;
             foreach (var pair in SourceSnapshot)
             {
@@ -246,11 +290,20 @@ internal static class EarpieceAudio
                 if (s.Owner is not null && !live.Contains(s.Owner)) { s.Owner = null; s.Retired = true; }
                 if (s.Retired && pair.Key.PlayBackState != BetterSource.EPlayBackState.Playing)
                 { Forget(pair.Key, true); continue; }
+                if (!Affects(s.Owner)) { Forget(pair.Key, true); continue; }
                 if (now < s.RetryAt) continue;
                 try
                 {
-                    if (s.VolumeFactor != Volume(s.Owner, s.Kind, listener) / s.BakedLocalVolume) RefreshOutput(pair.Key);
-                    if (s.HasRange && s.RangeFactor != Hearing(s.Owner, s.Kind, listener, map)) pair.Key.SetRolloff(s.RawRange);
+                    if (revision != EquipmentPresence.AudioRevision)
+                    {
+                        MaintenanceFactors.Clear(); listener = EarpieceRuntime.Listener; hat = Headwear.Listener; map = Map(listener);
+                        revision = EquipmentPresence.AudioRevision;
+                    }
+                    var key = (s.Owner, s.Kind);
+                    if (!MaintenanceFactors.TryGetValue(key, out var factors))
+                        MaintenanceFactors[key] = factors = (Volume(s.Owner, s.Kind, listener, hat), Hearing(s.Owner, s.Kind, listener, map, hat));
+                    if (s.VolumeFactor != factors.Volume / s.BakedLocalVolume) RefreshOutput(pair.Key);
+                    if (s.HasRange && s.RangeFactor != factors.Range) pair.Key.SetRolloff(s.RawRange);
                 }
                 catch (Exception error)
                 {
@@ -260,7 +313,7 @@ internal static class EarpieceAudio
                 }
             }
         }
-        finally { StaleQueues.Clear(); SourceSnapshot.Clear(); }
+        finally { StaleQueues.Clear(); SourceSnapshot.Clear(); MaintenanceFactors.Clear(); StaleActors.Clear(); }
         var ambient = Ambient;
         if (ambient != LastAmbient && MonoBehaviourSingleton<BetterAudio>.Instantiated)
         { RefreshHeadphones(); LastAmbient = ambient; }
@@ -270,11 +323,16 @@ internal static class EarpieceAudio
         Current = default;
         try
         {
-            foreach (var source in Sources.Keys.ToArray()) Cleanup("source lease", () => Forget(source, true));
-            if (LastAmbient != 1f && MonoBehaviourSingleton<BetterAudio>.Instantiated && MonoBehaviourSingleton<BetterAudio>.Instance != null)
-                Cleanup("ambient volume", RefreshHeadphones);
+            RestoreSources();
         }
-        finally { Sources.Clear(); Queues.Clear(); Reports.Clear(); FactorReports.Clear(); MapWorld = null; MapName = null; Current = default; LastAmbient = 1f; }
+        finally { Sources.Clear(); Queues.Clear(); DiscoveryAt.Clear(); StaleActors.Clear(); MaintenanceFactors.Clear(); Reports.Clear(); FactorReports.Clear(); MapWorld = null; MapName = null; ObservedListener = null; Current = default; LastAmbient = 1f; ObservedAudioRevision = -1; }
+    }
+    private static void RestoreSources()
+    {
+        foreach (var source in Sources.Keys.ToArray()) Cleanup("source lease", () => Forget(source, true));
+        if (LastAmbient != 1f && MonoBehaviourSingleton<BetterAudio>.Instantiated && MonoBehaviourSingleton<BetterAudio>.Instance != null)
+            Cleanup("ambient volume", RefreshHeadphones);
+        LastAmbient = 1f;
     }
 }
 
@@ -316,6 +374,9 @@ internal static class EarpieceQueueSourcePatch
 {
     private static IEnumerable<MethodBase> TargetMethods() => new[] { AccessTools.Method(typeof(GClass890), "SetRolloff"), AccessTools.Method(typeof(GClass890), "Enqueue") };
     private static void Prefix(GClass890 __instance) => EarpieceAudio.RegisterQueue(__instance);
+    // Enqueue can add membership after the prefix; capture it before playback
+    // without rediscovering the whole queue on every subsequent Update.
+    private static void Postfix(GClass890 __instance) => EarpieceAudio.RegisterQueue(__instance);
 }
 [HarmonyPatch(typeof(GClass890), nameof(GClass890.Update))]
 internal static class EarpieceQueuePlaybackPatch

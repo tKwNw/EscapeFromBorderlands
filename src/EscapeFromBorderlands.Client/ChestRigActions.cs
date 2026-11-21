@@ -126,6 +126,7 @@ internal static class ChestRigSwapAnimatorPatch
 internal static class ChestRigBoltCyclePatch
 {
     private static readonly Dictionary<object,float> Speeds=new();
+    internal static void Reset() => Speeds.Clear();
     private static void Postfix(Player.FirearmController.DefaultWeaponOperationClass __instance)
     {
         var s = ChestRigNative.For(__instance.Weapon_0);

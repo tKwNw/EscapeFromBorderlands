@@ -30,30 +30,35 @@ internal static class PlayerRefresh
     private static readonly HashSet<Player> Disposed = new();
     private static readonly FieldInfo PhysicalOwner = AccessTools.Field(typeof(Physical), "Player_0");
     private static readonly FieldInfo PhysicalBridge = AccessTools.Field(typeof(PhysicalBase), "IobserverToPlayerBridge_0");
-    private static GameWorld? ClosingWorld;
+    private static readonly SessionLifetime<GameWorld> Lifetime = new();
     internal static bool Resetting;
+    internal static int Generation => Lifetime.Generation;
+    internal static int PendingCount => Requests.Count;
 
     internal static GameWorld? ActiveWorld(GameWorld? world) =>
-        world == null || ReferenceEquals(world, ClosingWorld) ? null : world;
+        Lifetime.Current(world == null ? null : world);
 
     internal static bool CloseWorld(GameWorld world)
     {
-        if (ReferenceEquals(world, ClosingWorld)) return false;
-        ClosingWorld = world;
-        return true;
+        return Lifetime.Close(world);
     }
+
+    internal static bool IsCurrentSession(GameWorld? world, int generation) => !Resetting &&
+        world != null && ReferenceEquals(Singleton<GameWorld>.Instance, world) && Lifetime.IsCurrent(world, generation);
 
     internal static bool CanObserve([NotNullWhen(true)] Player? player) => !Resetting &&
         ActiveWorld(Singleton<GameWorld>.Instance) != null &&
         player != null && !player.Destroyed && !Disposed.Contains(player) &&
         player.HealthController?.IsAlive == true && player.ActiveHealthController is not null &&
         player.InventoryController?.Inventory?.Equipment is not null &&
-        player.MovementContext is not null && player.Physical?.Stamina is not null &&
-        player.Physical.HandsStamina is not null && player.Physical.Oxygen is not null;
+        player.MovementContext is not null && player.Physical is not null &&
+        (!ActorCapabilities.UsesStamina(player) || player.Physical.Stamina is not null &&
+        player.Physical.HandsStamina is not null && player.Physical.Oxygen is not null);
 
     internal static void Forget(Player player)
     {
         Disposed.Add(player);
+        EquipmentPresence.Forget(player);
         Headwear.Forget(player);
         Requests.Remove(player);
         BackpackRuntime.ForgetEndpoints(player);
@@ -61,6 +66,7 @@ internal static class PlayerRefresh
 
     internal static void Reset()
     {
+        Lifetime.Reset();
         Requests.Clear();
         Disposed.Clear();
         NextCheck = 0f;
@@ -71,6 +77,8 @@ internal static class PlayerRefresh
     internal static void Firearm(Player player, string site) => Request(player, Work.Firearm, site);
     private static void Request(Player player, Work work, string site)
     {
+        if (!ActorCapabilities.IsHuman(player)) work &= ~Work.Weight;
+        if (work == Work.None) return;
         if (!CanObserve(player)) return;
         if (!Requests.TryGetValue(player, out var pending)) Requests[player] = pending = new Pending();
         pending.Work |= work;
@@ -87,8 +95,8 @@ internal static class PlayerRefresh
         var bridge = PhysicalBridge.GetValue(physical);
         if (bridge is null || Native.Get(bridge, "Skills") is null ||
             inventory.TotalWeight is null || inventory.TotalWeightEliteSkill is null ||
-            physical.Stamina.TotalCapacity is null || physical.HandsStamina.TotalCapacity is null ||
-            physical.Oxygen.TotalCapacity is null) return false;
+            physical.Stamina?.TotalCapacity is null || physical.HandsStamina?.TotalCapacity is null ||
+            physical.Oxygen?.TotalCapacity is null) return false;
         if (physical is Physical full &&
             (!ReferenceEquals(PhysicalOwner.GetValue(full), player) || full.Consumptions is null)) return false;
         return player.HandsController is not Player.FirearmController || player.ProceduralWeaponAnimation is not null;

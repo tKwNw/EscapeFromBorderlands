@@ -22,7 +22,8 @@ internal static class BackpackDryMarchPatch
 {
     private static void Postfix(PlayerPhysicalClass __instance, ref float __result)
     {
-        if (!BackpackRuntime.Is(BackpackRuntime.Actor(__instance), "BP05-2")) return;
+        var player = BackpackRuntime.Actor(__instance);
+        if (!ActorCapabilities.UsesStamina(player) || !BackpackRuntime.Is(player, "BP05-2")) return;
         var normal = Comfort.Common.Singleton<BackendConfigSettingsClass>.Instance.StaminaDrain.GetAt(1f);
         if (normal > 0f) __result *= __instance.Single_0 / normal;
     }

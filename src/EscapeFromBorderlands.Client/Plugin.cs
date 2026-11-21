@@ -17,7 +17,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.tKwNw.escapefromborderlands";
     public const string PluginName = "tKwNw-EscapeFromBorderlands";
-    public const string PluginVersion = "0.40.6";
+    public const string PluginVersion = "0.41.0";
 
     internal static ReleaseLog LogSource { get; private set; } = new ReleaseLog();
     internal static Plugin Instance { get; private set; } = null!;
@@ -25,6 +25,7 @@ public sealed class Plugin : BaseUnityPlugin
     private Harmony? _harmony;
     private GameWorld? _world;
     private float _nextHeadwearError;
+    private bool _consolidationChecked;
 
     private void MigrateLegacyClientConfig()
     {
@@ -77,6 +78,7 @@ public sealed class Plugin : BaseUnityPlugin
 
     private void OnDestroy()
     {
+        _raidPlayers.Clear();
         SceneManager.sceneUnloaded -= GrenadeBreachDoors.SceneUnloaded;
         GrenadeBreachDoors.Dispose();
         ResetSession();
@@ -90,14 +92,35 @@ public sealed class Plugin : BaseUnityPlugin
 
     private void Update()
     {
+        BackpackLayoutWarmup.Maintain();
+        if (!_consolidationChecked)
+        {
+            _consolidationChecked = true;
+            if (Singleton<GameWorld>.Instance is null && _harmony is not null) ConsolidatedHooks.Install(_harmony);
+        }
         var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
-        if (!ReferenceEquals(_world, world)) { ResetSession(); _world = world; }
-        if (world is null) return; // Menu storage still updates in LateUpdate.
-        EffectStatusHud.PrepareDuringSetup(world);
+        if (!ReferenceEquals(_world, world))
+        {
+            _raidPlayers.Clear();
+            ResetSession(); _world = world;
+            if (_harmony is not null) HumanStaminaRoute.Reconcile(_harmony);
+            if (_harmony is not null) HumanCachedValueRoute.Reconcile(_harmony);
+        }
+        QuestHitCopyPolicy.Prepare();
+        GrenadeInventoryPath.Prepare();
+        if (world is null) { CombatCodeWarmup.Maintain(); return; } // Menu storage still updates in LateUpdate.
         var trace = RaidUpdateTrace.Begin();
+        EffectStatusHud.PrepareDuringSetup(world);
+        trace.Phase("HUD setup");
+        NativeFrameTrace.Observe();
+        trace.Phase("diagnostic frame recorder");
+        InventoryCollectionSmoothing.Maintain(world);
+        trace.Phase("inventory incremental collection");
         var completed = false;
         try
         {
+            EquipmentPresence.Maintain(world, _raidPlayers);
+            trace.Phase("equipment roster");
             try { Headwear.Maintain(world); }
             catch (Exception e)
             {
@@ -122,11 +145,12 @@ public sealed class Plugin : BaseUnityPlugin
             trace.Phase("medical playback");
             ChestRigRuntime.Maintain(world, _raidPlayers);
             trace.Phase("chest rigs");
-            MeleeRuntime.Maintain(world);
+            MeleeRuntime.Maintain(world, _raidPlayers);
             trace.Phase("melee");
             BackpackRuntime.Maintain(world, _raidPlayers);
+            trace.Phase("backpack maintenance");
             BackpackVisitorExtraction.Maintain(world);
-            trace.Phase("backpacks");
+            trace.Phase("backpack extraction");
             EffectStatusHud.Maintain(world);
             trace.Phase("effect HUD and grenade charges");
             PlayerRefresh.Maintain(world);
@@ -135,7 +159,7 @@ public sealed class Plugin : BaseUnityPlugin
         }
         finally
         {
-            _raidPlayers.Clear();
+            _raidPlayers.EndPass();
             trace.Phase(completed ? "roster cleanup" : "interrupted update");
             trace.Finish();
         }
@@ -150,7 +174,12 @@ public sealed class Plugin : BaseUnityPlugin
         try
         {
             SessionCleanup.Begin();
+            SessionCleanup.Run(nameof(InventoryCollectionSmoothing), InventoryCollectionSmoothing.Reset);
+            NativeFrameTrace.Reset();
             PlayerRefresh.Reset();
+            EquipmentPresence.Reset();
+            ActorLookup.Reset();
+            CombatActorLookup.Reset();
             SessionCleanup.Run(nameof(Headwear), Headwear.Reset);
             SessionCleanup.Run(nameof(ServiceWindowPlayback), ServiceWindowPlayback.Reset);
             SessionCleanup.Run("earpiece suspend", EarpieceRuntime.Suspend);
@@ -166,17 +195,23 @@ public sealed class Plugin : BaseUnityPlugin
             SessionCleanup.Run(nameof(AdvancedLegendaryActions), AdvancedLegendaryActions.ResetSession);
             SessionCleanup.Run(nameof(LegendaryFireModePatch), LegendaryFireModePatch.ResetSession);
             SessionCleanup.Run(nameof(WeaponCombatState), WeaponCombatState.ResetSession);
+            SessionCleanup.Run(nameof(QuestHitCopyPolicy), QuestHitCopyPolicy.Reset);
             SessionCleanup.Run(nameof(LegendaryRuntime), LegendaryRuntime.ResetSession);
             SessionCleanup.Run(nameof(RarityResolver), RarityResolver.ResetSession);
             SessionCleanup.Run(nameof(ReusableGrenadeRuntime), ReusableGrenadeRuntime.Reset);
             SessionCleanup.Run(nameof(GrenadeSpikeTrace), GrenadeSpikeTrace.Reset);
+            DiagnosticPathTrace.Reset();
             SessionCleanup.Run(nameof(RaidUpdateTrace), RaidUpdateTrace.Reset);
             SessionCleanup.Run(nameof(WeaponPerformanceTrace), WeaponPerformanceTrace.Reset);
             SessionCleanup.Run(nameof(LegendaryGrenadeDrawAudio), LegendaryGrenadeDrawAudio.ResetSession);
             SessionCleanup.Run(nameof(LegendaryGrenadeSettings), LegendaryGrenadeSettings.Reset);
             SessionCleanup.Run(nameof(EarpieceRuntime), EarpieceRuntime.Reset);
         }
-        finally { PlayerRefresh.Resetting = false; }
+        finally
+        {
+            try { SessionCleanup.Complete(); }
+            finally { PlayerRefresh.Resetting = false; }
+        }
     }
 }
 

@@ -42,8 +42,10 @@ internal static class ChestRigRuntime
         internal bool WasVaulting, WasProne, Reloading, EmergencyReloading, Emergency, EmptyPrimary, DressingArmed, PatrolCharged, GlassReady, BreathArmed;
         internal string ReloadWeapon = "", LastWeapon = "", LastPrimary = "", ArmedPrimary = "";
         internal WeaponState Weapon(Weapon w) => Weapons.TryGetValue(w.Id, out var value) ? value : Weapons[w.Id] = new WeaponState();
-        internal bool Active(string key) => Ledger.Active(Key + ":" + key);
-        internal void Arm(string key, float seconds) => Ledger.Arm(Key + ":" + key, seconds);
+        private QualifiedTimerKeys? TimerKeys;
+        private string TimerKey(string key) => (TimerKeys ??= new QualifiedTimerKeys()).Read(Key, key);
+        internal bool Active(string key) => Ledger.Active(TimerKey(key));
+        internal void Arm(string key, float seconds) => Ledger.Arm(TimerKey(key), seconds);
         internal bool Ready => Ledger.Ready(Key);
         internal void Cooldown(float seconds) => Ledger.Cooldown(Key, seconds);
     }
@@ -63,6 +65,8 @@ internal static class ChestRigRuntime
         internal ShotScope? Previous;
         internal bool Hit, Finalized, FullAutoAtFire;
         internal readonly HashSet<Shot> Pending = new();
+        internal (string Weapon, int FireIndex)? ImpactKey;
+        internal HashSet<(string Weapon, int FireIndex)>? ExtraImpactKeys;
         internal float Created, FinishedAt = -1f;
     }
     internal static readonly Dictionary<Player, State> States = new();
@@ -78,12 +82,15 @@ internal static class ChestRigRuntime
     [ThreadStatic] internal static ShotScope? CurrentShot;
     private static GameWorld? World;
     private static float NextScan;
+    private static readonly RaidPlayerWorkset TickPlayers = new(static work => work.Add(States));
     internal static Item? Worn(Player? p) => p?.InventoryController?.Inventory?.Equipment?.GetSlot(EquipmentSlot.TacticalVest)?.ContainedItem;
     internal static State? Get(Player? p, bool observed = false)
     {
+        State? old = null;
+        if (p is not null && !States.TryGetValue(p, out old) && !EquipmentPresence.Has(p, GearKind.Rig)) return null;
         if (p is null || !observed && !PlayerRefresh.CanObserve(p)) { if (p is not null) Forget(p); return null; }
-        var rig = Worn(p);
-        if (States.TryGetValue(p, out var old) && old.Rig.Id == rig?.Id) return old;
+        var rig = EquipmentPresence.Worn(p, GearKind.Rig);
+        if (old is not null && (ReferenceEquals(old.Rig, rig) || old.Rig.Id == rig?.Id)) return old;
         if (old is not null) { States.Remove(p); ChestRigMedical.Unequip(old); }
         if (rig is null || RarityResolver.Resolve(rig) is not { } roll || roll.Definition.ChestRigEffect is null) {if(old is not null)Refresh(p);return null;}
         var recordKey = p.ProfileId;
@@ -100,7 +107,17 @@ internal static class ChestRigRuntime
         States.Remove(p);
         ChestRigMedical.Unequip(state);
     }
-    internal static void Reset() { States.Clear(); Names.Clear(); Records.Clear(); Shots.Clear(); ImpactScopes.Clear(); Volleys.Clear(); CurrentShot = null; World = null; NextScan = 0f; ChestRigMedical.Reset(); ChestRigInventory.Reset(); ChestRigCombat.Reset(); }
+    internal static void Reset()
+    {
+        TickPlayers.Clear(); States.Clear(); Names.Clear(); Records.Clear(); Shots.Clear(); ImpactScopes.Clear(); Volleys.Clear();
+        FinishedVolleys.Clear(); StalePlayers.Clear(); CurrentShot = null; World = null; NextScan = 0f;
+        // Native operations own their dying animators; live operation-end hooks
+        // still restore speeds. Raid teardown only discards the old leases.
+        ChestRigUtilitySpeedPatch.Reset(); ChestRigBoltCyclePatch.Reset();
+        SessionCleanup.Run(nameof(ChestRigMedical), ChestRigMedical.Reset);
+        SessionCleanup.Run(nameof(ChestRigInventory), ChestRigInventory.Reset);
+        SessionCleanup.Run(nameof(ChestRigCombat), ChestRigCombat.Reset);
+    }
     internal static void Maintain(GameWorld? world, RaidPlayerSnapshot snapshot)
     {
         if (World != world) { Reset(); World = world; }
@@ -119,6 +136,7 @@ internal static class ChestRigRuntime
         if (world is null || Time.time < NextScan) return;
         NextScan = Time.time + .05f;
         ChestRigCombat.Maintain();
+        if (States.Count == 0 && !EquipmentPresence.AnyRig) return;
         snapshot.Capture(world);
         try
         {
@@ -127,7 +145,7 @@ internal static class ChestRigRuntime
             foreach (var old in StalePlayers) Forget(old);
         }
         finally { StalePlayers.Clear(); }
-        foreach (var p in snapshot)
+        foreach (var p in TickPlayers.Select(snapshot, GearKind.Rig, humansOnly: true))
         {
             var s = Get(p);
             if (s is null) continue;
@@ -174,6 +192,7 @@ internal static class ChestRigRuntime
     private static bool Moving(Player p) => p.InputDirection.sqrMagnitude > .0001f;
     private static void TickSignature(State s, Player p, float dt)
     {
+        if (!ActorCapabilities.IsHuman(p)) return;
         switch (s.Key)
         {
             case "TR02-2":
@@ -183,6 +202,9 @@ internal static class ChestRigRuntime
                 break;
             case "TR24-1":
             case "AR08-2":
+                // Native AI initialization omits the vaulting component. Mods
+                // that supply one automatically retain the signature checks.
+                if (!ActorCapabilities.PollVaulting(p)) { s.WasVaulting = false; break; }
                 var vaulting = p.MovementContext.PlayerAnimatorGetIsVaulting();
                 if (s.WasVaulting && !vaulting)
                 {
@@ -207,7 +229,7 @@ internal static class ChestRigRuntime
             case "TR29-2":
                 const string spent = "TR29-2:breathSpent";
                 if (p.HandsController?.IsAiming == true &&
-                    (Native.Get(p.Physical, "HoldingBreath") is true || Native.Get(p.Physical, "HoldBreath") is true))
+                    p.Physical.HoldingBreath)
                     s.BreathSeconds += dt;
                 else { s.BreathSeconds = 0f; if (!s.BreathArmed) s.Ledger.Checklist.Remove(spent); }
                 if (s.BreathSeconds >= 2f && !s.Ledger.Checklist.ContainsKey(spent)) s.BreathArmed = true;
@@ -222,6 +244,7 @@ internal static class ChestRigRuntime
                 }
                 break;
             case "TR26-2":
+                if (!ActorCapabilities.UsesStamina(p)) break;
                 var position = p.Position;
                 var motion = position - s.Previous;
                 s.Previous = position;
@@ -231,7 +254,7 @@ internal static class ChestRigRuntime
                 if (s.WalkDistance >= 30f) s.PatrolCharged = true;
                 break;
             case "AR22-2":
-                if (p.Physical.Stamina.Current <= .01f && s.Ready) { s.Arm("stamina", 20f); s.Cooldown(30f); }
+                if (ActorCapabilities.UsesStamina(p) && p.Physical.Stamina.Current <= .01f && s.Ready) { s.Arm("stamina", 20f); s.Cooldown(30f); }
                 break;
         }
     }
@@ -263,13 +286,31 @@ internal static class ChestRigRuntime
     internal static float Health(Player p, EBodyPart part = EBodyPart.Common)
     { var h = p.ActiveHealthController.GetBodyPartHealth(part, false); return h.Maximum > 0 ? h.Current / h.Maximum : 1f; }
     internal static void RestoreArms(Player p, float fraction)
-    { var st = p.Physical.HandsStamina; st.UpdateStamina(Math.Min(st.TotalCapacity, st.Current + st.TotalCapacity * fraction)); }
-    internal struct StatFactors { internal float Recoil, Ergonomics, Accuracy, FireRate, Aim, Hip, Sway, Penetration, Velocity, FlatErgonomics; }
+    { if (!ActorCapabilities.UsesStamina(p)) return; var st = p.Physical.HandsStamina; st.UpdateStamina(Math.Min(st.TotalCapacity, st.Current + st.TotalCapacity * fraction)); }
+    internal struct StatFactors : IEquatable<StatFactors>
+    {
+        internal float Recoil, Ergonomics, Accuracy, FireRate, Aim, Hip, Sway, Penetration, Velocity, FlatErgonomics;
+        // ValueType.Equals boxes both structs and may reflect over every field
+        // on Mono. Keep float.Equals semantics (including NaN and signed zero).
+        public bool Equals(StatFactors other) => Recoil.Equals(other.Recoil) && Ergonomics.Equals(other.Ergonomics) &&
+            Accuracy.Equals(other.Accuracy) && FireRate.Equals(other.FireRate) && Aim.Equals(other.Aim) &&
+            Hip.Equals(other.Hip) && Sway.Equals(other.Sway) && Penetration.Equals(other.Penetration) &&
+            Velocity.Equals(other.Velocity) && FlatErgonomics.Equals(other.FlatErgonomics);
+        public override bool Equals(object? other) => other is StatFactors value && Equals(value);
+        public override int GetHashCode() => Recoil.GetHashCode() ^ Ergonomics.GetHashCode() ^ Accuracy.GetHashCode() ^
+            FireRate.GetHashCode() ^ Aim.GetHashCode() ^ Hip.GetHashCode() ^ Sway.GetHashCode() ^ Penetration.GetHashCode() ^
+            Velocity.GetHashCode() ^ FlatErgonomics.GetHashCode();
+    }
     internal static StatFactors Stats(State s, Weapon w)
     {
         if (CurrentShot is { } current && current.Weapon == w) return ReadStats(s, w, current.Bonuses);
         if (WeaponStatReadBatch.TryRigStats(w, s, out var cached)) return cached;
-        var stats = ReadStats(s, w, Preview(s, w, null));
+        // Damage-only previews do not contribute to firearm stat getters.
+        // Keep the real shot path above intact, including its committed state.
+        var preview = s.Key is "TR21-1" or "TR03-1" or "TR11-2" or "TR24-1" or "TR11-1" or "TR27-2" or
+            "TR31-2" or "TR32-1" or "AR07-2" or "AR10-1" or "AR17-2" or "AR28-2"
+            ? Preview(s, w, null) : ShotBonuses.Normal;
+        var stats = ReadStats(s, w, preview);
         WeaponStatReadBatch.RememberRigStats(w, s, stats);
         return stats;
     }
@@ -277,17 +318,20 @@ internal static class ChestRigRuntime
     {
         var p = s.Player;
         var result = new StatFactors { Recoil = s.Roll.ChestRig.Recoil * shot.Recoil, Ergonomics = s.Roll.ChestRig.Ergonomics, Accuracy = shot.Accuracy, FireRate = shot.FireRate, Aim = s.Roll.ChestRig.Aim, Hip = shot.Hip, Sway = 1f, Penetration = shot.Penetration, Velocity = shot.Velocity };
-        if (s.Key == "TR08-2" && s.StationarySeconds >= 3f) result.Recoil *= .7f;
-        if (s.Key == "TR16-2") { if (Magnified(p)) result.Sway *= .5f; }
-        if (s.Key == "TR18-1" && LegendaryRuntime.Capacity(w) >= 30 && LegendaryFireModePatch.LogicalMode(w) == "fullauto") result.Recoil *= .75f;
-        if (s.Key == "TR29-1" && s.GlassReady && Magnified(p)) { result.Accuracy *= .6f; result.Sway *= .4f; }
-        if (s.Key == "AR01-1" && s.Active("aim")) result.Aim *= 1.4f;
-        if(s.Key=="AR08-2"&&s.Active("ergo"))result.FlatErgonomics=15f;
-        if(s.Key=="TR06-1"&&s.Active("clutch"))result.Ergonomics*=1.2f;
-        if (Knight(s)) result.Ergonomics *= 1.1f;
-        if (s.Key == "AR16-1" && p.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem is null) result.Aim *= 1.6f;
-        if (s.Key == "AR24-2" && Health(p,EBodyPart.Chest) < .35f) result.Aim *= 1.4f;
-        if (s.Key == "AR19-2" && s.Active("breach")) result.Hip *= .5f;
+        switch (s.Key)
+        {
+            case "TR08-2" when s.StationarySeconds >= 3f: result.Recoil *= .7f; break;
+            case "TR16-2" when Magnified(p): result.Sway *= .5f; break;
+            case "TR18-1" when LegendaryRuntime.Capacity(w) >= 30 && LegendaryFireModePatch.LogicalMode(w) == "fullauto": result.Recoil *= .75f; break;
+            case "TR29-1" when s.GlassReady && Magnified(p): result.Accuracy *= .6f; result.Sway *= .4f; break;
+            case "AR01-1" when s.Active("aim"): result.Aim *= 1.4f; break;
+            case "AR08-2" when s.Active("ergo"): result.FlatErgonomics = 15f; break;
+            case "TR06-1" when s.Active("clutch"): result.Ergonomics *= 1.2f; break;
+            case "AR15-1" when Knight(s): result.Ergonomics *= 1.1f; break;
+            case "AR16-1" when p.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem is null: result.Aim *= 1.6f; break;
+            case "AR24-2" when Health(p, EBodyPart.Chest) < .35f: result.Aim *= 1.4f; break;
+            case "AR19-2" when s.Active("breach"): result.Hip *= .5f; break;
+        }
         return result;
     }
     internal static ShotBonuses Preview(State s, Weapon w, Ammo? ammo, int? remainingOverride = null)
@@ -344,12 +388,14 @@ internal static class ChestRigRuntime
         var p = s.Player;
         var ws = s.Weapon(w);
         ObserveMode(s,w);
-        var mode = LegendaryFireModePatch.LogicalMode(w);
+        var mode = ws.Mode;
         int? nativeRemaining = null;
         int Remaining() => nativeRemaining ??= LegendaryRuntime.RemainingAmmo(w);
         // Native FirearmController.Shot has already consumed this cartridge. Snapshot the
         // pre-shot ammunition window before previewing last-round conditions.
-        var scope = new ShotScope { Created=Time.time, State=s, Weapon=w, Ammo=ammo, FullAutoAtFire=mode=="fullauto", Generation=ws.ReloadGeneration, Ordinal=ws.Shots+1, Previous=CurrentShot, Bonuses=Preview(s,w,ammo,remainingOverride??Remaining()+1) };
+        var needsWindow = s.Key is "TR22-2" or "TR31-2" or "TR32-1";
+        var window = remainingOverride ?? (needsWindow ? Remaining()+1 : (int?)null);
+        var scope = new ShotScope { Created=Time.time, State=s, Weapon=w, Ammo=ammo, FullAutoAtFire=mode=="fullauto", Generation=ws.ReloadGeneration, Ordinal=ws.Shots+1, Previous=CurrentShot, Bonuses=Preview(s,w,ammo,window) };
         if (s.Key == "TR22-2" && Pistol(w) && Remaining() == 0) scope.Bonuses.Damage = 2f;
         CurrentShot = scope; ws.Shots++; ws.Outcomes[scope.Ordinal]=null;
         if (mode == "burst") ws.BurstShots++;
@@ -364,7 +410,7 @@ internal static class ChestRigRuntime
         if(s.Key=="TR29-2"&&s.BreathArmed){s.BreathArmed=false;s.Ledger.Checklist[s.Key+":breathSpent"]=1;}
         if(s.Key=="AR03-2")s.HitDamage=1f;
         if(s.Key=="TR25-1"&&ws.Shots==20) ArmReload(s,1.8f);
-        if(s.Key=="TR18-2"&&w.WeapClass=="machinegun"&&ws.Shots%20==0&&s.Ready){BackpackRuntime.RestoreLeg(p!, .3f);s.Cooldown(5f);}
+        if(s.Key=="TR18-2"&&ActorCapabilities.UsesStamina(p)&&w.WeapClass=="machinegun"&&ws.Shots%20==0&&s.Ready){BackpackRuntime.RestoreLeg(p!, .3f);s.Cooldown(5f);}
         if(s.Key=="TR10-1"&&Primary(p!,w)&&Remaining()==0)s.EmptyPrimary=true;
         if(s.Key=="TR22-2"&&Pistol(w)&&Remaining()==0)ArmReload(s,1.75f,w);
         return scope;
@@ -373,9 +419,20 @@ internal static class ChestRigRuntime
     internal static bool TryShot(Shot shot,out ShotScope scope)=>Shots.TryGetValue(shot,out scope!);
     internal static ShotScope? FindScope(Weapon w,int fireIndex)=>ImpactScopes.TryGetValue((w.Id,fireIndex),out var scope)?scope:null;
     internal static void Associate(Shot shot)
-    { if(CurrentShot is { } scope){Shots[shot]=scope;ImpactScopes[(scope.Weapon.Id,shot.FireIndex)]=scope;scope.Pending.Add(shot);scope.FinishedAt=-1;Volleys.Add(scope);} }
+    { if(CurrentShot is { } scope) TrackShot(shot, scope); }
     internal static void AssociateSibling(Shot shot,Shot parent)
-    { if(Shots.TryGetValue(parent,out var scope)){Shots[shot]=scope;ImpactScopes[(scope.Weapon.Id,shot.FireIndex)]=scope;scope.Pending.Add(shot);scope.FinishedAt=-1;Volleys.Add(scope);} }
+    { if(Shots.TryGetValue(parent,out var scope)) TrackShot(shot, scope); }
+    private static void TrackShot(Shot shot, ShotScope scope)
+    {
+        // Keep reverse keys with the volley: finishing one cartridge must not
+        // scan every unrelated projectile and impact record in the raid.
+        Shots[shot] = scope;
+        var key = (scope.Weapon.Id, shot.FireIndex);
+        ImpactScopes[key] = scope;
+        if (scope.ImpactKey is not { } first) scope.ImpactKey = key;
+        else if (key != first) (scope.ExtraImpactKeys ??= new()).Add(key);
+        scope.Pending.Add(shot); scope.FinishedAt = -1; Volleys.Add(scope);
+    }
     internal static void BulletFinished(Shot shot)
     { if(!Shots.TryGetValue(shot,out var s))return; Shots.Remove(shot);s.Pending.Remove(shot);if(s.Pending.Count==0)s.FinishedAt=Time.time; }
     internal static void FleshHit(ShotScope v,Player target,EBodyPart part,bool killed)
@@ -387,22 +444,27 @@ internal static class ChestRigRuntime
         {
             v.Hit=true;
             ws.Outcomes[v.Ordinal]=s.Key!="AR10-1"||v.FullAutoAtFire;FlushOutcomes(s,w);
-            if(s.Key=="AR11-2"&&ChestRigCombat.BlindedBy(target,p))RestoreArms(p,.1f);
+            if(s.Key=="AR11-2"&&ActorCapabilities.UsesStamina(p)&&ChestRigCombat.BlindedBy(target,p))RestoreArms(p,.1f);
             if(s.Key=="AR17-2"&&v.Ordinal<=10&&s.Emergency) { /* recoil is snapshotted at fire time */ }
             if(s.Key=="TR24-2"&&Vector3.Distance(p.Position,target.Position)>=75){ArmReload(s,1.6f);s.CycleCharge=1.75f;}
         }
         if(!killed)return;
-        if(s.Key=="TR16-1"&&w.Mods.Any(m=>m is SilencerItemClass)&&s.Ready){RestoreArms(p,.3f);BackpackRuntime.RestoreLeg(p,.3f);s.Cooldown(10f);}
-        if(s.Key=="TR28-2"&&w.WeapClass=="shotgun"){s.Arm("medical",15f);if(s.Ready){BackpackRuntime.RestoreLeg(p,.25f);s.Cooldown(10f);}}
+        if(s.Key=="TR16-1"&&ActorCapabilities.UsesStamina(p)&&w.Mods.Any(m=>m is SilencerItemClass)&&s.Ready){RestoreArms(p,.3f);BackpackRuntime.RestoreLeg(p,.3f);s.Cooldown(10f);}
+        if(s.Key=="TR28-2"&&ActorCapabilities.IsHuman(p)&&w.WeapClass=="shotgun"){s.Arm("medical",15f);if(s.Ready){BackpackRuntime.RestoreLeg(p,.25f);s.Cooldown(10f);}}
     }
     private static void FinishVolley(ShotScope v)
     {
         if(v.Finalized)return;v.Finalized=true;Volleys.Remove(v);
         var ws=v.State.Weapon(v.Weapon);
         if(!v.Hit&&v.Generation==ws.ReloadGeneration){ws.Outcomes[v.Ordinal]=false;FlushOutcomes(v.State,v.Weapon);}
-        foreach(var shot in Shots.Where(kv=>kv.Value==v).Select(kv=>kv.Key).ToArray())Shots.Remove(shot);
-        foreach(var key in ImpactScopes.Where(kv=>kv.Value==v).Select(kv=>kv.Key).ToArray())ImpactScopes.Remove(key);
+        foreach (var shot in v.Pending)
+            if (Shots.TryGetValue(shot, out var owner) && ReferenceEquals(owner, v)) Shots.Remove(shot);
+        v.Pending.Clear();
+        if (v.ImpactKey is { } key) RemoveImpact(key, v);
+        if (v.ExtraImpactKeys is { } extra) { foreach (var other in extra) RemoveImpact(other, v); extra.Clear(); }
     }
+    private static void RemoveImpact((string Weapon, int FireIndex) key, ShotScope scope)
+    { if (ImpactScopes.TryGetValue(key, out var owner) && ReferenceEquals(owner, scope)) ImpactScopes.Remove(key); }
     private static void FlushOutcomes(State s,Weapon w)
     {
         var ws=s.Weapon(w);
@@ -434,8 +496,8 @@ internal static class ChestRigRuntime
         if(bit==2)
         {
             if(s.Key=="TR04-2"&&!BackpackRuntime.Daytime()&&s.Ready){ArmReload(s,1.75f);s.Cooldown(30f);}
-            if(s.Key=="TR14-2"&&s.Ready){RestoreArms(p,.4f);s.Cooldown(20f);}
-            if(s.Key=="TR26-2"&&s.PatrolCharged){BackpackRuntime.RestoreLeg(p,.5f);s.PatrolCharged=false;s.WalkDistance=0;EffectStatusModel.Notify(p.ProfileId,"rig:"+s.Key,s.Roll.Definition.ShortName,Time.time,"Leg Stamina recovery");}
+            if(s.Key=="TR14-2"&&ActorCapabilities.UsesStamina(p)&&s.Ready){RestoreArms(p,.4f);s.Cooldown(20f);}
+            if(s.Key=="TR26-2"&&ActorCapabilities.UsesStamina(p)&&s.PatrolCharged){BackpackRuntime.RestoreLeg(p,.5f);s.PatrolCharged=false;s.WalkDistance=0;EffectStatusModel.Notify(p.ProfileId,"rig:"+s.Key,s.Roll.Definition.ShortName,Time.time,"Leg Stamina recovery");}
         }
         Refresh(p);
     }
@@ -475,6 +537,7 @@ internal static class ChestRigRuntime
     }
     internal static float Value(Player p,string kind,bool observed=false)
     {
+        if (!ActorCapabilities.UsesStamina(p)) return 1f;
         var s=Get(p,observed);if(s is null)return 1f;
         if(kind=="aimCost"&&s.Key=="AR24-2"&&Health(p,EBodyPart.Chest)<.35f&&p.HandsController is Player.FirearmController{IsTriggerPressed:true})return 0f;
         if(kind=="aimCost")return s.Roll.ChestRig.AimCost*(s.Key=="TR08-2"&&s.StationarySeconds>=3f?.5f:1f)*(s.Key=="AR22-2"&&s.Active("stamina")?.5f:1f);
@@ -485,17 +548,22 @@ internal static class ChestRigRuntime
     }
     internal static float Movement(Player p)
     {
-        var s=Get(p);if(s is null)return 1f;var factor=s.Roll.ChestRig.Movement;var sprint=p.MovementContext.IsSprintEnabled;var aim=p.HandsController?.IsAiming==true;
-        if(Knight(s))factor*=1.1f;
-        if(s.Key=="TR02-2"&&s.Active("workout")&&sprint)factor*=1.25f;
-        if(s.Key=="TR13-1"&&ThreeFirearms(p))factor*=1.1f;
-        if(s.Key=="TR07-1"&&s.Active("grenade")&&sprint)factor*=1.2f;
-        if(s.Key=="TR22-1"&&s.Active("loot")&&sprint)factor*=1.3f;
-        if(s.Key=="TR33-1"&&aim&&AdvancedMeleeRuntime.Crouched(p))factor*=1.2f;
-        if(s.Key=="AR15-2"&&s.Active("door")&&aim)factor*=1.35f;
-        if(s.Key=="AR16-1"&&sprint&&p.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem is null)factor*=1.1f;
-        if(s.Key=="AR23-2"&&s.Active("escape")&&sprint)factor*=1.3f;
-        if(s.Key=="AR26-2"&&Health(p)<.5f)factor*=.75f;
+        var s=Get(p);if(s is null)return 1f;var factor=s.Roll.ChestRig.Movement;
+        // Only sample the inputs consumed by this signature. Rolled movement
+        // remains live; timers, posture, health and equipment are never delayed.
+        switch (s.Key)
+        {
+            case "AR15-1" when Knight(s): factor *= 1.1f; break;
+            case "TR02-2" when s.Active("workout") && p.MovementContext.IsSprintEnabled: factor *= 1.25f; break;
+            case "TR13-1" when ThreeFirearms(p): factor *= 1.1f; break;
+            case "TR07-1" when s.Active("grenade") && p.MovementContext.IsSprintEnabled: factor *= 1.2f; break;
+            case "TR22-1" when s.Active("loot") && p.MovementContext.IsSprintEnabled: factor *= 1.3f; break;
+            case "TR33-1" when p.HandsController?.IsAiming == true && AdvancedMeleeRuntime.Crouched(p): factor *= 1.2f; break;
+            case "AR15-2" when s.Active("door") && p.HandsController?.IsAiming == true: factor *= 1.35f; break;
+            case "AR16-1" when p.MovementContext.IsSprintEnabled && p.InventoryController.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem is null: factor *= 1.1f; break;
+            case "AR23-2" when s.Active("escape") && p.MovementContext.IsSprintEnabled: factor *= 1.3f; break;
+            case "AR26-2" when Health(p) < .5f: factor *= .75f; break;
+        }
         return factor;
     }
     internal static float JumpHeight(Player p)
@@ -506,6 +574,7 @@ internal static class ChestRigRuntime
     }
     internal static float Noise(Player p,string kind)
     {
+        if(!ActorCapabilities.IsHuman(p))return 1f;
         var s=Get(p);if(s is null)return 1f;
         if(s.Key=="TR19-2")return .5f;
         if(s.Key=="TR03-1"&&p.HandsController?.Item is Weapon w&&s.Weapon(w).Chamber&&kind is "movement" or "item" or "inventory")return kind=="movement"&&p.MovementContext.IsSprintEnabled?1f:.6f;
@@ -519,14 +588,15 @@ internal static class ChestRigRuntime
         if(player?.HealthController?.IsAlive!=true)yield break;
         var s=Get(player);
         if(Records.TryGetValue(player.ProfileId,out var ledger))
-            foreach(var pair in ledger.Until.Where(kv=>kv.Key.StartsWith("cd:",StringComparison.Ordinal)&&kv.Value>Time.time))
+            foreach(var pair in ledger.Until)
             {
+                if (!pair.Key.StartsWith("cd:", StringComparison.Ordinal) || !(pair.Value > Time.time)) continue;
                 var key=pair.Key.Substring(3);
-                if(s?.Key!=key&&Names.TryGetValue(key,out var name))
+                if(key!="TR17-1"&&s?.Key!=key&&Names.TryGetValue(key,out var name))
                     yield return new EffectStatusModel.Status("rig:"+key,name,false,0f,pair.Value-Time.time);
             }
-        if(s is null)yield break;
-        var remaining=s.Ledger.Until.Where(kv=>kv.Key.StartsWith(s.Key+":",StringComparison.Ordinal)&&kv.Value>Time.time).Select(kv=>kv.Value-Time.time).Where(v=>v<100000f).DefaultIfEmpty(0f).Max();
+        if(s is null||s.Key=="TR17-1")yield break;
+        var remaining=StatusRemaining(s.Ledger.Until, s.Key, Time.time);
         var cooldown=EffectStatusModel.Remaining(s.Ledger.Until,"cd:"+s.Key,Time.time);
         var held=s.Player.HandsController?.Item as Weapon;
         var ws=held is null?null:s.Weapon(held);
@@ -555,5 +625,19 @@ internal static class ChestRigRuntime
         if(s.Key=="AR11-2")
         {var flash=ChestRigCombat.FlashRemaining(player);remaining=Math.Max(remaining,flash);active|=flash>0;}
         if(active||cooldown>0)yield return new EffectStatusModel.Status("rig:"+s.Key,s.Roll.Definition.ShortName,active,remaining,cooldown,charges>0?charges+" charges":s.CycleCharge>1?"Next bolt cycle ready":s.HitDamage>1?"Next shot ready":"");
+    }
+    internal static float StatusRemaining(Dictionary<string, float> timers, string key, float now)
+    {
+        var result = 0f;
+        foreach (var pair in timers)
+        {
+            // Compare the delimiter in place: no per-entry key concatenation,
+            // LINQ iterator chain or captured state on every HUD refresh.
+            if (pair.Key.Length <= key.Length || pair.Key[key.Length] != ':' ||
+                !pair.Key.StartsWith(key, StringComparison.Ordinal) || !(pair.Value > now)) continue;
+            var remaining = pair.Value - now;
+            if (remaining < 100000f && remaining > result) result = remaining;
+        }
+        return result;
     }
 }

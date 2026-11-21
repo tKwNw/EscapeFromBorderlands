@@ -163,8 +163,11 @@ internal static class LegendaryHollywoodFx
 
     internal static void Reset()
     {
-        foreach (var lease in Leases.Values) Restore(lease);
-        Leases.Clear(); Owners.Clear(); Reports.Clear(); Failed = false;
+        try
+        {
+            foreach (var lease in Leases.Values.ToArray()) SessionCleanup.Run("HollywoodFX lease", lease, static value => Restore(value));
+        }
+        finally { Leases.Clear(); Owners.Clear(); Reports.Clear(); Failed = false; }
     }
 }
 [HarmonyPatch]

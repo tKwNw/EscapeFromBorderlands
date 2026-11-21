@@ -66,7 +66,7 @@ internal static class BackpackItemUseSoundPatch
 [HarmonyPatch(typeof(Player), "method_46")]
 internal static class BackpackSearchSourcePatch
 {
-    private static void Postfix(Player __instance, BetterSource __result) { if (__result != null) BackpackAudio.Searches[__result] = __instance; }
+    private static void Postfix(Player __instance, BetterSource __result) { if (ActorCapabilities.IsHuman(__instance) && __result != null) BackpackAudio.Searches[__result] = __instance; }
 }
 [HarmonyPatch(typeof(BetterSource), "SetBaseVolume")]
 internal static class BackpackSearchVolumePatch

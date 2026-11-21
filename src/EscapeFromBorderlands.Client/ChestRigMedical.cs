@@ -27,7 +27,9 @@ internal static class ChestRigMedical
     { foreach(var effect in Uses.Where(kv=>kv.Value.State==state).Select(kv=>kv.Key).ToArray())Uses.Remove(effect);foreach(var key in state.Ledger.Until.Keys.Where(k=>k.StartsWith(state.Key+":",StringComparison.Ordinal)).ToArray()) state.Ledger.Until.Remove(key); }
     internal static void Begin(object effect)
     {
-        var player=BackpackRuntime.Actor(Native.Get(effect,"HealthController"));var state=ChestRigRuntime.Get(player);
+        var player=BackpackRuntime.Actor(Native.Get(effect,"HealthController"));
+        if(!ActorCapabilities.IsHuman(player))return;
+        var state=ChestRigRuntime.Get(player);
         if(state is null||Native.Get(effect,"MedItem") is not Item item)return;
         var part=Native.Get(effect,"BodyPart") is EBodyPart body?body:EBodyPart.Chest;
         var u=new Use{State=state,Item=item,Part=part,Resource=Native.Component<MedKitComponent>(item)?.HpResource??0f,Hp=player!.ActiveHealthController.GetBodyPartHealth(part,false).Current};
@@ -65,9 +67,10 @@ internal static class ChestRigMedical
         throw new InvalidOperationException("The surgical kit's native HP penalty was unavailable.");
     }
     internal static void Surgery(ActiveHealthController h,EBodyPart part,float penalty)
-    { foreach(var u in Uses.Values.Where(u=>u.State.Player==h.Player&&u.Part==part))u.SurgeryPenalty=penalty; }
+    { if(!ActorCapabilities.IsHuman(h.Player))return;foreach(var u in Uses.Values.Where(u=>u.State.Player==h.Player&&u.Part==part))u.SurgeryPenalty=penalty; }
     internal static void Maintain(ChestRigRuntime.State s,float dt)
     {
+        if(!ActorCapabilities.IsHuman(s.Player))return;
         var h=s.Player.ActiveHealthController;
         if(s.Key=="AR03-1"&&s.Active("triageHeal"))Heal(h,5f*dt);
         if(s.Key!="AR05-2")return;
@@ -106,7 +109,7 @@ internal static class ChestRigMedical
             count = remaining;
         }
     }
-    internal static bool HasDressing(ChestRigRuntime.State s)=>ChestRigInventory.Carried(s).Any(i=>Supply(i,false)||Supply(i,true));
+    internal static bool HasDressing(ChestRigRuntime.State s)=>ActorCapabilities.IsHuman(s.Player)&&ChestRigInventory.Carried(s).Any(i=>Supply(i,false)||Supply(i,true));
     private static bool Supply(Item item,bool heavy)
     {
         var med=Native.Component<MedKitComponent>(item);var effects=Native.Component<HealthEffectsComponent>(item);
@@ -115,6 +118,7 @@ internal static class ChestRigMedical
     }
     internal static void NewBleed(ActiveHealthController h,bool heavy,EBodyPart part)
     {
+        if(!ActorCapabilities.IsHuman(h.Player))return;
         var s=ChestRigRuntime.Get(h.Player);if(s?.Key!="AR24-1"||!s.DressingArmed)return;
         var effect=h.GetAllEffects().FirstOrDefault(e=>e.Existing&&e.BodyPart==part&&e.GetType().Name==(heavy?"HeavyBleeding":"LightBleeding"));
         var item=ChestRigInventory.Carried(s).FirstOrDefault(i=>Supply(i,heavy));
@@ -124,6 +128,7 @@ internal static class ChestRigMedical
     }
     internal static bool PauseBleed(ActiveHealthController h,EBodyPart part,EDamageType type)
     {
+        if(!ActorCapabilities.IsHuman(h.Player))return false;
         var s=ChestRigRuntime.Get(h.Player);return s?.Key=="AR04-2"&&type is EDamageType.LightBleeding or EDamageType.HeavyBleeding&&Uses.Values.Any(u=>u.State==s&&u.Part==part&&Native.Component<HealthEffectsComponent>(u.Item)?.DamageEffects.ContainsKey(type==EDamageType.HeavyBleeding?EDamageEffectType.HeavyBleeding:EDamageEffectType.LightBleeding)==true);
     }
     internal static bool Combat(EDamageType type)=>type is EDamageType.Bullet or EDamageType.Explosion or EDamageType.GrenadeFragment or EDamageType.Melee;
@@ -143,6 +148,7 @@ internal static class ChestRigMedical
     }
     internal static float UseSpeed(Player p,Item? item=null)
     {
+        if(!ActorCapabilities.IsHuman(p))return 1f;
         var s=ChestRigRuntime.Get(p);
         if(s?.Key=="TR28-2"&&s.Active("medical"))return 1.5f;
         item??=(p.HandsController as Player.MedsController)?.Item;

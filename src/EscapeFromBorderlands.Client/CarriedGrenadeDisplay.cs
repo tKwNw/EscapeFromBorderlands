@@ -95,6 +95,10 @@ internal static class CarriedGrenadeDisplay
                     count++;
                 }
             if (count < Entries.Count) Entries.RemoveRange(count, Entries.Count - count);
+            // Native container/grenade events still invalidate immediately.
+            // An empty display needs only a slow safety check for mods which
+            // mutate inventory silently. Positive charge displays retain 1 Hz.
+            if (count == 0) ReconcileAt = now + 5f;
         }
         catch { Dirty = true; throw; }
         finally { Seen.Clear(); }
