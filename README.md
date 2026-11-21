@@ -26,7 +26,6 @@ For a fresh installation, close the game, launcher and server, then extract the 
 - Improved container navigation, quest-hit handling, grenade release and hit-impact processing.
 - Strengthened cleanup between raids and prevented delayed actions from carrying into a later raid.
 - Fixed grenade icon scaling, NVG state handling and passive effects remaining permanently visible as active statuses. The SPT 4.0.13 build also includes an optic exception safeguard.
-- Preserved Legendary IDs, signatures, rolls, settings and integrations. The collection remains at **1,614 Legendary designs**.
 
 ## Legendary equipment
 
