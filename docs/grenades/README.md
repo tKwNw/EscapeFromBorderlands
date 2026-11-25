@@ -1,6 +1,6 @@
 # Legendary grenades — Escape From Borderlands
 
-**SPT 4.1.6 · EFB 0.41.1**
+**SPT 4.1.6 · EFB 0.51.0**
 
 **37 reusable Legendary grenade designs.** Each copy has separate charges, random bonuses and a recharge timer. The table shows default charges and seconds to restore 1 charge; recharge times can be changed in the [settings](../configuration.md).
 
@@ -56,7 +56,7 @@
 | --- | ---: | ---: | --- |
 | Danger Zone | 3 | 180 | Blast damage is increased by 75% against targets within 3 metres of the detonation. |
 | Lunch Bell | 3 | 180 | After a successful throw, gain 40% reload speed for 5 seconds. |
-| Semtax | 3 | 180 | Sticks to the 1st object it hits, including enemies and scenery, and remains attached until its fuse expires. |
+| Semtax | 3 | 180 | Sticks to the first non-grenade object it hits, including enemies and scenery, and remains attached until its fuse expires. Cannot stick to other grenades. |
 | Street Sweeper | 3 | 180 | Every detonation creates 75% more fragments. |
 
 ## RGN hand grenade

@@ -348,7 +348,7 @@ internal static partial class Headwear
     internal static bool Amplifies(MeleeRuntime.HeldState held) => Baton(held.Item.StringTemplateId) && Is(held.Player, "HW083-2");
     internal static Player? Owner(Weapon weapon) => TemporaryOwner(weapon) ?? BackpackNative.WeaponOwner(weapon);
     private static bool AudioStat(HatStat stat) => stat is HatStat.Noise or HatStat.Hearing or HatStat.ExternalSteps or HatStat.Gunshot;
-    internal static float Factor(Player? p, HatStat stat) => AudioStat(stat) && !ActorCapabilities.IsHuman(p) ? 1f : Factor(Get(p), stat);
+    internal static float Factor(Player? p, HatStat stat) => AudioStat(stat) && !ActorCapabilities.IsHuman(p) ? 1f : Factor(Get(p), stat) * Eyewear.Factor(p, stat);
     internal static float Factor(State? s, HatStat stat)
     {
         if (s is null || AudioStat(stat) && !ActorCapabilities.IsHuman(s.Player)) return 1;

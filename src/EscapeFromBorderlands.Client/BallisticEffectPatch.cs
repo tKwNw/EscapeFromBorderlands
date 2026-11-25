@@ -24,10 +24,13 @@ internal static class BallisticEffectPatch
         var roll = LegendaryRuntime.ResolveShotRoll(weapon);
         // Ordinary bullets have no EFB work when no cartridge or fragment
         // context can affect them. Launcher and grenade payload paths survive.
-        if (roll is null && ChestRigRuntime.CurrentShot is null && HatCartridge.Current is null &&
+        if (roll is null && ChestRigRuntime.CurrentShot is null && HatCartridge.Current is null && Eyewear.CurrentShot is null &&
             EarpieceRuntime.CurrentShot is null && !ChestRigCombat.HasFragmentFactors &&
             !(LegendaryGrenadeEffects.HasPayloads && LegendaryGrenadeEffects.Try(weapon, out _)) &&
             __result.Weapon is not Launcher) return;
+        var directionScope = Eyewear.BeginProjectileDirection(__instance, __result);
+        try
+        {
         var application = roll is not null && weapon is Weapon firearm
             ? LegendaryRuntime.RegisterShot(firearm, ammo, player, fireIndex, roll.Definition)
             : EffectApplication.Empty;
@@ -60,7 +63,10 @@ internal static class BallisticEffectPatch
             }
         }
         LegendaryRuntime.Associate(__result,application);
+        Eyewear.ApplyProjectile(__instance, __result, fragmentIndex, application);
         if(roll is not null)RarityResolver.LogRollOnce(weapon,roll);
+        }
+        finally { Eyewear.EndProjectileDirection(directionScope); }
     }
 
     private static float Clamp01(float value) => value < 0f ? 0f : value > 1f ? 1f : value;

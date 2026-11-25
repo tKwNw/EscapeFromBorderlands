@@ -1,6 +1,6 @@
 # Legendary firearms — Escape From Borderlands
 
-**SPT 4.1.6 · EFB 0.41.1**
+**SPT 4.1.6 · EFB 0.51.0**
 
 **1,229 Legendary firearm designs.** Each has a fixed signature ability and 4 random bonuses. Vanilla firearms and their compatible attachments remain available.
 
@@ -1076,7 +1076,7 @@
 | Double Select: Quick Switch | When the fire selector is changed 2 times: until the next reload, +40% fire rate and +45% projectile velocity. |
 | Loud and Clear Hammer Line | While no suppressor is installed: −55% dispersion, −35% recoil, and +10% damage. |
 | Mach Line Twin Line | When the loaded cartridge is faster than 399 m/s (the 9×19mm average): 2-projectile tight spread; both projectiles deal 100% damage. |
-| Proper SEAL | Burst mode removed. +30% fire rate, −60% recoil, and −40% shot dispersion. |
+| Proper Seal | Burst mode removed. +30% fire rate, −60% recoil, and −40% shot dispersion. |
 | Quiet Work Laser Line | While a suppressor is installed: −40% dispersion, −30% recoil, and +10% velocity. |
 | Quiet Work Switchback | While a suppressor is installed: alternates between +35% velocity and +55% damage. |
 

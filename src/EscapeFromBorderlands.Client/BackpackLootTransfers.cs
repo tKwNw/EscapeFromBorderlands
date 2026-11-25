@@ -14,12 +14,12 @@ internal static class BackpackLootTransfers
     {
         internal Player Player = null!;
         internal Item Source = null!, Received = null!;
-        internal bool External;
+        internal bool External, LooseWorld;
     }
     private static ConditionalWeakTable<object, Transfer> Pending = new();
     private static bool ReportedFailure;
     internal static void Reset() { Pending = new(); ReportedFailure = false; }
-    private static bool Relevant(Player p) => ChestRigRuntime.Get(p) is not null || BackpackRuntime.States.ContainsKey(p) ||
+    private static bool Relevant(Player p) => Eyewear.TracksLoot(p) || ChestRigRuntime.Get(p) is not null || BackpackRuntime.States.ContainsKey(p) ||
         RarityResolver.TryGetDefinition(BackpackRuntime.Worn(p), out var definition) && definition.BackpackEffect is not null;
     internal static void Observe(object operation, IItemOwner controller, CommandStatus status, Item source, Item received, ItemAddress? from, ItemAddress? to)
     {
@@ -41,7 +41,8 @@ internal static class BackpackLootTransfers
             var origin = EFT.InventoryLogic.ContainerExtensions.GetOwner(from);
             var destination = EFT.InventoryLogic.ContainerExtensions.GetOwner(to);
             if (origin is null || destination?.ID != inventory.ID) return;
-            Pending.Add(operation, new Transfer { Player = p, Source = source, Received = received, External = origin.ID != inventory.ID });
+            Pending.Add(operation, new Transfer { Player = p, Source = source, Received = received, External = origin.ID != inventory.ID,
+                LooseWorld = ReferenceEquals(origin.RootItem, source) });
             return;
         }
         if (!Pending.TryGetValue(operation, out var transfer))
@@ -58,6 +59,7 @@ internal static class BackpackLootTransfers
         if (transfer.Received.CurrentAddress is not { } address || EFT.InventoryLogic.ContainerExtensions.GetOwner(address)?.ID != transfer.Player.InventoryController.ID) return;
         BackpackRuntime.Acquired(transfer.Player, transfer.Source, transfer.Received, transfer.External);
         ChestRigInventory.Acquired(transfer.Player, transfer.Source, transfer.Received, transfer.External);
+        Eyewear.Acquired(transfer.Player, transfer.Source, transfer.Received, transfer.LooseWorld, transfer.External);
     }
 }
 

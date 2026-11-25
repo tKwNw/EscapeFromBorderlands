@@ -42,7 +42,7 @@ internal static class BackpackReachabilityPatch
 internal static class BackpackDropPatch
 {
     private static void Prefix(Player.PlayerInventoryController __instance, Item item)
-    { var p = BackpackRuntime.Actor(__instance); if (p is not null) BackpackNative.QueueDrop(p, item); }
+    { var p = BackpackRuntime.Actor(__instance); if (p is not null) { BackpackNative.QueueDrop(p, item); Eyewear.Dropped(p, item); } }
 }
 [HarmonyPatch(typeof(MovementContext), "get_CanSprint")]
 internal static class BackpackBlackLegSprintPatch

@@ -58,6 +58,7 @@ internal static class PlayerRefresh
         Disposed.Add(player);
         EquipmentPresence.Forget(player);
         Headwear.Forget(player);
+        Eyewear.Forget(player);
         Requests.Remove(player);
         BackpackRuntime.ForgetEndpoints(player);
     }

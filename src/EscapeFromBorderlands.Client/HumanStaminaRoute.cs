@@ -18,6 +18,7 @@ internal static class HumanStaminaRoute
     private static readonly MethodInfo End = AccessTools.Method(typeof(ConsolidatedHooks), "SprintEnd");
     private static readonly MethodInfo Finally = AccessTools.Method(typeof(ConsolidatedHooks), "SprintFinally");
     private static readonly MethodInfo Rewrite = AccessTools.Method(typeof(HumanStaminaRoute), nameof(Transpiler));
+    private static readonly MethodInfo EyewearRewrite = AccessTools.Method(typeof(EyewearLegDrain), "Transpiler");
     private static bool Installed;
     // The game's Harmony references Mono's mscorlib Label; our netstandard
     // reference assembly cannot type that field. They unify in the game host.
@@ -33,7 +34,7 @@ internal static class HumanStaminaRoute
         if (Installed || Target is null || Target.ReturnType != typeof(void) || Target.IsStatic ||
             Target.GetMethodBody() is not { } body || body.ExceptionHandlingClauses.Count != 0) return;
         var info = Harmony.GetPatchInfo(Target);
-        if (info is null || info.Owners.Any(owner => owner != Plugin.PluginGuid) || info.Transpilers.Count != 0 ||
+        if (info is null || info.Owners.Any(owner => owner != Plugin.PluginGuid) || info.Transpilers.Count > 1 || info.Transpilers.Any(p => p.PatchMethod != EyewearRewrite) ||
             !Only(info.Prefixes.ToArray(), Begin) || !Only(info.Postfixes.ToArray(), End) || !Only(info.Finalizers.ToArray(), Finally)) return;
         try
         {
@@ -54,7 +55,8 @@ internal static class HumanStaminaRoute
         if (!Installed) return;
         var info = Harmony.GetPatchInfo(Target);
         if (info is not null && info.Owners.All(owner => owner == Plugin.PluginGuid) &&
-            info.Transpilers.Count == 1 && info.Transpilers[0].PatchMethod == Rewrite &&
+            info.Transpilers.Count is 1 or 2 && info.Transpilers.Count(p => p.PatchMethod == Rewrite) == 1 &&
+            info.Transpilers.All(p => p.PatchMethod == Rewrite || p.PatchMethod == EyewearRewrite) &&
             info.Prefixes.Count == 0 && info.Postfixes.Count == 0 && info.Finalizers.Count == 0) return;
         harmony.Unpatch(Target, Rewrite);
         Restore(harmony);

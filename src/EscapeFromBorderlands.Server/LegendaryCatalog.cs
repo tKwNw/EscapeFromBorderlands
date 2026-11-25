@@ -50,6 +50,7 @@ internal sealed class LegacyAliasDefinition
 
 internal sealed class VariantDefinition
 {
+    public bool IsEyewear => WeaponClass == "eyewear";
     public bool IsEarpiece { get; set; } public bool IsHeadwear => WeaponClass is "armoredHeadwear" or "unarmoredHeadwear";
     public bool SpawnEnabled { get; set; } = true;
     public bool IsMysteryFleaOffer { get; set; }
@@ -90,7 +91,7 @@ internal sealed class VariantDefinition
     public MeleeEffectDefinition? MeleeEffect { get; set; }
     public BackpackEffectDefinition? BackpackEffect { get; set; }
     public ChestRigEffectDefinition? ChestRigEffect { get; set; }
-    public string LocaleDescription => BackpackEffect is null && ChestRigEffect is null && GrenadeChargesPerRaid == 0 && !IsEarpiece && !IsHeadwear ? Description
+    public string LocaleDescription => BackpackEffect is null && ChestRigEffect is null && GrenadeChargesPerRaid == 0 && !IsEarpiece && !IsHeadwear && !IsEyewear ? Description
         : "<color=#66D9EF>" + EffectText + "</color>" + (string.IsNullOrEmpty(Description) ? "" : "\n\n" + Description);
     public List<string> FireModes { get; set; } = [];
     public int? BurstShotsCount { get; set; }

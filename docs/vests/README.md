@@ -1,6 +1,6 @@
 # Legendary vests and chest rigs — Escape From Borderlands
 
-**SPT 4.1.6 · EFB 0.41.1**
+**SPT 4.1.6 · EFB 0.51.0**
 
 **88 Legendary vest and chest rig designs.** Each has a fixed signature ability and 4 random bonuses. Designs can have different storage layouts while sharing the same signature ability.
 

@@ -77,7 +77,7 @@ internal static class FactionEquipmentSpawning
         "SecondPrimaryWeapon_LongRange" or "SecondPrimaryWeapon_ShortRange" or
         "Holster" or "Scabbard" or "Backpack" or "TacticalVest" or "ArmorVest" or "Earpiece";
 
-    private static string Category(VariantDefinition v) => v.IsEarpiece ? "earpieces" : v.MeleeEffect is not null ? "melee" : v.BackpackEffect is not null ? "backpacks" : v.ChestRigEffect is not null ? "chestRigs" : "guns";
+    private static string Category(VariantDefinition v) => v.IsEyewear ? "eyewear" : v.IsEarpiece ? "earpieces" : v.MeleeEffect is not null ? "melee" : v.BackpackEffect is not null ? "backpacks" : v.ChestRigEffect is not null ? "chestRigs" : "guns";
 
     private static IEnumerable<DictionaryEntry> Entries(IDictionary pool)
     { foreach (DictionaryEntry entry in pool) yield return entry; }

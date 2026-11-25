@@ -70,7 +70,7 @@ internal static class EarpieceAimPatch
     private static void Postfix(ProceduralWeaponAnimation __instance)
     {
         var player = ActorLookup.Find(__instance, ActorMember.Animation);
-        var factor = EarpieceRuntime.Aim(player) * Headwear.Factor(Headwear.Get(__instance), HatStat.Aim); if (factor == 1f) return;
+        var factor = EarpieceRuntime.Aim(player) * Headwear.Factor(Headwear.Get(__instance), HatStat.Aim) * Eyewear.Factor(player, HatStat.Aim); if (factor == 1f) return;
         var speed = (float)Speed.GetValue(__instance)! * factor; Speed.SetValue(__instance, speed);
         if (Native.Get(__instance, "_aimSwayBlender") is Player.ValueBlender blend) blend.Speed = __instance.SwayFalloff / speed;
     }
@@ -201,14 +201,14 @@ internal static class EarpieceFoodUse
 internal static class EarpieceFoodStartPatch
 {
     private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController.MedEffect), "Started");
-    private static void Prefix(object __instance) => EarpieceFoodUse.Begin(__instance);
+    private static void Prefix(object __instance) { EarpieceFoodUse.Begin(__instance); Eyewear.UseStart(__instance); }
     private static void Postfix(object __instance) => HatMedical.Start(__instance);
 }
 [HarmonyPatch]
 internal static class EarpieceFoodEndPatch
 {
     private static MethodBase TargetMethod() => AccessTools.Method(typeof(ActiveHealthController.MedEffect), "Residue");
-    private static void Postfix(object __instance) { EarpieceFoodUse.End(__instance); HatMedical.End(__instance); }
+    private static void Postfix(object __instance) { EarpieceFoodUse.End(__instance); HatMedical.End(__instance); Eyewear.UseEnd(__instance); }
 }
 
 [HarmonyPatch(typeof(FirearmControllerSharedMethods), nameof(FirearmControllerSharedMethods.ApplyLightAndSoundHealthEffects))]

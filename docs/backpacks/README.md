@@ -1,6 +1,6 @@
 # Legendary backpacks — Escape From Borderlands
 
-**SPT 4.1.6 · EFB 0.41.1**
+**SPT 4.1.6 · EFB 0.51.0**
 
 **67 Legendary backpack designs.** Each has a fixed signature ability and 4 random bonuses. Storage changes are described on the item.
 
@@ -160,7 +160,7 @@
 
 | Legendary name | Signature effect |
 | --- | --- |
-| A Fine Addition | The 1st Found in Raid item of each different barter category placed in this bag speeds up searching other backpacks by 10%, up to 60%. Records reset each raid; only the wearer receives the bonus. |
+| A Fine Addition | The 1st Found in Raid item of each different barter category placed in this bag speeds up all searching by 10%, up to 60%. Records reset each raid; only the wearer receives the bonus. |
 | Daylight Delivery | Between 06:00 and 20:00 in raid: +10% movement speed and +25% weapon ergonomics. |
 
 ## LolKek 3F Transfer tourist backpack

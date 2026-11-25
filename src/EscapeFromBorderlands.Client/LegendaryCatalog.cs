@@ -41,6 +41,7 @@ internal sealed class LegendaryCatalog
 
 internal sealed class VariantDefinition
 {
+    public bool IsEyewear => WeaponClass == "eyewear";
     public bool IsEarpiece { get; set; } public bool IsHeadwear => WeaponClass is "armoredHeadwear" or "unarmoredHeadwear";
     public bool SpawnEnabled { get; set; } = true;
     public bool IsMysteryFleaOffer { get; set; }

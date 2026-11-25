@@ -23,6 +23,9 @@ internal static class LegendaryHitTrackingPatch
             return;
         }
 
+        var eyewearSource = EyewearDamageSources.BeginImpact(__instance);
+        try
+        {
         DiagnosticPathTrace trace = default;
         DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.HitImpact);
         if (LegendaryRuntime.TryGetApplication(__instance, out var application))
@@ -40,11 +43,14 @@ internal static class LegendaryHitTrackingPatch
         }
         trace.Phase(2);
         ChestRigBallistics.Impact(__instance);
+        Eyewear.Impact(__instance);
         trace.Phase(3);
         LegendaryRuntime.RecordImpact(__instance);
         trace.Phase(4);
         LegendaryRuntime.Release(__instance);
         trace.Phase(5);
+        }
+        finally { EyewearDamageSources.EndNative(eyewearSource); }
     }
 
     private static void ApplyLocationDamage(Shot shot, EffectApplication application)
@@ -121,6 +127,7 @@ internal static class LegendaryMissTrackingPatch
         if (__result && !__0.HasAchievedTarget)
         {
             ChestRigRuntime.BulletFinished(__0);
+            Eyewear.Miss(__0);
             LegendaryRuntime.RecordMiss(__0);
             LegendaryRuntime.Release(__0);
         }

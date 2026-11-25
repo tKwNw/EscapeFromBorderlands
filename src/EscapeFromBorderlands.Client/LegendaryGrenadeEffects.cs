@@ -20,6 +20,7 @@ internal static class LegendaryGrenadeEffects
 {
     internal sealed class Payload
     {
+        internal float EyewearOutgoing = 1;
         internal RarityResolver.ShotRoll Roll = null!;
         internal string Owner = "", DirectTarget = "";
         internal string Key => SmokeChild ? "" : Roll.Definition.RuntimeKey;
@@ -233,6 +234,9 @@ internal static class LegendaryGrenadeEffects
         if (!Try(grenade.WeaponSource, out var p)) return true;
         var collider = collision.collider;
         if (collider == null) return true;
+        // A grenade is never an attachment surface for Semtax, including
+        // ordinary grenades and colliders nested under another grenade.
+        if (p.Key == "GR04" && GrenadeLaunch.IsGrenade(collider)) return true;
         var body = collider.GetComponentInParent<BodyPartCollider>();
         var hitOwner = body?.PlayerProfileID ?? Singleton<GameWorld>.Instance?.GetAlivePlayerBridgeByCollider(collider)?.iPlayer.ProfileId;
         if (hitOwner == p.Owner) return true;
@@ -317,6 +321,7 @@ internal static class LegendaryGrenadeEffects
                 finally { AssetPoolObject.ReturnToPool(pooled); }
                 var child = factory.Create(settings, position + (mirv ? Vector3.up * .2f : Vector3.zero), Quaternion.identity, Vector3.zero, item, parent.Owner);
                 Created(child, item, parent.Owner);
+                if (parent.EyewearOutgoing != 1) EyewearDamageSources.CaptureGrenade(item, parent.EyewearOutgoing);
                 world.RegisterGrenade(child);
                 if (mirv)
                 {

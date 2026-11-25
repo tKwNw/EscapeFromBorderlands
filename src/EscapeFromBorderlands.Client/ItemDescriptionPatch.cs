@@ -100,7 +100,7 @@ internal static class ItemDescriptionPresentation
         }
         if (description == block || description.StartsWith(block + "\n\n", StringComparison.Ordinal)) return description;
         // Replace the server's signature fallback with this instance's full roll.
-        if (roll.Definition.IsHeadwear || roll.Definition.IsEarpiece || roll.Definition.BackpackEffect is not null || roll.Definition.ChestRigEffect is not null || roll.Definition.GrenadeChargesPerRaid > 0)
+        if (roll.Definition.IsHeadwear || roll.Definition.IsEyewear || roll.Definition.IsEarpiece || roll.Definition.BackpackEffect is not null || roll.Definition.ChestRigEffect is not null || roll.Definition.GrenadeChargesPerRaid > 0)
         {
             var signature = roll.Definition.EffectText;
             foreach (var prefix in new[] { signature, "<color=#66D9EF>" + signature + "</color>" })
