@@ -101,6 +101,7 @@ internal static class RarityResolver
         if (definition.GrenadeChargesPerRaid > 0) return RollGrenade(rng, definition);
         if (definition.IsEarpiece) return RollEarpiece(rng, definition);
         if (definition.IsHeadwear) return RollHeadwear(rng, definition);
+        if (definition.IsEyewear) return RollEyewear(rng, definition);
         if (definition.ChestRigEffect is not null) return RollChestRig(rng, definition);
         if (definition.BackpackEffect is not null) return RollBackpack(rng, definition);
         if (definition.MeleeEffect is not null) return RollMelee(rng, definition);
@@ -297,6 +298,37 @@ internal static class RarityResolver
         return roll;
     }
 
+    private static ShotRoll RollEyewear(StableRandom rng, VariantDefinition definition)
+    {
+        var roll = new ShotRoll(definition, $"Legendary — {definition.DisplayName}", "#FF9D28");
+        // 20/20 already prevents concussion: never spend one of its four bonuses on Clear Head.
+        var choices = definition.RuntimeKey == "EW004"
+            ? new[] { 1, 2, 3, 4, 5, 6, 7, 8 } : new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+        var remaining = choices.Length;
+        var bonus = new EyewearRoll();
+        float Pick(int min, int max) => (min + rng.Next((max - min) / 5 + 1) * 5) / 100f;
+        for (var i = 0; i < 4; i++)
+        {
+            var index = rng.Next(remaining);
+            var kind = choices[index];
+            choices[index] = choices[--remaining];
+            switch (kind)
+            {
+                case 0: bonus.Concussion = Pick(20, 30); roll.AffixDescriptions.Add($"Clear Head −{bonus.Concussion:P0} concussion duration"); break;
+                case 1: bonus.Flash = Pick(20, 30); roll.AffixDescriptions.Add($"Afterimage −{bonus.Flash:P0} flashbang blindness duration"); break;
+                case 2: bonus.Sway = Pick(10, 30); roll.AffixDescriptions.Add($"Steady Gaze −{bonus.Sway:P0} aiming sway"); break;
+                case 3: bonus.Aim = Pick(15, 25); roll.AffixDescriptions.Add($"Quick Focus +{bonus.Aim:P0} aiming speed"); break;
+                case 4: bonus.Arm = Pick(10, 30); roll.AffixDescriptions.Add($"Light on the Eyes −{bonus.Arm:P0} arm-stamina drain while aiming"); break;
+                case 5: bonus.Recoil = Pick(10, 15); roll.AffixDescriptions.Add($"Follow Through −{bonus.Recoil:P0} recoil while aiming"); break;
+                case 6: bonus.Hip = Pick(15, 25); roll.AffixDescriptions.Add($"Close Focus −{bonus.Hip:P0} hip-fire spread while stationary"); break;
+                case 7: bonus.MovingSway = Pick(20, 30); roll.AffixDescriptions.Add($"Moving Picture −{bonus.MovingSway:P0} aiming sway while walking"); break;
+                case 8: bonus.Search = Pick(25, 50); roll.AffixDescriptions.Add($"Keen Appraiser +{bonus.Search:P0} search speed"); break;
+            }
+        }
+        roll.Eyewear = bonus;
+        return roll;
+    }
+
     private static ShotRoll RollHeadwear(StableRandom rng, VariantDefinition definition)
     {
         var roll = new ShotRoll(definition, $"Legendary — {definition.DisplayName}", "#FF9D28");
@@ -452,6 +484,7 @@ internal static class RarityResolver
         public ChestRigBoons ChestRig { get; } = new();
         public EarpieceBoons Earpiece { get; } = new();
         internal HeadwearRoll Headwear { get; set; }
+        internal EyewearRoll Eyewear { get; set; }
         public float GrenadeDamageMultiplier { get; set; } = 1f;
         public float GrenadeRadiusMultiplier { get; set; } = 1f;
         public float GrenadeFragmentMultiplier { get; set; } = 1f;

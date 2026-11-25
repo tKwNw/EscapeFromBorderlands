@@ -34,6 +34,8 @@ internal static class HatDeath
     {
         try { Headwear.Dead(__instance, ___LastAggressor, in ___LastDamageInfo); }
         catch (Exception e) { Plugin.LogSource.LogWarning($"EFB headwear kill processing: {e.Message}"); }
+        try { Eyewear.Dead(__instance, ___LastAggressor, in ___LastDamageInfo); }
+        catch (Exception e) { Plugin.LogSource.LogWarning($"EFB eyewear kill processing: {e.Message}"); }
     }
 }
 [HarmonyPatch(typeof(Player), nameof(Player.ApplyShot))]
@@ -294,7 +296,7 @@ internal static class HatSway
     private static void Postfix(ProceduralWeaponAnimation __instance)
     {
         var s = Headwear.Get(__instance);
-        var factor = Headwear.Factor(s, HatStat.Sway);
+        var factor = Headwear.Factor(s, HatStat.Sway) * Eyewear.Factor(Eyewear.Get(__instance), HatStat.Sway);
         if (factor != 1) Strength.SetValue(__instance, (float)Strength.GetValue(__instance)! * factor);
         HatRecoilRecovery.Bind(__instance, s);
     }
@@ -419,6 +421,7 @@ internal static partial class Headwear
 {
     internal static float BeginDraw(Player? p, Weapon weapon, float native)
     {
+        native *= Eyewear.Factor(p, HatStat.Draw);
         if (Get(p) is not { } s || p is null) return native;
         var factor = Factor(s, HatStat.Draw);
         if (s.Key == "HW042-1" && s.DrawCharges > 0) factor *= 1.60f;

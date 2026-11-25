@@ -38,20 +38,20 @@ public sealed class RarityConfiguration
     public double? LegacyPmcLegendaryWeaponChancePercent { get; set; }
     public double EffectiveStandalonePmcChancePercent => LegacyPmcLegendaryWeaponChancePercent ?? StandalonePmcLegendaryChancePercent;
 
-    internal static readonly string[] Categories = ["guns", "melee", "backpacks", "chestRigs", "grenades", "earpieces", "armoredHeadwear", "unarmoredHeadwear"];
+    internal static readonly string[] Categories = ["guns", "melee", "backpacks", "chestRigs", "grenades", "earpieces", "armoredHeadwear", "unarmoredHeadwear", "eyewear"];
     private static readonly string[] LegacyScalars = ["standalonePmcLegendaryChancePercent", "apbsPmcLegendaryChancePercent", "pmcLegendaryWeaponChancePercent", "bossLegendaryChancePercent", "effectiveStandalonePmcChancePercent"];
     private static readonly JsonSerializerOptions ReadOptions = new() { PropertyNameCaseInsensitive = true, ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
     private static readonly JsonSerializerOptions WriteOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, IgnoreReadOnlyProperties = true, WriteIndented = true };
     private static T? Find<T>(Dictionary<string, T>? groups, string name) where T : class => groups?.FirstOrDefault(p => p.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Value;
-    private static double? Value(CategorySpawnChances? group, string category) => category switch { "guns" => group?.Guns, "melee" => group?.Melee, "backpacks" => group?.Backpacks, "chestRigs" => group?.ChestRigs, "grenades" => group?.Grenades, "earpieces" => group?.Earpieces, "armoredHeadwear" => group?.ArmoredHeadwear, "unarmoredHeadwear" => group?.UnarmoredHeadwear, _ => null };
+    private static double? Value(CategorySpawnChances? group, string category) => category switch { "guns" => group?.Guns, "melee" => group?.Melee, "backpacks" => group?.Backpacks, "chestRigs" => group?.ChestRigs, "grenades" => group?.Grenades, "earpieces" => group?.Earpieces, "armoredHeadwear" => group?.ArmoredHeadwear, "unarmoredHeadwear" => group?.UnarmoredHeadwear, "eyewear" => group?.Eyewear, _ => null };
     private static double Valid(double? value, double fallback) => Math.Clamp(value is { } configured && double.IsFinite(configured) ? configured : fallback, 0d, 99d);
 
     public double Chance(string method, string category)
     {
         if (method.Equals("scavs", StringComparison.OrdinalIgnoreCase))
-            return Valid(Value(Find(SpawnChances, "scavs"), category), category == "unarmoredHeadwear" ? 1d : 0d);
+            return Valid(Value(Find(SpawnChances, "scavs"), category), category is "unarmoredHeadwear" or "eyewear" ? 1d : 0d);
         var boss = method.Equals("bosses", StringComparison.OrdinalIgnoreCase);
-        var fallback = category is "backpacks" or "chestRigs" or "grenades" or "earpieces" or "armoredHeadwear" or "unarmoredHeadwear" ? (boss ? 10d : 1d)
+        var fallback = category is "backpacks" or "chestRigs" or "grenades" or "earpieces" or "armoredHeadwear" or "unarmoredHeadwear" or "eyewear" ? (boss ? 10d : 1d)
             : boss ? BossLegendaryChancePercent : method.Equals("apbs", StringComparison.OrdinalIgnoreCase) ? ApbsPmcLegendaryChancePercent : EffectiveStandalonePmcChancePercent;
         var configured = Value(Find(SpawnChances, boss ? "bosses" : "pmcs"), category);
         if (!boss) configured ??= Value(Find(SpawnChances, method), category);
@@ -87,7 +87,7 @@ public sealed class RarityConfiguration
     }
     public double LootContainerFraction(string category) => LootContainerChance(category) / 100d;
     public string Describe(string method) => string.Join(", ", Categories.Select(category => $"{category}={Chance(method, category):0.###}%"));
-    public static string Category(string slot) => slot == "Earpiece" ? "earpieces" : slot == "Scabbard" ? "melee" : slot == "Backpack" ? "backpacks" : slot is "TacticalVest" or "ArmorVest" ? "chestRigs" : "guns";
+    public static string Category(string slot) => slot == "Eyewear" ? "eyewear" : slot == "Earpiece" ? "earpieces" : slot == "Scabbard" ? "melee" : slot == "Backpack" ? "backpacks" : slot is "TacticalVest" or "ArmorVest" ? "chestRigs" : "guns";
 
     public static RarityConfiguration Load(string? legacyMethod = null)
     {
@@ -215,4 +215,5 @@ public sealed class CategorySpawnChances
     public double? Earpieces { get; set; }
     public double? ArmoredHeadwear { get; set; }
     public double? UnarmoredHeadwear { get; set; }
+    public double? Eyewear { get; set; }
 }

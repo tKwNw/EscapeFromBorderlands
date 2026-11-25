@@ -129,6 +129,7 @@ internal static class ProjectileEffectSpawner
         projectile.ArmorDamage = primary.ArmorDamage;
         ChestRigRuntime.AssociateSibling(projectile, primary);
         LegendaryRuntime.Associate(projectile, application, bonusProjectile: true);
+        Eyewear.LegendarySibling(calculator, projectile, application, application.SpecialId == "wave015_echo" ? .12f : 0f);
         if (application.SpecialId == "wave015_echo")
         {
             // At range distances both impacts otherwise arrive in one frame.

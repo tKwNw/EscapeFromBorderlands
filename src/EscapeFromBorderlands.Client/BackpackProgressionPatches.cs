@@ -26,6 +26,7 @@ internal static class BackpackBreachRewardPatch
     private static void Postfix(WorldInteractiveObject interactive, InteractionResult interactionResult, Player user, bool __state)
     {
         if (__state || interactionResult.InteractionType != EInteractionType.Breach || interactive is not Door { IsBroken: true }) return;
+        Eyewear.Breach(user);
         var s = BackpackRuntime.Get(user); if (s?.Key == "BP35-3") s.Record.Arm("meleeReach", 20f);
     }
 }

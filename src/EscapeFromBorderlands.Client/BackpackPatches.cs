@@ -27,6 +27,7 @@ internal static class BackpackCachedValuePatch
         if (!ActorCapabilities.UsesStamina(player)) return;
         var recovery = kind is "legRecovery" or "armRecovery";
         var aim = kind == "aimCost";
+        if (aim) __result *= Eyewear.AimStaminaFactor(player);
         var grenadeRecovery = recovery ? GrenadeBuffs.Recovery(player, kind) : 1f;
         if (!EquipmentPresence.Has(player, GearKind.Gear)) { __result *= grenadeRecovery; return; }
         var observed = PlayerRefresh.CanObserve(player);

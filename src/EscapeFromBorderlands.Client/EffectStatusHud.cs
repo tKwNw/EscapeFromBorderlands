@@ -217,6 +217,7 @@ internal static class EffectStatusHud
             trace.Phase("HUD rig status");
             if (visibility.Earpieces && EarpieceRuntime.Get(player) is not null) statuses.AddRange(EarpieceRuntime.Statuses(player));
             if (visibility.Headwear && Headwear.Get(player) is not null) statuses.AddRange(Headwear.Status(player));
+            if (visibility.Eyewear && Eyewear.Get(player) is not null) statuses.AddRange(Eyewear.Status(player));
             trace.Phase("HUD headset status");
             EffectStatusModel.CopyVisible(statuses, Visible, StatusIndex);
             statuses = Visible;

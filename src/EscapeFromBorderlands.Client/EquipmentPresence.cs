@@ -124,6 +124,7 @@ internal static class EquipmentPresence
         if (!PlayerRefresh.CanObserve(player)) { Forget(player); return GearKind.None; }
         if (entry is null) { Entries[player] = entry = new Entry(); EntryEpoch++; }
         var gear = player.InventoryController.Inventory.Equipment;
+        Eyewear.Observe(player);
         var kind = GearKind.None;
         if (entry.Bag.Read(gear.GetSlot(EquipmentSlot.Backpack)?.ContainedItem)?.BackpackEffect is not null) kind |= GearKind.Backpack;
         if (entry.Rig.Read(gear.GetSlot(EquipmentSlot.TacticalVest)?.ContainedItem)?.ChestRigEffect is not null) kind |= GearKind.Rig;
@@ -155,6 +156,7 @@ internal static class EquipmentPresence
     }
     internal static void Forget(Player player)
     {
+        Eyewear.Forget(player);
         if (HeldMelee.Remove(player)) Revision++;
         if (Entries.TryGetValue(player, out var entry))
         {

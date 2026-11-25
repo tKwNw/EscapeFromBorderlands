@@ -17,7 +17,7 @@ public sealed class Plugin : BaseUnityPlugin
 {
     public const string PluginGuid = "com.tKwNw.escapefromborderlands";
     public const string PluginName = "tKwNw-EscapeFromBorderlands";
-    public const string PluginVersion = "0.41.0";
+    public const string PluginVersion = "0.50.0";
 
     internal static ReleaseLog LogSource { get; private set; } = new ReleaseLog();
     internal static Plugin Instance { get; private set; } = null!;
@@ -25,6 +25,7 @@ public sealed class Plugin : BaseUnityPlugin
     private Harmony? _harmony;
     private GameWorld? _world;
     private float _nextHeadwearError;
+    private float _nextEyewearError;
     private bool _consolidationChecked;
 
     private void MigrateLegacyClientConfig()
@@ -128,6 +129,13 @@ public sealed class Plugin : BaseUnityPlugin
                 { _nextHeadwearError = UnityEngine.Time.unscaledTime + 30; LogSource.LogWarning($"EFB headwear update will retry: {e.Message}"); }
             }
             trace.Phase("headwear");
+            try { Eyewear.Maintain(world); }
+            catch (Exception e)
+            {
+                if (UnityEngine.Time.unscaledTime >= _nextEyewearError)
+                { _nextEyewearError = UnityEngine.Time.unscaledTime + 30; LogSource.LogWarning($"EFB eyewear update will retry: {e.Message}"); }
+            }
+            trace.Phase("eyewear");
             AdvancedLegendaryActions.Maintain(world);
             trace.Phase("short smoke");
             LegendaryExplosionFx.Maintain(world);
@@ -181,6 +189,9 @@ public sealed class Plugin : BaseUnityPlugin
             ActorLookup.Reset();
             CombatActorLookup.Reset();
             SessionCleanup.Run(nameof(Headwear), Headwear.Reset);
+            SessionCleanup.Run(nameof(Eyewear), Eyewear.Reset);
+            SessionCleanup.Run(nameof(EyewearAmmo), EyewearAmmo.Reset);
+            SessionCleanup.Run(nameof(EyewearRocketDamage), EyewearRocketDamage.Reset);
             SessionCleanup.Run(nameof(ServiceWindowPlayback), ServiceWindowPlayback.Reset);
             SessionCleanup.Run("earpiece suspend", EarpieceRuntime.Suspend);
             SessionCleanup.Run(nameof(EffectStatusHud), EffectStatusHud.Reset);

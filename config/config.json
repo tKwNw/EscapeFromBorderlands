@@ -19,7 +19,8 @@
       "grenades": 1,
       "earpieces": 1,
       "armoredHeadwear": 1,
-      "unarmoredHeadwear": 1
+      "unarmoredHeadwear": 1,
+      "eyewear": 1
     },
     "bosses": {
       "guns": 10,
@@ -29,7 +30,8 @@
       "grenades": 10,
       "earpieces": 10,
       "armoredHeadwear": 10,
-      "unarmoredHeadwear": 10
+      "unarmoredHeadwear": 10,
+      "eyewear": 10
     },
     "scavs": {
       "guns": 0,
@@ -39,7 +41,8 @@
       "grenades": 0,
       "earpieces": 0,
       "armoredHeadwear": 0,
-      "unarmoredHeadwear": 1
+      "unarmoredHeadwear": 1,
+      "eyewear": 1
     }
   },
   "factionSpawnChances": {
@@ -51,7 +54,8 @@
       "grenades": 1,
       "earpieces": 1,
       "armoredHeadwear": 1,
-      "unarmoredHeadwear": 1
+      "unarmoredHeadwear": 1,
+      "eyewear": 1
     },
     "rogues": {
       "guns": 1,
@@ -61,7 +65,8 @@
       "grenades": 1,
       "earpieces": 1,
       "armoredHeadwear": 1,
-      "unarmoredHeadwear": 1
+      "unarmoredHeadwear": 1,
+      "eyewear": 1
     },
     "followers": {
       "guns": 1,
@@ -71,7 +76,8 @@
       "grenades": 1,
       "earpieces": 1,
       "armoredHeadwear": 1,
-      "unarmoredHeadwear": 1
+      "unarmoredHeadwear": 1,
+      "eyewear": 1
     },
     "cultists": {
       "guns": 1,
@@ -81,7 +87,8 @@
       "grenades": 1,
       "earpieces": 1,
       "armoredHeadwear": 1,
-      "unarmoredHeadwear": 1
+      "unarmoredHeadwear": 1,
+      "eyewear": 1
     },
     "arenaFighters": {
       "guns": 1,
@@ -91,7 +98,8 @@
       "grenades": 1,
       "earpieces": 1,
       "armoredHeadwear": 1,
-      "unarmoredHeadwear": 1
+      "unarmoredHeadwear": 1,
+      "eyewear": 1
     },
     "otherNonScavs": {
       "guns": 1,
@@ -101,7 +109,8 @@
       "grenades": 1,
       "earpieces": 1,
       "armoredHeadwear": 1,
-      "unarmoredHeadwear": 1
+      "unarmoredHeadwear": 1,
+      "eyewear": 1
     }
   },
   "lootContainerSpawnChances": {
@@ -112,7 +121,8 @@
     "grenades": 1,
     "earpieces": 1,
     "armoredHeadwear": 1,
-    "unarmoredHeadwear": 1
+    "unarmoredHeadwear": 1,
+    "eyewear": 1
   },
   "priceMultipliers": {
     "Legendary": 10.0

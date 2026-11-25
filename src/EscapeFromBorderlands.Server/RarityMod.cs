@@ -122,7 +122,7 @@ public sealed class RarityMod(
                 continue;
             }
 
-            if (variant.IsHeadwear && localeService.GetLocaleDb("en").TryGetValue(variant.SourceTemplateId + " Description", out var description))
+            if ((variant.IsHeadwear || variant.IsEyewear) && localeService.GetLocaleDb("en").TryGetValue(variant.SourceTemplateId + " Description", out var description))
                 variant.Description = description;
             var priceMultiplier = config.PriceMultiplierFor(variant.Tier, variant.PriceMultiplier);
             var sourceHandbookPrice = Math.Max(1d, source.Handbook.Price.GetValueOrDefault(50_000d));
@@ -659,7 +659,7 @@ public sealed class RarityMod(
 
         return (inventoryTemplate.Properties?.Slots ?? [])
             .Where(slot => Enum.TryParse<EquipmentSlots>(slot.Name, out var equipmentSlot) &&
-                equipmentSlot is EquipmentSlots.FirstPrimaryWeapon or EquipmentSlots.SecondPrimaryWeapon or EquipmentSlots.Holster or EquipmentSlots.Scabbard or EquipmentSlots.Backpack or EquipmentSlots.TacticalVest or EquipmentSlots.ArmorVest or EquipmentSlots.Earpiece or EquipmentSlots.Headwear &&
+                equipmentSlot is EquipmentSlots.FirstPrimaryWeapon or EquipmentSlots.SecondPrimaryWeapon or EquipmentSlots.Holster or EquipmentSlots.Scabbard or EquipmentSlots.Backpack or EquipmentSlots.TacticalVest or EquipmentSlots.ArmorVest or EquipmentSlots.Earpiece or EquipmentSlots.Headwear or EquipmentSlots.Eyewear &&
                 (slot.Properties?.Filters ?? []).Any(filter =>
                     filter.Filter?.Any(filterId => filterId.Equals(sourceTemplateId) || itemHelper.IsOfBaseclass(sourceTemplateId, filterId)) == true))
             .Select(slot => Enum.Parse<EquipmentSlots>(slot.Name!))

@@ -142,11 +142,12 @@ internal static class WeaponCombatState
     private static bool HasGearEffects(Player? player, bool livePoll)
     {
         if (player is null) return false;
+        var eyewear = livePoll ? Eyewear.ChangesFirearm(player) : Eyewear.Get(player) is not null;
         if (!EquipmentPresence.Has(player, GearKind.Headwear | GearKind.Rig | GearKind.Earpiece) &&
-            !GrenadeBuffs.ChangesFirearm(player)) return false;
+            !eyewear && !GrenadeBuffs.ChangesFirearm(player)) return false;
         var observed = PlayerRefresh.CanObserve(player);
         // Explicit refreshes and cartridge boundaries retain their full path.
-        return (livePoll ? Headwear.ChangesFirearm(player) : Headwear.Get(player) is not null) || ChestRigRuntime.Get(player, observed) is not null || GrenadeBuffs.ChangesFirearm(player, observed) ||
+        return eyewear || (livePoll ? Headwear.ChangesFirearm(player) : Headwear.Get(player) is not null) || ChestRigRuntime.Get(player, observed) is not null || GrenadeBuffs.ChangesFirearm(player, observed) ||
             EarpieceRuntime.ChangesFirearm(player, observed);
     }
 
@@ -154,11 +155,13 @@ internal static class WeaponCombatState
     {
         if (RarityResolver.TryGetDefinition(weapon, out _)) return true;
         var owner = Headwear.Owner(weapon);
-        return Headwear.Get(owner) is not null || ChestRigRuntime.Get(owner) is not null || EarpieceRuntime.Get(owner) is not null;
+        return Headwear.Get(owner) is not null || Eyewear.Get(owner) is not null || ChestRigRuntime.Get(owner) is not null || EarpieceRuntime.Get(owner) is not null;
     }
 
     internal static int? PreparedRemaining(Player.FirearmController controller, Weapon weapon, Ammo ammo)
     {
+        if (Eyewear.Get(Owner(controller)) is { Key: "EW022" } && EyewearAmmo.IsRetained(weapon, ammo))
+            return LegendaryRuntime.RemainingAmmo(weapon);
         // Double-tap can remove both cartridges before firing. Retain the
         // native ammo identity and per-barrel count without a LINQ closure.
         if (controller.CurrentOperation is not Player.FirearmController.FireOnlyBarrelFireOperation barrels) return null;
@@ -207,7 +210,11 @@ internal static class WeaponShellCenterPatch
 {
     private static void Prefix(IWeapon weapon, Vector3 shotDirection)
     {
-        if (weapon.Item is Weapon receiver) LegendaryRuntime.SetShotCenter(receiver, shotDirection);
+        if (weapon.Item is Weapon receiver)
+        {
+            LegendaryRuntime.SetShotCenter(receiver, shotDirection);
+            Eyewear.SetShotCenter(receiver, shotDirection);
+        }
     }
 }
 

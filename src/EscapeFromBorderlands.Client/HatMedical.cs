@@ -29,8 +29,10 @@ internal static class HatMedical
     };
     internal static float Speed(Player? p, Item? item)
     {
-        if (p is null || item is not MedsItemClass || Headwear.Get(p) is not { } s) return 1;
-        return Headwear.Factor(s, HatStat.Medical) * (ByPlayer.TryGetValue(p, out var u) && u.State == s && u.Item == item ? u.ChargeSpeed : Charge(s, item));
+        if (p is null || item is not MedsItemClass) return 1;
+        var eyewear = Eyewear.Factor(p, HatStat.Medical);
+        if (Headwear.Get(p) is not { } s) return eyewear;
+        return eyewear * Headwear.Factor(s, HatStat.Medical) * (ByPlayer.TryGetValue(p, out var u) && u.State == s && u.Item == item ? u.ChargeSpeed : Charge(s, item));
     }
     internal static void Start(object effect)
     {

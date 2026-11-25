@@ -236,7 +236,7 @@ internal static class CustomBotSpawning
             var category = categories[source.Category];
             if (category != "grenades" && (!equipped ||
                 (item.SlotId == "Headwear" ? category is not "armoredHeadwear" and not "unarmoredHeadwear" :
-                    item.SlotId is not ("FirstPrimaryWeapon" or "SecondPrimaryWeapon" or "Holster" or "Scabbard" or "Backpack" or "TacticalVest" or "ArmorVest" or "Earpiece") ||
+                    item.SlotId is not ("FirstPrimaryWeapon" or "SecondPrimaryWeapon" or "Holster" or "Scabbard" or "Backpack" or "TacticalVest" or "ArmorVest" or "Earpiece" or "Eyewear") ||
                     RarityConfiguration.Category(item.SlotId) != category))) continue;
             if (random() >= rates.Fractions[source.Category]) continue;
             var choices = source.ForMode(item.Upd?.FireMode?.FireMode ?? "");
