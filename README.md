@@ -23,10 +23,7 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 - Added **27 Legendary eyewear designs**, each with a signature ability and four per-instance random bonuses.
 - Eyewear supports compatible bot combat effects while avoiding checks for player-only actions.
-- Grand Vizier fires an independently scattered extra shotgun volley, including additional Legendary projectiles, with a 30% shotgun damage penalty.
-- Added Director’s Cut readiness status and corrected Hot Work Permit grenade launch. Semtax no longer attaches to other grenades.
-- Retained the previous performance, raid-cleanup, container, grenade-icon, NVG and compatibility improvements.
-- Preserved Legendary IDs, existing rolls, settings and integrations. The collection now includes **1,641 Legendary designs**.
+- The collection now includes **1,641 Legendary designs**.
 
 ## Legendary equipment
 
