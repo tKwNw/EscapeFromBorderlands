@@ -2,7 +2,7 @@
 
 **Borderlands-inspired Legendary equipment for SPT.**
 
-EFB adds Legendary versions of vanilla firearms, melee weapons, chest rigs, backpacks, grenades, headsets and headwear, each with a signature ability and random bonuses.
+EFB adds Legendary versions of vanilla firearms, melee weapons, chest rigs, backpacks, grenades, headsets, headwear and eyewear, each with a signature ability and random bonuses.
 
 ## Download and install
 
@@ -10,8 +10,8 @@ Choose the download that matches your installed SPT version.
 
 | SPT version | EFB version | Full install | Upgrade | Release notes |
 | --- | --- | --- | --- | --- |
-| 4.0.13 | 0.41.0 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.41.0-spt-4.0.13/EscapeFromBorderlands_0.41.0_SPT-4.0.13.zip) | [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.41.0-spt-4.0.13/EscapeFromBorderlands_0.41.0_SPT-4.0.13_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.41.0-spt-4.0.13) |
-| 4.1.6 | 0.41.1 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.41.1-spt-4.1.6/EscapeFromBorderlands_0.41.1_SPT-4.1.6.zip) | [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.41.1-spt-4.1.6/EscapeFromBorderlands_0.41.1_SPT-4.1.6_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.41.1-spt-4.1.6) |
+| 4.0.13 | 0.50.0 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.50.0-spt-4.0.13/EscapeFromBorderlands_0.50.0_SPT-4.0.13.zip) | [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.50.0-spt-4.0.13/EscapeFromBorderlands_0.50.0_SPT-4.0.13_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.50.0-spt-4.0.13) |
+| 4.1.6 | 0.51.0 | [Installation ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.51.0-spt-4.1.6/EscapeFromBorderlands_0.51.0_SPT-4.1.6.zip) | [Upgrade ZIP](https://github.com/tKwNw/EscapeFromBorderlands/releases/download/v0.51.0-spt-4.1.6/EscapeFromBorderlands_0.51.0_SPT-4.1.6_Upgrade.zip) | [What's changed](https://github.com/tKwNw/EscapeFromBorderlands/releases/tag/v0.51.0-spt-4.1.6) |
 
 Source branches: [SPT 4.0.13](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.0.13) · [SPT 4.1.6](https://github.com/tKwNw/EscapeFromBorderlands/tree/spt-4.1.6). Each includes its build instructions.
 
@@ -21,11 +21,12 @@ For a fresh installation, close the game, launcher and server, then extract the 
 
 ## Latest changes
 
-- Reduced repeated firearm-stat work, equipment lookups, movement calculations and temporary allocations.
-- Reduced bot checks for player-only actions and systems while retaining supported Legendary combat and movement effects.
-- Improved container navigation, quest-hit handling, grenade release and hit-impact processing.
-- Strengthened cleanup between raids and prevented delayed actions from carrying into a later raid.
-- Fixed grenade icon scaling, NVG state handling and passive effects remaining permanently visible as active statuses. The SPT 4.0.13 build also includes an optic exception safeguard.
+- Added **27 Legendary eyewear designs**, each with a signature ability and four per-instance random bonuses.
+- Eyewear supports compatible bot combat effects while avoiding checks for player-only actions.
+- Grand Vizier fires an independently scattered extra shotgun volley, including additional Legendary projectiles, with a 30% shotgun damage penalty.
+- Added Director’s Cut readiness status and corrected Hot Work Permit grenade launch. Semtax no longer attaches to other grenades.
+- Retained the previous performance, raid-cleanup, container, grenade-icon, NVG and compatibility improvements.
+- Preserved Legendary IDs, existing rolls, settings and integrations. The collection now includes **1,641 Legendary designs**.
 
 ## Legendary equipment
 
@@ -48,7 +49,8 @@ Legendary equipment counts as its vanilla base for objectives such as weapon kil
 | Grenades | 37 | [Browse](docs/grenades/README.md) |
 | Headsets and earpieces | 39 | [Browse](docs/headsets/README.md) |
 | Headwear | 106 | [Browse](docs/headwear/README.md) |
-| **Total** | **1,614** | |
+| Eyewear | 27 | [Browse](docs/eyewear/README.md) |
+| **Total** | **1,641** | |
 
 [Browse the complete item catalog](docs/README.md). Both supported SPT versions share this item catalog.
 

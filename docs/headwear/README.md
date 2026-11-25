@@ -1,6 +1,6 @@
 # Legendary headwear — Escape From Borderlands
 
-**SPT 4.0.13 / SPT 4.1.6**
+**SPT 4.0.13**
 
 **106 Legendary headwear designs.** Each has a fixed signature ability and 4 random bonuses. Effects apply while equipped unless stated otherwise.
 
