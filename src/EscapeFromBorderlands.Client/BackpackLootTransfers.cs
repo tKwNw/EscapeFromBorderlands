@@ -18,16 +18,24 @@ internal static class BackpackLootTransfers
     }
     private static ConditionalWeakTable<object, Transfer> Pending = new();
     private static bool ReportedFailure;
-    internal static void Reset() { Pending = new(); ReportedFailure = false; }
+    internal static void Reset()
+    {
+        Pending = new();
+        ReportedFailure = false;
+    }
     private static bool Relevant(Player p) => Eyewear.TracksLoot(p) || ChestRigRuntime.Get(p) is not null || BackpackRuntime.States.ContainsKey(p) ||
         RarityResolver.TryGetDefinition(BackpackRuntime.Worn(p), out var definition) && definition.BackpackEffect is not null;
     internal static void Observe(object operation, IItemOwner controller, CommandStatus status, Item source, Item received, ItemAddress? from, ItemAddress? to)
     {
-        try { ObserveCore(operation, controller, status, source, received, from, to); }
+        try
+        {
+            ObserveCore(operation, controller, status, source, received, from, to);
+        }
         catch (Exception e)
         {
             Pending.Remove(operation);
-            if (ReportedFailure) return;
+            if (ReportedFailure)
+                return;
             ReportedFailure = true;
             Plugin.LogSource.LogWarning($"Backpack loot tracking skipped an unavailable inventory transfer: {e.Message}");
         }
@@ -37,26 +45,37 @@ internal static class BackpackLootTransfers
         if (status == CommandStatus.Begin)
         {
             Pending.Remove(operation);
-            if (controller is not InventoryController inventory || BackpackRuntime.Actor(inventory) is not { } p || p.HealthController?.IsAlive != true || !Relevant(p) || from is null || to is null) return;
+            if (controller is not InventoryController inventory || BackpackRuntime.Actor(inventory) is not { } p || p.HealthController?.IsAlive != true || !Relevant(p) || from is null || to is null)
+                return;
             var origin = GClass3113.GetOwner(from);
             var destination = GClass3113.GetOwner(to);
-            if (origin is null || destination?.ID != inventory.ID) return;
-            Pending.Add(operation, new Transfer { Player = p, Source = source, Received = received, External = origin.ID != inventory.ID,
-                LooseWorld = ReferenceEquals(origin.RootItem, source) });
+            if (origin is null || destination?.ID != inventory.ID)
+                return;
+            Pending.Add(operation, new Transfer
+            {
+                Player = p,
+                Source = source,
+                Received = received,
+                External = origin.ID != inventory.ID,
+                LooseWorld = ReferenceEquals(origin.RootItem, source)
+            });
             return;
         }
         if (!Pending.TryGetValue(operation, out var transfer))
         {
             // A transfer out of the equipment may have no eligible destination,
             // but it must still invalidate equip-local charges/checklist steps.
-            if (status == CommandStatus.Succeed && BackpackRuntime.Actor(controller) is { } p && Relevant(p)) _ = BackpackRuntime.Get(p);
+            if (status == CommandStatus.Succeed && BackpackRuntime.Actor(controller) is { } p && Relevant(p))
+                _ = BackpackRuntime.Get(p);
             return;
         }
         Pending.Remove(operation);
-        if (status != CommandStatus.Succeed || transfer.Player.HealthController?.IsAlive != true) return;
+        if (status != CommandStatus.Succeed || transfer.Player.HealthController?.IsAlive != true)
+            return;
         // The owner/address may have changed since Begin. Only a successful
         // transfer that really ended in this equipment can grant progress.
-        if (transfer.Received.CurrentAddress is not { } address || GClass3113.GetOwner(address)?.ID != transfer.Player.InventoryController.ID) return;
+        if (transfer.Received.CurrentAddress is not { } address || GClass3113.GetOwner(address)?.ID != transfer.Player.InventoryController.ID)
+            return;
         BackpackRuntime.Acquired(transfer.Player, transfer.Source, transfer.Received, transfer.External);
         ChestRigInventory.Acquired(transfer.Player, transfer.Source, transfer.Received, transfer.External);
         Eyewear.Acquired(transfer.Player, transfer.Source, transfer.Received, transfer.LooseWorld, transfer.External);

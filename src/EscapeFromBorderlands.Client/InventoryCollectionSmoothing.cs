@@ -35,9 +35,11 @@ internal static class InventoryCollectionSmoothing
         var matches = new List<int>();
         for (var i = 2; i < code.Count; i++)
             if (code[i].Calls(native) && code[i - 1].opcode == OpCodes.Conv_I8 &&
-                code[i - 2].opcode == OpCodes.Ldc_I4 && Equals(code[i - 2].operand, 25_000_000)) matches.Add(i);
+                code[i - 2].opcode == OpCodes.Ldc_I4 && Equals(code[i - 2].operand, 25_000_000))
+                matches.Add(i);
         // Modified/unknown SPT implementations keep all their existing code.
-        if (matches.Count != 1 || code.Count(c => c.Calls(native)) != 1) return code;
+        if (matches.Count != 1 || code.Count(c => c.Calls(native)) != 1)
+            return code;
         code[matches[0]].operand = AccessTools.Method(typeof(InventoryCollectionSmoothing), nameof(Request));
         return code;
     }
@@ -48,15 +50,28 @@ internal static class InventoryCollectionSmoothing
     private static bool Request(ulong amount)
     {
         var world = Singleton<GameWorld>.Instance;
-        if (!Active(world)) { Reset(); return CollectImmediate(amount); }
-        if (World != world) { Reset(); World = world; }
+        if (!Active(world))
+        {
+            Reset();
+            return CollectImmediate(amount);
+        }
+        if (World != world)
+        {
+            Reset();
+            World = world;
+        }
         return Budget.Request(amount, Time.frameCount, Slice, Collect);
     }
     private static bool CollectSlice(ulong amount) => GarbageCollector.CollectIncremental(amount);
     internal static void Maintain(GameWorld? world)
     {
-        if (Budget.Remaining == 0) return;
-        if (world != World || !Active(world)) { Reset(); return; }
+        if (Budget.Remaining == 0)
+            return;
+        if (world != World || !Active(world))
+        {
+            Reset();
+            return;
+        }
         Budget.Drain(Time.frameCount, Slice, CollectUpdate);
     }
     internal static void Reset()

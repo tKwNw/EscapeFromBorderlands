@@ -18,8 +18,14 @@ internal static class WeaponCombatState
     private static readonly FieldInfo PlayerField = typeof(Player.ItemHandsController).GetField("_player", InstanceFields)!;
     private static readonly FieldInfo AccuracyField = typeof(Player.FirearmController).GetField("float_3", InstanceFields)!;
     private static readonly FieldInfo DispersionField = typeof(Player.FirearmController).GetField("float_4", InstanceFields)!;
-    private sealed class PreviousInputs { internal (float recoil, float ergo, float accuracy) Value; }
-    private sealed class PreviousInterval { internal float Value; }
+    private sealed class PreviousInputs
+    {
+        internal (float recoil, float ergo, float accuracy) Value;
+    }
+    private sealed class PreviousInterval
+    {
+        internal float Value;
+    }
     private static ConditionalWeakTable<Player.FirearmController, PreviousInputs> Inputs = new();
     private static readonly HashSet<Player.FirearmController> Refreshing = new();
     private static ConditionalWeakTable<Player.FirearmController.GenericFireOperationClass, PreviousInterval> SingleIntervals = new();
@@ -41,7 +47,8 @@ internal static class WeaponCombatState
     public static void RefreshPreparedSingleInterval(Player.FirearmController controller, Weapon weapon)
     {
         if (controller.CurrentOperation is not Player.FirearmController.GenericFireOperationClass operation ||
-            !SingleIntervals.TryGetValue(operation, out var original)) return;
+            !SingleIntervals.TryGetValue(operation, out var original))
+            return;
         var interval = 60f / Math.Max(1, weapon.SingleFireRate);
         var elapsed = Math.Max(0f, original.Value - operation.Float_0);
         operation.Float_0 = Math.Max(0f, interval - elapsed);
@@ -66,14 +73,18 @@ internal static class WeaponCombatState
     internal static WeaponPerformanceTrace.Route Refresh(Player.FirearmController controller, Weapon? weapon, Player? player,
         VariantDefinition? definition, ref WeaponPerformanceTrace trace, bool forShot = false, bool livePoll = false)
     {
-        if (livePoll && !ActorCapabilities.IsHuman(player)) return WeaponPerformanceTrace.Route.Neutral;
-        if (weapon is null) return WeaponPerformanceTrace.Route.Neutral;
+        if (livePoll && !ActorCapabilities.IsHuman(player))
+            return WeaponPerformanceTrace.Route.Neutral;
+        if (weapon is null)
+            return WeaponPerformanceTrace.Route.Neutral;
         var active = definition is not null || HasGearEffects(player ?? BackpackRuntime.Actor(controller), livePoll);
         var route = definition is not null ? WeaponPerformanceTrace.Route.Legendary :
             active ? WeaponPerformanceTrace.Route.Gear : WeaponPerformanceTrace.Route.Neutral;
         Inputs.TryGetValue(controller, out var previous);
-        if ((!active && previous is null) || !Refreshing.Add(controller)) return route;
-        if (!active) route = WeaponPerformanceTrace.Route.Restore;
+        if ((!active && previous is null) || !Refreshing.Add(controller))
+            return route;
+        if (!active)
+            route = WeaponPerformanceTrace.Route.Restore;
         try
         {
             (float recoil, float ergo, float accuracy) inputs;
@@ -127,7 +138,8 @@ internal static class WeaponCombatState
                 controller.UpdateHipInaccuracy();
                 trace.Apply(applyStart);
             }
-            if (!active) Inputs.Remove(controller);
+            if (!active)
+                Inputs.Remove(controller);
             if (!intervalRefreshed && controller.CurrentOperation is Player.FirearmController.GClass2029 automatic)
             {
                 var intervalStart = trace.Stamp();
@@ -135,16 +147,21 @@ internal static class WeaponCombatState
                 trace.Interval(intervalStart);
             }
         }
-        finally { Refreshing.Remove(controller); }
+        finally
+        {
+            Refreshing.Remove(controller);
+        }
         return route;
     }
 
     private static bool HasGearEffects(Player? player, bool livePoll)
     {
-        if (player is null) return false;
+        if (player is null)
+            return false;
         var eyewear = livePoll ? Eyewear.ChangesFirearm(player) : Eyewear.Get(player) is not null;
         if (!EquipmentPresence.Has(player, GearKind.Headwear | GearKind.Rig | GearKind.Earpiece) &&
-            !eyewear && !GrenadeBuffs.ChangesFirearm(player)) return false;
+            !eyewear && !GrenadeBuffs.ChangesFirearm(player))
+            return false;
         var observed = PlayerRefresh.CanObserve(player);
         // Explicit refreshes and cartridge boundaries retain their full path.
         return eyewear || (livePoll ? Headwear.ChangesFirearm(player) : Headwear.Get(player) is not null) || ChestRigRuntime.Get(player, observed) is not null || GrenadeBuffs.ChangesFirearm(player, observed) ||
@@ -153,7 +170,8 @@ internal static class WeaponCombatState
 
     internal static bool TracksInterval(Weapon weapon)
     {
-        if (RarityResolver.TryGetDefinition(weapon, out _)) return true;
+        if (RarityResolver.TryGetDefinition(weapon, out _))
+            return true;
         var owner = Headwear.Owner(weapon);
         return Headwear.Get(owner) is not null || Eyewear.Get(owner) is not null || ChestRigRuntime.Get(owner) is not null || EarpieceRuntime.Get(owner) is not null;
     }
@@ -164,10 +182,12 @@ internal static class WeaponCombatState
             return LegendaryRuntime.RemainingAmmo(weapon);
         // Double-tap can remove both cartridges before firing. Retain the
         // native ammo identity and per-barrel count without a LINQ closure.
-        if (controller.CurrentOperation is not Player.FirearmController.FireOnlyBarrelFireOperation barrels) return null;
+        if (controller.CurrentOperation is not Player.FirearmController.FireOnlyBarrelFireOperation barrels)
+            return null;
         foreach (var shot in barrels.List_1)
         {
-            if (shot.AmmoToFire != ammo) continue;
+            if (shot.AmmoToFire != ammo)
+                continue;
             return shot.AmmoCountInChamberBeforeShot > 0
                 ? shot.AmmoCountInChamberBeforeShot + weapon.GetCurrentMagazineCount() : null;
         }
@@ -178,7 +198,8 @@ internal static class WeaponCombatState
     {
         var heat = weapon.MalfState.OverheatFirerateMult;
         var interval = 60f / (Math.Max(1, weapon.FireRate) * (heat > 0f ? heat : 1f));
-        if (Math.Abs(interval - operation.Float_5) <= 0.000001f) return;
+        if (Math.Abs(interval - operation.Float_5) <= 0.000001f)
+            return;
         var progress = operation.Float_5 > 0f ? operation.Float_7 / operation.Float_5 : 0f;
         operation.Float_5 = interval;
         operation.Float_7 = progress * interval;
@@ -224,7 +245,8 @@ internal static class WeaponTotalProjectileCountPatch
     private static void Postfix(Ammo __instance, ref int __result)
     {
         // Instance-scoped only: do not change the shared ammunition template.
-        if (LegendaryRuntime.ReplaceNaturalPellets(__instance)) __result = 1;
+        if (LegendaryRuntime.ReplaceNaturalPellets(__instance))
+            __result = 1;
     }
 }
 
@@ -264,7 +286,8 @@ internal static class WeaponAutomaticIntervalPatch
     private static void Prefix(Player.FirearmController.GClass2029 __instance)
     {
         var weapon = __instance.Weapon_0;
-        if (WeaponCombatState.TracksInterval(weapon)) WeaponCombatState.RefreshInterval(__instance, weapon);
+        if (WeaponCombatState.TracksInterval(weapon))
+            WeaponCombatState.RefreshInterval(__instance, weapon);
     }
 }
 
@@ -281,7 +304,8 @@ internal static class LegendaryCarrierAnimationPatch
 
     private static void Postfix(Player.FirearmController.GenericFireOperationClass __instance, MethodBase __originalMethod)
     {
-        if (__originalMethod.Name == "Start") WeaponCombatState.RecordSingleStart(__instance);
+        if (__originalMethod.Name == "Start")
+            WeaponCombatState.RecordSingleStart(__instance);
     }
 
     private static Exception? Finalizer(LegendaryFireModePatch.ModeScope? __state, Exception? __exception)

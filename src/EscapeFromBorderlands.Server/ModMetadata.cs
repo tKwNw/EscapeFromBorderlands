@@ -14,7 +14,10 @@ public record ModMetadata : AbstractModMetadata
     public override SemRange SptVersion { get; init; } = new("~4.0.13", false);
     public override List<string>? Incompatibilities { get; init; } = [];
     public override Dictionary<string, SemRange>? ModDependencies { get; init; } = [];
-    public override string? Url { get; init; }
+    public override string? Url
+    {
+        get; init;
+    }
     public override bool? IsBundleMod { get; init; } = false;
     public override string License { get; init; } = "MIT";
 }

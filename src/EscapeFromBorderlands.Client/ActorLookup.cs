@@ -5,7 +5,10 @@ using EFT;
 
 namespace EscapeFromBorderlands.Client;
 
-internal enum ActorMember { Animation, HandsAnimator, HitReaction, MovementSkill, Physical }
+internal enum ActorMember
+{
+    Animation, HandsAnimator, HitReaction, MovementSkill, Physical
+}
 
 // Native objects keep their owner across many callbacks. Validate the current
 // binding on every hit; transfers, replaced animators and teardown cannot reuse
@@ -25,15 +28,20 @@ internal static class ActorLookup
     };
     internal static Player? Find(object? key, ActorMember member)
     {
-        if (key is null || PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance) is not { } world) return null;
+        if (key is null || PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance) is not { } world)
+            return null;
         if (Owners.TryGetValue(key, out var known))
         {
-            if (Matches(known, key, member) && PlayerRefresh.CanObserve(known) && PlayerRefresh.IsRegistered(world, known)) return known;
+            if (Matches(known, key, member) && PlayerRefresh.CanObserve(known) && PlayerRefresh.IsRegistered(world, known))
+                return known;
             Owners.Remove(key);
         }
         foreach (var candidate in world.RegisteredPlayers)
             if (candidate is Player player && Matches(player, key, member) && PlayerRefresh.CanObserve(player))
-            { Owners.Add(key, player); return player; }
+            {
+                Owners.Add(key, player);
+                return player;
+            }
         return null;
     }
 }

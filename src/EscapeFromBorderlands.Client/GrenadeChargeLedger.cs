@@ -22,8 +22,10 @@ internal sealed class GrenadeChargeLedger
 
     private Entry Get(string itemId, int capacity, double interval)
     {
-        if (string.IsNullOrEmpty(itemId) || capacity < 1) throw new ArgumentException("A reusable grenade needs an item ID and positive capacity.");
-        if (!Items.TryGetValue(itemId, out var entry)) Items[itemId] = entry = new Entry { Capacity = capacity };
+        if (string.IsNullOrEmpty(itemId) || capacity < 1)
+            throw new ArgumentException("A reusable grenade needs an item ID and positive capacity.");
+        if (!Items.TryGetValue(itemId, out var entry))
+            Items[itemId] = entry = new Entry { Capacity = capacity };
         Update(entry, interval);
         return entry;
     }
@@ -37,25 +39,40 @@ internal sealed class GrenadeChargeLedger
 
     private void Advance(Entry e)
     {
-        if (e.Spent == 0 || e.NextCharge <= 0) return;
+        if (e.Spent == 0 || e.NextCharge <= 0)
+            return;
         Advance(e, Clock());
     }
     private static void Advance(Entry e, double now)
     {
-        if (e.Spent == 0 || e.NextCharge <= 0 || now < e.NextCharge) return;
+        if (e.Spent == 0 || e.NextCharge <= 0 || now < e.NextCharge)
+            return;
         var restored = (int)Math.Min(e.Spent, 1 + Math.Floor((now - e.NextCharge) / e.Interval));
         e.Spent -= restored;
         e.NextCharge = e.Spent == 0 ? 0 : e.NextCharge + restored * e.Interval;
     }
     internal int Remaining(string itemId, int capacity, double interval = 180)
-    { lock (Sync) { var e = Get(itemId, capacity, interval); return Math.Max(0, e.Capacity - e.Spent); } }
+    {
+        lock (Sync)
+        {
+            var e = Get(itemId, capacity, interval);
+            return Math.Max(0, e.Capacity - e.Spent);
+        }
+    }
     internal double SecondsUntil(string itemId, int capacity, double interval = 180)
-    { lock (Sync) { var e = Get(itemId, capacity, interval); return e.Spent == 0 ? 0 : Math.Max(0, e.NextCharge - Clock()); } }
+    {
+        lock (Sync)
+        {
+            var e = Get(itemId, capacity, interval);
+            return e.Spent == 0 ? 0 : Math.Max(0, e.NextCharge - Clock());
+        }
+    }
     internal (int Remaining, double Seconds) Display(string itemId, int capacity, double interval)
     {
         lock (Sync)
         {
-            if (!Items.TryGetValue(itemId, out var entry)) return (capacity, 0d);
+            if (!Items.TryGetValue(itemId, out var entry))
+                return (capacity, 0d);
             Update(entry, interval);
             return (Math.Max(0, entry.Capacity - entry.Spent),
                 entry.Spent == 0 ? 0d : Math.Max(0d, entry.NextCharge - Clock()));
@@ -66,7 +83,12 @@ internal sealed class GrenadeChargeLedger
         internal readonly string Id;
         internal readonly int Capacity;
         internal readonly double Interval;
-        internal DisplayQuery(string id, int capacity, double interval) { Id = id; Capacity = capacity; Interval = interval; }
+        internal DisplayQuery(string id, int capacity, double interval)
+        {
+            Id = id;
+            Capacity = capacity;
+            Interval = interval;
+        }
     }
     internal void DisplayBatch(List<DisplayQuery> queries, List<(int Remaining, double Seconds)> output)
     {
@@ -76,7 +98,11 @@ internal sealed class GrenadeChargeLedger
             var now = Clock();
             foreach (var q in queries)
             {
-                if (!Items.TryGetValue(q.Id, out var entry)) { output.Add((q.Capacity, 0d)); continue; }
+                if (!Items.TryGetValue(q.Id, out var entry))
+                {
+                    output.Add((q.Capacity, 0d));
+                    continue;
+                }
                 SetInterval(entry, q.Interval);
                 Advance(entry, now);
                 output.Add((Math.Max(0, entry.Capacity - entry.Spent),
@@ -88,11 +114,13 @@ internal sealed class GrenadeChargeLedger
         => ReserveToken(itemId, capacity, token, interval);
     internal bool ReserveToken(string itemId, int capacity, object token, double interval = 180)
     {
-        if (token is null || token is string text && text.Length == 0) throw new ArgumentException("A throw needs a reservation token.");
+        if (token is null || token is string text && text.Length == 0)
+            throw new ArgumentException("A throw needs a reservation token.");
         lock (Sync)
         {
             var e = Get(itemId, capacity, interval);
-            if (e.Spent >= e.Capacity || e.Reservation is not null) return false;
+            if (e.Spent >= e.Capacity || e.Reservation is not null)
+                return false;
             e.Reservation = token;
             return true;
         }
@@ -104,12 +132,14 @@ internal sealed class GrenadeChargeLedger
         lock (Sync)
         {
             if (!Items.TryGetValue(itemId, out var e) ||
-                !(ReferenceEquals(e.Reservation, token) || e.Reservation is string previous && token is string text && previous == text)) return false;
+                !(ReferenceEquals(e.Reservation, token) || e.Reservation is string previous && token is string text && previous == text))
+                return false;
             Advance(e);
             e.Reservation = null;
             if (spawned)
             {
-                if (e.Spent == 0) e.NextCharge = Clock() + e.Interval;
+                if (e.Spent == 0)
+                    e.NextCharge = Clock() + e.Interval;
                 e.Spent++;
             }
             return true;
@@ -120,8 +150,10 @@ internal sealed class GrenadeChargeLedger
         lock (Sync)
         {
             var e = Get(itemId, capacity, interval);
-            if (e.Spent == 0 || seconds <= 0 || double.IsNaN(seconds) || double.IsInfinity(seconds)) return false;
-            if (e.NextCharge - Clock() > seconds) e.NextCharge -= seconds;
+            if (e.Spent == 0 || seconds <= 0 || double.IsNaN(seconds) || double.IsInfinity(seconds))
+                return false;
+            if (e.NextCharge - Clock() > seconds)
+                e.NextCharge -= seconds;
             else
             {
                 e.Spent--;
@@ -132,16 +164,28 @@ internal sealed class GrenadeChargeLedger
             return true;
         }
     }
-    internal void Pin(string actorId, string itemId) { lock (Sync) Selected[actorId] = itemId; }
-    internal string? Pinned(string actorId) { lock (Sync) return Selected.TryGetValue(actorId, out var id) ? id : null; }
+    internal void Pin(string actorId, string itemId)
+    {
+        lock (Sync)
+            Selected[actorId] = itemId;
+    }
+    internal string? Pinned(string actorId)
+    {
+        lock (Sync)
+            return Selected.TryGetValue(actorId, out var id) ? id : null;
+    }
     internal string? Select(string actorId, IEnumerable<string> available, string? preferred)
     {
         lock (Sync)
         {
             var ids = available.ToArray();
-            if (Selected.TryGetValue(actorId, out var pinned) && ids.Contains(pinned, StringComparer.Ordinal)) return pinned;
+            if (Selected.TryGetValue(actorId, out var pinned) && ids.Contains(pinned, StringComparer.Ordinal))
+                return pinned;
             var chosen = preferred is not null && ids.Contains(preferred, StringComparer.Ordinal) ? preferred : ids.FirstOrDefault();
-            if (chosen is null) Selected.Remove(actorId); else Selected[actorId] = chosen;
+            if (chosen is null)
+                Selected.Remove(actorId);
+            else
+                Selected[actorId] = chosen;
             return chosen;
         }
     }
@@ -158,15 +202,27 @@ internal sealed class GrenadeChargeLedger
             for (var i = 0; i < available.Count; i++)
             {
                 var id = idOf(available[i]);
-                if (i == 0) first = id;
+                if (i == 0)
+                    first = id;
                 hasPinned |= pinned is not null && string.Equals(id, pinned, StringComparison.Ordinal);
                 hasPreferred |= preferred is not null && string.Equals(id, preferred, StringComparison.Ordinal);
             }
-            if (hasPinned) return pinned;
+            if (hasPinned)
+                return pinned;
             var chosen = hasPreferred ? preferred : first;
-            if (chosen is null) Selected.Remove(actorId); else Selected[actorId] = chosen;
+            if (chosen is null)
+                Selected.Remove(actorId);
+            else
+                Selected[actorId] = chosen;
             return chosen;
         }
     }
-    internal void Reset() { lock (Sync) { Items.Clear(); Selected.Clear(); } }
+    internal void Reset()
+    {
+        lock (Sync)
+        {
+            Items.Clear();
+            Selected.Clear();
+        }
+    }
 }

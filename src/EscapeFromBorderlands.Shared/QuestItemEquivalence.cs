@@ -17,14 +17,19 @@ internal sealed class QuestItemEquivalence
     internal bool Matches(string actual, string required) => actual == required || Source(actual) == required;
     internal bool Contains(IEnumerable<string> required, string actual)
     {
-        if (required is null) throw new ArgumentNullException("source");
+        if (required is null)
+            throw new ArgumentNullException("source");
         var source = Source(actual);
         if (required is string[] array)
         {
-            for (var i = 0; i < array.Length; i++) if (actual == array[i] || source == array[i]) return true;
+            for (var i = 0; i < array.Length; i++)
+                if (actual == array[i] || source == array[i])
+                    return true;
             return false;
         }
-        foreach (var id in required) if (actual == id || source == id) return true;
+        foreach (var id in required)
+            if (actual == id || source == id)
+                return true;
         return false;
     }
     // Null means no identity needs appending. Never modify the event's lists:
@@ -36,16 +41,23 @@ internal sealed class QuestItemEquivalence
         {
             var id = actual[i];
             var source = Source(id);
-            if (source == id) continue;
+            if (source == id)
+                continue;
             var values = (IReadOnlyList<string>?)expanded ?? actual;
             var exists = false;
             for (var j = 0; j < values.Count; j++)
-                if (values[j] == source) { exists = true; break; }
-            if (exists) continue;
+                if (values[j] == source)
+                {
+                    exists = true;
+                    break;
+                }
+            if (exists)
+                continue;
             if (expanded is null)
             {
                 expanded = new List<string>(actual.Count + 1);
-                for (var j = 0; j < actual.Count; j++) expanded.Add(actual[j]);
+                for (var j = 0; j < actual.Count; j++)
+                    expanded.Add(actual[j]);
             }
             expanded.Add(source);
         }
@@ -60,9 +72,11 @@ internal sealed class QuestItemEquivalence
         {
             var id = values[i];
             var source = Source(id);
-            if (source == id) continue;
+            if (source == id)
+                continue;
             known ??= new HashSet<string>(values, StringComparer.Ordinal);
-            if (known.Add(source)) values.Add(source);
+            if (known.Add(source))
+                values.Add(source);
         }
         return values;
     }

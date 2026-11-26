@@ -20,9 +20,13 @@ internal static class ProjectileEffectSpawner
         SessionGeneration++;
         try
         {
-            foreach (var shot in DelayedProjectiles.ToArray()) SessionCleanup.Run("delayed projectile", shot, static value => ReleaseDelayed(value));
+            foreach (var shot in DelayedProjectiles.ToArray())
+                SessionCleanup.Run("delayed projectile", shot, static value => ReleaseDelayed(value));
         }
-        finally { DelayedProjectiles.Clear(); }
+        finally
+        {
+            DelayedProjectiles.Clear();
+        }
     }
 
     public static void Spawn(BallisticsCalculator calculator, EftBulletClass primary, EffectApplication application)
@@ -52,11 +56,11 @@ internal static class ProjectileEffectSpawner
             // Even volleys need symmetric offsets too. Keep the original on
             // the left edge and place every sibling from the original axis.
             // Four projectiles now occupy -1, -1/3, +1/3, +1 of the spread.
-            SetDirection(primary,(Quaternion.AngleAxis(-application.ProjectileSpreadDegrees,axis)*center).normalized);
-            for(var index=1;index<application.ProjectileCount;index++)
+            SetDirection(primary, (Quaternion.AngleAxis(-application.ProjectileSpreadDegrees, axis) * center).normalized);
+            for (var index = 1; index < application.ProjectileCount; index++)
             {
-                var angle=application.ProjectileSpreadDegrees*(index/(float)(application.ProjectileCount-1)*2f-1f);
-                SpawnOne(calculator,primary,application,index,(Quaternion.AngleAxis(angle,axis)*center).normalized);
+                var angle = application.ProjectileSpreadDegrees * (index / (float)(application.ProjectileCount - 1) * 2f - 1f);
+                SpawnOne(calculator, primary, application, index, (Quaternion.AngleAxis(angle, axis) * center).normalized);
             }
             return;
         }
@@ -142,14 +146,18 @@ internal static class ProjectileEffectSpawner
                 ReleaseDelayed(projectile);
                 return;
             }
-            try { world.StartCoroutine(ShootEcho(world, calculator, projectile, SessionGeneration)); }
+            try
+            {
+                world.StartCoroutine(ShootEcho(world, calculator, projectile, SessionGeneration));
+            }
             catch (Exception exception)
             {
                 ReleaseDelayed(projectile);
                 Plugin.LogSource.LogWarning($"Echo follow-up could not be scheduled: {exception.Message}");
             }
         }
-        else calculator.Shoot(projectile);
+        else
+            calculator.Shoot(projectile);
     }
 
     private static IEnumerator ShootEcho(GameWorld world, BallisticsCalculator calculator, EftBulletClass projectile, int session)
@@ -157,7 +165,8 @@ internal static class ProjectileEffectSpawner
         try
         {
             yield return new WaitForSeconds(0.12f);
-            if (session != SessionGeneration || Singleton<GameWorld>.Instance != world) yield break;
+            if (session != SessionGeneration || Singleton<GameWorld>.Instance != world)
+                yield break;
             try
             {
                 calculator.Shoot(projectile);
@@ -170,13 +179,15 @@ internal static class ProjectileEffectSpawner
         }
         finally
         {
-            if (session == SessionGeneration) ReleaseDelayed(projectile);
+            if (session == SessionGeneration)
+                ReleaseDelayed(projectile);
         }
     }
 
     private static void ReleaseDelayed(EftBulletClass projectile)
     {
-        if (!DelayedProjectiles.Remove(projectile)) return;
+        if (!DelayedProjectiles.Remove(projectile))
+            return;
         LegendaryRuntime.Release(projectile);
         EftBulletClass.Release(projectile);
     }

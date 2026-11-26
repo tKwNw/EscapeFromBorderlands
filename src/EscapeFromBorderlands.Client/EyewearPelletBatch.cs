@@ -21,14 +21,17 @@ internal static class EyewearPelletBatchPatch
     private static void Prefix(List<EftBulletClass> __4, Item __6, out Context __state)
     {
         __state = default;
-        if (Eyewear.CurrentShot is not { Double: true } scope || !ReferenceEquals(scope.Weapon, __6)) return;
+        if (Eyewear.CurrentShot is not { Double: true } scope || !ReferenceEquals(scope.Weapon, __6))
+            return;
         __state = new Context { Scope = scope, Previous = scope.NativePelletBatch, Generation = Eyewear.Generation };
         scope.NativePelletBatch = __4;
     }
     private static Exception? Finalizer(Context __state, Exception? __exception)
     {
         if (__state.Scope is { } scope && __state.Generation == Eyewear.Generation)
-        { scope.NativePelletBatch = __state.Previous; }
+        {
+            scope.NativePelletBatch = __state.Previous;
+        }
         return __exception;
     }
 }

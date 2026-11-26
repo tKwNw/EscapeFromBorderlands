@@ -35,9 +35,14 @@ internal static class WeaponStatReadBatch
         {
             _owns = !IsReading(weapon);
             _previous = _owns ? _current : default;
-            if (_owns) _current = new State { Weapon = weapon, ShareStatEquipment = true };
+            if (_owns)
+                _current = new State { Weapon = weapon, ShareStatEquipment = true };
         }
-        public void Dispose() { if (_owns) _current = _previous; }
+        public void Dispose()
+        {
+            if (_owns)
+                _current = _previous;
+        }
     }
 
     internal readonly struct Scope : IDisposable
@@ -60,7 +65,8 @@ internal static class WeaponStatReadBatch
 
     internal static RarityResolver.ShotRoll? ResolveRoll(Weapon weapon)
     {
-        if (!ReferenceEquals(_current.Weapon, weapon)) return RarityResolver.Resolve(weapon);
+        if (!ReferenceEquals(_current.Weapon, weapon))
+            return RarityResolver.Resolve(weapon);
         if (!_current.HasRoll)
         {
             _current.Roll = Definition(weapon) is { } definition ? RarityResolver.Resolve(weapon, definition) : null;
@@ -70,7 +76,8 @@ internal static class WeaponStatReadBatch
     }
     internal static VariantDefinition? Definition(Weapon weapon)
     {
-        if (!IsReading(weapon)) return RarityResolver.TryGetDefinition(weapon, out var outside) ? outside : null;
+        if (!IsReading(weapon))
+            return RarityResolver.TryGetDefinition(weapon, out var outside) ? outside : null;
         if (!_current.HasDefinition)
         {
             RarityResolver.TryGetDefinition(weapon, out _current.Definition!);
@@ -81,7 +88,8 @@ internal static class WeaponStatReadBatch
 
     internal static Player? ResolveOwner(Weapon weapon)
     {
-        if (!ReferenceEquals(_current.Weapon, weapon)) return BackpackNative.FindWeaponOwner(weapon);
+        if (!ReferenceEquals(_current.Weapon, weapon))
+            return BackpackNative.FindWeaponOwner(weapon);
         if (!_current.HasOwner)
         {
             _current.Owner = BackpackNative.FindWeaponOwner(weapon, _current.ControllerOwner);
@@ -118,18 +126,23 @@ internal static class WeaponStatReadBatch
     internal static WeaponLiveStats? Preview => _current.Application;
     internal static void RememberPreview(Weapon weapon, WeaponLiveStats application)
     {
-        if (IsReading(weapon)) _current.Application = application;
+        if (IsReading(weapon))
+            _current.Application = application;
     }
     internal static bool TryRigStats(Weapon weapon, ChestRigRuntime.State rig, out ChestRigRuntime.StatFactors stats)
     {
         if (IsReading(weapon) && ReferenceEquals(rig, _current.Rig) && _current.RigStats is { } cached)
-        { stats = cached; return true; }
+        {
+            stats = cached;
+            return true;
+        }
         stats = default;
         return false;
     }
     internal static void RememberRigStats(Weapon weapon, ChestRigRuntime.State rig, ChestRigRuntime.StatFactors stats)
     {
-        if (!IsReading(weapon)) return;
+        if (!IsReading(weapon))
+            return;
         _current.Rig = rig;
         _current.RigStats = stats;
     }

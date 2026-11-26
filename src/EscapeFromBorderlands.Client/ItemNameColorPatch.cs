@@ -33,8 +33,14 @@ internal static class InspectItemNameColorPatch
 
     private static void Postfix(ItemSpecificationPanel __instance)
     {
-        try { Apply(__instance); }
-        catch (Exception error) { ItemDescriptionPresentation.ReportFailure("inspection name", error); }
+        try
+        {
+            Apply(__instance);
+        }
+        catch (Exception error)
+        {
+            ItemDescriptionPresentation.ReportFailure("inspection name", error);
+        }
     }
 
     private static void Apply(ItemSpecificationPanel __instance)
@@ -79,8 +85,14 @@ internal static class GridItemNameColorPatch
 
     private static void Postfix(GridItemView __instance, ref string __result)
     {
-        try { Apply(__instance, ref __result); }
-        catch (Exception error) { ItemDescriptionPresentation.ReportFailure("inventory name", error); }
+        try
+        {
+            Apply(__instance, ref __result);
+        }
+        catch (Exception error)
+        {
+            ItemDescriptionPresentation.ReportFailure("inventory name", error);
+        }
     }
 
     private static void Apply(GridItemView __instance, ref string __result)

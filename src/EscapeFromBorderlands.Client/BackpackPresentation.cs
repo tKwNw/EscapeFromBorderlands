@@ -11,29 +11,46 @@ using HarmonyLib;
 using UnityEngine;
 
 namespace EscapeFromBorderlands.Client;
+
 internal static class BackpackPresentation
 {
     private static bool NightReduced;
     internal static bool NightVisionOn(Player? player) => player?.NightVisionObserver?.Component?.Togglable?.On == true;
-    internal static void Reset() { NightReduced = false; RefreshNight(); }
-    internal static void Restore(Player p) { if (Singleton<GameWorld>.Instance?.MainPlayer == p) { NightReduced = false; RefreshNight(); } }
+    internal static void Reset()
+    {
+        NightReduced = false;
+        RefreshNight();
+    }
+    internal static void Restore(Player p)
+    {
+        if (Singleton<GameWorld>.Instance?.MainPlayer == p)
+        {
+            NightReduced = false;
+            RefreshNight();
+        }
+    }
     internal static void Maintain(BackpackRuntime.State s)
     {
-        if (Singleton<GameWorld>.Instance?.MainPlayer != s.Player) return;
+        if (Singleton<GameWorld>.Instance?.MainPlayer != s.Player)
+            return;
         var reduced = s.Key == "BP15-1";
-        if (reduced == NightReduced) return;
-        NightReduced = reduced; RefreshNight();
+        if (reduced == NightReduced)
+            return;
+        NightReduced = reduced;
+        RefreshNight();
     }
     private static void RefreshNight()
     {
         var effect = CameraClass.Instance?.NightVision;
-        if (effect != null) effect.ApplySettings();
+        if (effect != null)
+            effect.ApplySettings();
     }
     internal static bool FullCompartments(Item bag)
     {
         var count = 0;
         foreach (var grid in Native.Items(Native.Get(bag, "Grids")))
-            if (++count > 6 || !Native.Items(Native.Get(grid, "Items")).Any()) return false;
+            if (++count > 6 || !Native.Items(Native.Get(grid, "Items")).Any())
+                return false;
         return count == 6;
     }
 }
@@ -44,9 +61,14 @@ internal static class BackpackSwayPatch
     {
         __state = __instance.Intensity;
         var p = BackpackRuntime.Actor(__instance.Physical);
-        if (BackpackRuntime.Is(p, "BP11-2") && p!.MovementContext.IsInPronePose && p.InputDirection.sqrMagnitude < .0001f) __instance.Intensity *= .3f;
+        if (BackpackRuntime.Is(p, "BP11-2") && p!.MovementContext.IsInPronePose && p.InputDirection.sqrMagnitude < .0001f)
+            __instance.Intensity *= .3f;
     }
-    private static Exception? Finalizer(BreathEffector __instance, float __state, Exception? __exception) { __instance.Intensity = __state; return __exception; }
+    private static Exception? Finalizer(BreathEffector __instance, float __state, Exception? __exception)
+    {
+        __instance.Intensity = __state;
+        return __exception;
+    }
 }
 [HarmonyPatch]
 internal static class BackpackRecoilSettlingPatch
@@ -58,7 +80,8 @@ internal static class BackpackRecoilSettlingPatch
     {
         var p = BackpackRuntime.Actor(___FirearmController);
         var s = BackpackRuntime.Get(p);
-        if (s?.Key == "BP41-2" && BackpackPresentation.FullCompartments(s.Bag)) deltaTime *= 1.3f;
+        if (s?.Key == "BP41-2" && BackpackPresentation.FullCompartments(s.Bag))
+            deltaTime *= 1.3f;
     }
 }
 [HarmonyPatch(typeof(RootMotion.FinalIK.HitReaction), "Hit")]
@@ -67,7 +90,8 @@ internal static class BackpackAimPunchPatch
     private static void Prefix(RootMotion.FinalIK.HitReaction __instance, ref Vector3 force)
     {
         var p = ActorLookup.Find(__instance, ActorMember.HitReaction);
-        if (BackpackRuntime.Is(p, "BP09-3")) force *= .5f;
+        if (BackpackRuntime.Is(p, "BP09-3"))
+            force *= .5f;
     }
 }
 [HarmonyPatch(typeof(BSG.CameraEffects.NightVision), "ApplySettings")]
@@ -76,10 +100,14 @@ internal static class BackpackNightVisionPatch
     private static void Prefix(BSG.CameraEffects.NightVision __instance, out float __state)
     {
         __state = __instance.NoiseIntensity;
-        if (__instance.On && BackpackRuntime.Is(Singleton<GameWorld>.Instance?.MainPlayer, "BP15-1")) __instance.NoiseIntensity *= .2f;
+        if (__instance.On && BackpackRuntime.Is(Singleton<GameWorld>.Instance?.MainPlayer, "BP15-1"))
+            __instance.NoiseIntensity *= .2f;
     }
     private static Exception? Finalizer(BSG.CameraEffects.NightVision __instance, float __state, Exception? __exception)
-    { __instance.NoiseIntensity = __state; return __exception; }
+    {
+        __instance.NoiseIntensity = __state;
+        return __exception;
+    }
 }
 [HarmonyPatch(typeof(UltimateBloom), "OnRenderImage")]
 internal static class BackpackBloomPatch
@@ -88,8 +116,12 @@ internal static class BackpackBloomPatch
     {
         __state = __instance.m_BloomIntensity;
         var p = Singleton<GameWorld>.Instance?.MainPlayer;
-        if (BackpackRuntime.Is(p, "BP15-1") && BackpackPresentation.NightVisionOn(p)) __instance.m_BloomIntensity *= .2f;
+        if (BackpackRuntime.Is(p, "BP15-1") && BackpackPresentation.NightVisionOn(p))
+            __instance.m_BloomIntensity *= .2f;
     }
     private static Exception? Finalizer(UltimateBloom __instance, float __state, Exception? __exception)
-    { __instance.m_BloomIntensity = __state; return __exception; }
+    {
+        __instance.m_BloomIntensity = __state;
+        return __exception;
+    }
 }

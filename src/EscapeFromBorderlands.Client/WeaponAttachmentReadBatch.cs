@@ -32,7 +32,10 @@ internal static class WeaponAttachmentReadBatch
                 const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
                 Method = declaringType.GetProperty(property, flags, null, result, Type.EmptyTypes, null)?.GetGetMethod(true);
             }
-            catch (Exception error) { BindError = error.GetType().Name; }
+            catch (Exception error)
+            {
+                BindError = error.GetType().Name;
+            }
         }
     }
 
@@ -73,16 +76,19 @@ internal static class WeaponAttachmentReadBatch
 
     private static bool Prepare()
     {
-        if (ModsGetter.Method is null) return false;
+        if (ModsGetter.Method is null)
+            return false;
         foreach (var getter in StatGetters)
-            if (getter.Method is null) return false;
+            if (getter.Method is null)
+                return false;
         return true;
     }
 
     private static IEnumerable<MethodBase> TargetMethods()
     {
         foreach (var getter in StatGetters)
-            if (getter.Method is { } method) yield return method;
+            if (getter.Method is { } method)
+                yield return method;
     }
 
     private static bool CanUse(in NativeGetter getter, bool requireOurTranspiler)
@@ -106,9 +112,11 @@ internal static class WeaponAttachmentReadBatch
                 if (requireOurTranspiler)
                     foreach (var patch in patches.Transpilers)
                         if (patch.owner == Plugin.PluginGuid && patch.PatchMethod is { } installed &&
-                            installed.DeclaringType == typeof(WeaponAttachmentReadBatch) && installed.Name == nameof(Transpiler)) return true;
+                            installed.DeclaringType == typeof(WeaponAttachmentReadBatch) && installed.Name == nameof(Transpiler))
+                            return true;
             }
-            if (!requireOurTranspiler) return true;
+            if (!requireOurTranspiler)
+                return true;
             Fallback = getter.Name + " attachment hook was not installed";
             return false;
         }
@@ -121,11 +129,20 @@ internal static class WeaponAttachmentReadBatch
 
     private static bool CanShare()
     {
-        if (Compatibility != 0) return Compatibility > 0;
+        if (Compatibility != 0)
+            return Compatibility > 0;
         foreach (var getter in StatGetters)
-            if (!CanUse(getter, requireOurTranspiler: true)) { Compatibility = -1; return false; }
+            if (!CanUse(getter, requireOurTranspiler: true))
+            {
+                Compatibility = -1;
+                return false;
+            }
         foreach (var getter in InputGetters)
-            if (!CanUse(getter, requireOurTranspiler: false)) { Compatibility = -1; return false; }
+            if (!CanUse(getter, requireOurTranspiler: false))
+            {
+                Compatibility = -1;
+                return false;
+            }
         DirectTraversal = WeaponAttachmentTraversal.Compatible();
         Compatibility = 1;
         return true;
@@ -137,7 +154,8 @@ internal static class WeaponAttachmentReadBatch
         var reason = Fallback;
         Fallback = null;
         Compatibility = 0;
-        if (reason is not null) Plugin.LogSource?.LogInfo("EFB firearm batching used the normal getters: " + reason);
+        if (reason is not null)
+            Plugin.LogSource?.LogInfo("EFB firearm batching used the normal getters: " + reason);
     }
 
     [HarmonyPriority(Priority.Last)]
@@ -161,7 +179,8 @@ internal static class WeaponAttachmentReadBatch
         internal Scope(Weapon weapon, bool enabled)
         {
             Outer = Depth == 0;
-            if (Outer && enabled && WeaponAttachmentTraversal.NativeType(weapon.GetType()) && CanShare()) PollWeapon = weapon;
+            if (Outer && enabled && WeaponAttachmentTraversal.NativeType(weapon.GetType()) && CanShare())
+                PollWeapon = weapon;
             Depth++;
         }
 
@@ -189,7 +208,8 @@ internal static class WeaponAttachmentReadBatch
     // from live inputs once per poll; actual cartridges use the native path.
     private static bool Prefix(Weapon __instance, MethodBase __originalMethod, ref float __result)
     {
-        if (!IsPolling(__instance) || Filling) return true;
+        if (!IsPolling(__instance) || Filling)
+            return true;
         if (!StatsReady)
         {
             if (DirectTraversal && WeaponAttachmentInputs.TryRead(__instance, out var retained))
@@ -213,9 +233,11 @@ internal static class WeaponAttachmentReadBatch
                 var mod = mods[i];
                 // Foreign subclasses can supply stateful template/accuracy
                 // accessors; retain their original getter evaluation order.
-                if (!NativeBuffer && !WeaponAttachmentTraversal.NativeType(mod.GetType())) return true;
+                if (!NativeBuffer && !WeaponAttachmentTraversal.NativeType(mod.GetType()))
+                    return true;
                 var template = mod.Template;
-                if (!folded || mod is not StockItemClass) recoil += template.Recoil;
+                if (!folded || mod is not StockItemClass)
+                    recoil += template.Recoil;
                 ergonomics += template.Ergonomics;
                 accuracy = checked(accuracy + mod.Accuracy);
             }
@@ -233,8 +255,10 @@ internal static class WeaponAttachmentReadBatch
 
     private static IEnumerable<Mod> Read(Weapon weapon)
     {
-        if (!IsPolling(weapon) || Filling) return weapon.Mods;
-        if (Ready) return Buffer!;
+        if (!IsPolling(weapon) || Filling)
+            return weapon.Mods;
+        if (Ready)
+            return Buffer!;
 
         var buffer = Buffer ??= new List<Mod>(16);
         Filling = true;
@@ -254,6 +278,9 @@ internal static class WeaponAttachmentReadBatch
             buffer.Clear();
             throw;
         }
-        finally { Filling = false; }
+        finally
+        {
+            Filling = false;
+        }
     }
 }

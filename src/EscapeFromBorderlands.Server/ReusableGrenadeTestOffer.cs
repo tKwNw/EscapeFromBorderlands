@@ -13,7 +13,8 @@ internal static class ReusableGrenadeTestOffer
     internal static MongoId OfferId(string template) => new(Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("efb:grenade-test:" + template)))[..24].ToLowerInvariant());
     internal static void Install(DatabaseService database, LegendaryCatalog catalog)
     {
-        if (!database.GetTraders().TryGetValue(Prapor, out var trader) || trader.Assort is not { } assort) return;
+        if (!database.GetTraders().TryGetValue(Prapor, out var trader) || trader.Assort is not { } assort)
+            return;
         foreach (var definition in catalog.Variants.Where(v => v.GrenadeChargesPerRaid > 0))
             Remove(assort, definition);
     }

@@ -9,7 +9,8 @@ internal static class EffectStatusLayout
     internal static float Advance(float height, bool hasNext) => Math.Max(25f, height) + (hasNext ? Gap : 0f);
     internal static float[] Offsets(IReadOnlyList<float> heights, out float total)
     {
-        var offsets = new float[heights.Count]; total = 0f;
+        var offsets = new float[heights.Count];
+        total = 0f;
         for (var i = 0; i < heights.Count; i++)
         {
             offsets[i] = total;

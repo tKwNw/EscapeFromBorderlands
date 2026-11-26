@@ -30,7 +30,8 @@ internal static class FactionEquipmentSpawning
 
     internal static void RememberImported(int tier, string category, IEnumerable<string> ids)
     {
-        if (!Imported.TryGetValue((tier, category), out var set)) Imported[(tier, category)] = set = new(StringComparer.Ordinal);
+        if (!Imported.TryGetValue((tier, category), out var set))
+            Imported[(tier, category)] = set = new(StringComparer.Ordinal);
         set.UnionWith(ids);
     }
 
@@ -38,7 +39,8 @@ internal static class FactionEquipmentSpawning
     {
         var target = helper.GetMethod("GetEquipmentByBotRole", new[] { typeof(string), typeof(int) })
             ?? throw new InvalidOperationException("APBS role-specific equipment method was not found.");
-        if (Installed.Contains(target)) return;
+        if (Installed.Contains(target))
+            return;
         var returns = target.ReturnType;
         if (!returns.IsGenericType || returns.GetGenericTypeDefinition() != typeof(Dictionary<,>) || returns.GenericTypeArguments[1] != typeof(Dictionary<MongoId, double>))
             throw new InvalidOperationException("APBS equipment dictionary shape is unsupported.");
@@ -61,16 +63,22 @@ internal static class FactionEquipmentSpawning
     // Final inventory conversion owns the only roll; imported eligibility is irrelevant.
     internal static void Apply(object equipment, string role, int tier)
     {
-        if (equipment is not IDictionary slots) return;
+        if (equipment is not IDictionary slots)
+            return;
         foreach (DictionaryEntry slot in slots)
         {
-            if (slot.Value is not IDictionary pool) continue;
+            if (slot.Value is not IDictionary pool)
+                continue;
             foreach (var entry in Entries(pool).ToArray())
-                if (AllIds.Contains(entry.Key.ToString() ?? "")) pool.Remove(entry.Key);
+                if (AllIds.Contains(entry.Key.ToString() ?? ""))
+                    pool.Remove(entry.Key);
         }
     }
     private static string Category(VariantDefinition v) => v.IsEyewear ? "eyewear" : v.IsEarpiece ? "earpieces" : v.MeleeEffect is not null ? "melee" : v.BackpackEffect is not null ? "backpacks" : v.ChestRigEffect is not null ? "chestRigs" : "guns";
 
     private static IEnumerable<DictionaryEntry> Entries(IDictionary pool)
-    { foreach (DictionaryEntry entry in pool) yield return entry; }
+    {
+        foreach (DictionaryEntry entry in pool)
+            yield return entry;
+    }
 }

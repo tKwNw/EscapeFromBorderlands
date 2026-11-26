@@ -27,23 +27,31 @@ internal static class LegendaryGrenadeDrawAudio
         if (item is null || actor is null || actor.IsAI || actor.HealthController?.IsAlive != true ||
             !ReferenceEquals(actor, world?.MainPlayer) || !ReusableGrenadeRuntime.IsReusable(item) ||
             !RarityResolver.TryGetDefinition(item, out var definition) || definition.RuntimeKey != "GR15" ||
-            ReusableGrenadeRuntime.Remaining(item) <= 0 || ReferenceEquals(Controller, controller)) return;
+            ReusableGrenadeRuntime.Remaining(item) <= 0 || ReferenceEquals(Controller, controller))
+            return;
         Stop();
         Controller = controller;
         WasHeld = ReferenceEquals(actor.HandsController, controller);
         var volume = LegendaryGrenadeSettings.DrawSoundVolume;
-        if (volume <= 0f) return;
+        if (volume <= 0f)
+            return;
         Pending = true;
         RetryUntil = Time.unscaledTime + 2f;
         RetryAt = Time.unscaledTime;
-        if (WasHeld) TryPlay();
+        if (WasHeld)
+            TryPlay();
     }
 
     private static void TryPlay()
     {
-        if (!Pending || Time.unscaledTime < RetryAt) return;
+        if (!Pending || Time.unscaledTime < RetryAt)
+            return;
         var volume = LegendaryGrenadeSettings.DrawSoundVolume;
-        if (volume <= 0f) { Pending = false; return; }
+        if (volume <= 0f)
+        {
+            Pending = false;
+            return;
+        }
         if (Time.unscaledTime > RetryUntil)
         {
             Pending = false;
@@ -52,13 +60,19 @@ internal static class LegendaryGrenadeDrawAudio
         }
         RetryAt = Time.unscaledTime + .1f;
         var audio = MonoBehaviourSingleton<BetterAudio>.Instance;
-        if (audio == null || audio.ListenerTransform == null) return;
+        if (audio == null || audio.ListenerTransform == null)
+            return;
         try
         {
-            if (!ReferenceEquals(ClipOwner, audio)) { UnloadClip(); ClipOwner = audio; }
+            if (!ReferenceEquals(ClipOwner, audio))
+            {
+                UnloadClip();
+                ClipOwner = audio;
+            }
             LoadClip();
             var source = audio.GetSource(BetterAudio.AudioSourceGroupType.Nonspatial, true, true);
-            if (source == null) return;
+            if (source == null)
+                return;
             Source = source;
             source.OnReleased += Released;
             source.Position = audio.ListenerTransform.position;
@@ -93,7 +107,8 @@ internal static class LegendaryGrenadeDrawAudio
         if (Clip != null)
         {
             var state = Native.Get(Clip, "loadState");
-            if (state is null || state.ToString() == "Loaded") return;
+            if (state is null || state.ToString() == "Loaded")
+                return;
             UnloadClip();
         }
         using var stream = typeof(LegendaryGrenadeDrawAudio).Assembly.GetManifestResourceStream(ResourceName)
@@ -110,60 +125,94 @@ internal static class LegendaryGrenadeDrawAudio
         {
             var setData = AccessTools.Method(type, "SetData", new[] { typeof(float[]), typeof(int) })
                 ?? throw new MissingMethodException(type.FullName, "SetData");
-            if (!Equals(setData.Invoke(clip, new object[] { pcm.Samples, 0 }), true)) throw new InvalidOperationException("Unity rejected the draw cue samples.");
+            if (!Equals(setData.Invoke(clip, new object[] { pcm.Samples, 0 }), true))
+                throw new InvalidOperationException("Unity rejected the draw cue samples.");
             Play = AccessTools.Method(typeof(BetterSource), "Play", new[] { type, type, typeof(float), typeof(float), typeof(bool), typeof(bool) })
                 ?? throw new MissingMethodException(typeof(BetterSource).FullName, "Play");
             Clip = clip;
             Duration = pcm.Seconds;
         }
-        catch { UnityEngine.Object.Destroy(clip); throw; }
+        catch
+        {
+            UnityEngine.Object.Destroy(clip);
+            throw;
+        }
     }
 
     internal static void Maintain()
     {
-        if (Controller is null) return;
+        if (Controller is null)
+            return;
         var player = Singleton<GameWorld>.Instance?.MainPlayer;
-        if (player?.HealthController?.IsAlive != true) { Reset(); return; }
+        if (player?.HealthController?.IsAlive != true)
+        {
+            Reset();
+            return;
+        }
         if (!ReferenceEquals(player.HandsController, Controller))
         {
             // Spawn can precede the native hands-controller assignment.
-            if (Pending && !WasHeld && Time.unscaledTime <= RetryUntil) return;
-            Reset(); return;
+            if (Pending && !WasHeld && Time.unscaledTime <= RetryUntil)
+                return;
+            Reset();
+            return;
         }
         WasHeld = true;
         TryPlay();
-        if (Source != null && (Time.unscaledTime >= Until || LegendaryGrenadeSettings.DrawSoundVolume <= 0f)) Stop();
+        if (Source != null && (Time.unscaledTime >= Until || LegendaryGrenadeSettings.DrawSoundVolume <= 0f))
+            Stop();
     }
 
     private static void Released(BetterSource source)
     {
         source.OnReleased -= Released;
-        if (ReferenceEquals(Source, source)) Source = null;
+        if (ReferenceEquals(Source, source))
+            Source = null;
     }
     private static void Stop()
     {
         Pending = false;
-        var source = Source; Source = null;
-        if (source == null) return;
+        var source = Source;
+        Source = null;
+        if (source == null)
+            return;
         source.OnReleased -= Released;
-        try { source.Release(); }
-        catch (Exception e) { Report(e); }
+        try
+        {
+            source.Release();
+        }
+        catch (Exception e)
+        {
+            Report(e);
+        }
     }
     private static void Report(Exception e)
     {
-        if (ReportedFailure) return;
+        if (ReportedFailure)
+            return;
         ReportedFailure = true;
         Plugin.LogSource.LogWarning("Holy Hand Grenade draw sound unavailable: " + (e.InnerException ?? e).Message);
     }
-    internal static void Reset() { Stop(); Controller = null; Until = RetryUntil = RetryAt = 0f; WasHeld = false; }
+    internal static void Reset()
+    {
+        Stop();
+        Controller = null;
+        Until = RetryUntil = RetryAt = 0f;
+        WasHeld = false;
+    }
     private static void UnloadClip()
     {
-        if (Clip != null) UnityEngine.Object.Destroy(Clip);
-        Clip = null; Play = null; Duration = 0f;
+        if (Clip != null)
+            UnityEngine.Object.Destroy(Clip);
+        Clip = null;
+        Play = null;
+        Duration = 0f;
     }
     internal static void ResetSession()
     {
-        Reset(); UnloadClip(); ClipOwner = null;
+        Reset();
+        UnloadClip();
+        ClipOwner = null;
         ReportedFailure = ReportedPlayback = false;
     }
     internal static void Dispose() => ResetSession();

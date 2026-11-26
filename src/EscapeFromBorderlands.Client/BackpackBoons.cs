@@ -1,4 +1,5 @@
 namespace EscapeFromBorderlands.Client;
+
 internal sealed class BackpackBoons
 {
     public int ExtraRows, ExtraColumns;

@@ -18,14 +18,23 @@ internal static class MasterKeyRuntime
     private static readonly MethodInfo FindInteractable = AccessTools.Method(typeof(GameWorld), "FindInteractable");
     private static readonly PropertyInfo HitDistance = FindInteractable.GetParameters()[1].ParameterType.GetElementType()!.GetProperty("distance")!;
 
-    public static void Reset() { UsedPlayers.Clear(); _world = null; }
+    public static void Reset()
+    {
+        UsedPlayers.Clear();
+        _world = null;
+    }
     internal static bool Available(Player player) => Ready(player);
 
     private static bool Ready(Player? player)
     {
-        if (!Singleton<GameWorld>.Instantiated || player?.HealthController?.IsAlive != true) return false;
+        if (!Singleton<GameWorld>.Instantiated || player?.HealthController?.IsAlive != true)
+            return false;
         var world = Singleton<GameWorld>.Instance;
-        if (!ReferenceEquals(_world, world)) { UsedPlayers.Clear(); _world = world; }
+        if (!ReferenceEquals(_world, world))
+        {
+            UsedPlayers.Clear();
+            _world = world;
+        }
         return !UsedPlayers.Contains(player.ProfileId) && MeleeRuntime.Effect(player)?.UnlocksDoorOncePerRaid == true;
     }
 
@@ -35,7 +44,8 @@ internal static class MasterKeyRuntime
     public static bool TryUnlock(Player? player, Door? door)
     {
         if (!Ready(player) || door == null || !door.Operatable || door.NoInteractionsAllowed ||
-            door.DoorState != EDoorState.Locked) return false;
+            door.DoorState != EDoorState.Locked)
+            return false;
         // Reserve before native callbacks. A refused unlock releases the reservation; a successfully
         // unlocked door spends it even if another interaction interrupts the opening animation.
         var id = player!.ProfileId;
@@ -49,11 +59,13 @@ internal static class MasterKeyRuntime
         }
         catch (Exception error)
         {
-            if (door.DoorState == EDoorState.Locked) UsedPlayers.Remove(id);
+            if (door.DoorState == EDoorState.Locked)
+                UsedPlayers.Remove(id);
             Plugin.LogSource.LogWarning($"Emergency Access door interaction failed: {error.GetType().Name}.");
             return door.DoorState != EDoorState.Locked;
         }
-        if (door.DoorState != EDoorState.Locked) return true;
+        if (door.DoorState != EDoorState.Locked)
+            return true;
         UsedPlayers.Remove(id);
         return false;
     }
@@ -62,12 +74,15 @@ internal static class MasterKeyRuntime
     {
         // The native callback covers real collision hits, including bots. The player-only probe
         // runs during the native strike window and uses EFT's occlusion-checked interaction ray.
-        if (player == null || player.IsAI || collider.OnHit == null || !Ready(player)) return;
+        if (player == null || player.IsAI || collider.OnHit == null || !Ready(player))
+            return;
         var args = new object?[] { InteractionRay.GetValue(player), null };
         var target = FindInteractable.Invoke(null, args) as GameObject;
-        if (target == null || args[1] == null) return;
+        if (target == null || args[1] == null)
+            return;
         var distance = (float)HitDistance.GetValue(args[1])!;
-        if (distance < 0f || distance > collider.MaxDistance + EFTHardSettings.Instance.BEHIND_CAST) return;
+        if (distance < 0f || distance > collider.MaxDistance + EFTHardSettings.Instance.BEHIND_CAST)
+            return;
         TryUnlock(player, DoorFrom(target.transform));
     }
 }

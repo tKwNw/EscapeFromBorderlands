@@ -30,18 +30,22 @@ internal static class LegacyClientConfigMigration
             ? File.ReadAllLines(destination).ToList()
             : new List<string>();
         var existing = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in Entries(lines)) existing.Add(Key(entry.Section, entry.Name));
+        foreach (var entry in Entries(lines))
+            existing.Add(Key(entry.Section, entry.Name));
 
         var pending = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
         foreach (var source in sources)
         {
-            if (!File.Exists(source)) continue;
+            if (!File.Exists(source))
+                continue;
             // Avoid reading our own destination if paths are unexpectedly aliased.
             if (string.Equals(Path.GetFullPath(source), Path.GetFullPath(destination),
-                StringComparison.OrdinalIgnoreCase)) continue;
+                StringComparison.OrdinalIgnoreCase))
+                continue;
             foreach (var entry in Entries(File.ReadAllLines(source)))
             {
-                if (!existing.Add(Key(entry.Section, entry.Name))) continue;
+                if (!existing.Add(Key(entry.Section, entry.Name)))
+                    continue;
                 if (!pending.TryGetValue(entry.Section, out var values))
                 {
                     values = new List<string>();
@@ -51,7 +55,8 @@ internal static class LegacyClientConfigMigration
             }
         }
         var imported = pending.Values.Sum(x => x.Count);
-        if (imported == 0) return 0;
+        if (imported == 0)
+            return 0;
 
         // Insert missing entries into the existing section, not duplicate headings.
         // Repeated section headers are avoided for compatibility with INI parsers.
@@ -60,7 +65,8 @@ internal static class LegacyClientConfigMigration
             var sectionEnd = FindSectionEnd(lines, section.Key);
             if (sectionEnd < 0)
             {
-                if (lines.Count > 0 && lines[lines.Count - 1].Length > 0) lines.Add("");
+                if (lines.Count > 0 && lines[lines.Count - 1].Length > 0)
+                    lines.Add("");
                 lines.Add("[" + section.Key + "]");
                 lines.AddRange(section.Value);
             }
@@ -71,24 +77,29 @@ internal static class LegacyClientConfigMigration
         }
 
         var directory = Path.GetDirectoryName(destination);
-        if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
         // Preserve an existing destination once, prior to modifying it.
         if (File.Exists(destination))
         {
             var backup = destination + ".pre-0.30-migration.bak";
-            if (!File.Exists(backup)) File.Copy(destination, backup, overwrite: false);
+            if (!File.Exists(backup))
+                File.Copy(destination, backup, overwrite: false);
         }
         var temporary = destination + ".efb-migration-" + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
             File.WriteAllLines(temporary, lines, new UTF8Encoding(false));
             // Replace only after the complete merged file is safely staged.
-            if (File.Exists(destination)) File.Copy(temporary, destination, overwrite: true);
-            else File.Move(temporary, destination);
+            if (File.Exists(destination))
+                File.Copy(temporary, destination, overwrite: true);
+            else
+                File.Move(temporary, destination);
         }
         finally
         {
-            if (File.Exists(temporary)) File.Delete(temporary);
+            if (File.Exists(temporary))
+                File.Delete(temporary);
         }
         return imported;
     }
@@ -102,17 +113,21 @@ internal static class LegacyClientConfigMigration
         {
             var trimmed = line.Trim();
             if (trimmed.Length == 0 || trimmed.StartsWith("#", StringComparison.Ordinal) ||
-                trimmed.StartsWith(";", StringComparison.Ordinal)) continue;
+                trimmed.StartsWith(";", StringComparison.Ordinal))
+                continue;
             if (trimmed.Length >= 2 && trimmed[0] == '[' && trimmed[trimmed.Length - 1] == ']')
             {
                 section = trimmed.Substring(1, trimmed.Length - 2).Trim();
                 continue;
             }
-            if (string.IsNullOrEmpty(section)) continue;
+            if (string.IsNullOrEmpty(section))
+                continue;
             var separator = trimmed.IndexOf('=');
-            if (separator <= 0) continue;
+            if (separator <= 0)
+                continue;
             var name = trimmed.Substring(0, separator).Trim();
-            if (name.Length > 0) yield return (section, name, trimmed);
+            if (name.Length > 0)
+                yield return (section, name, trimmed);
         }
     }
 
@@ -125,10 +140,12 @@ internal static class LegacyClientConfigMigration
             var trimmed = lines[i].Trim();
             if (trimmed.Length < 2 || trimmed[0] != '[' || trimmed[trimmed.Length - 1] != ']')
                 continue;
-            if (current) position = i;
+            if (current)
+                position = i;
             current = string.Equals(trimmed.Substring(1, trimmed.Length - 2).Trim(),
                 sectionName, StringComparison.OrdinalIgnoreCase);
-            if (current) position = lines.Count;
+            if (current)
+                position = lines.Count;
         }
         return position;
     }

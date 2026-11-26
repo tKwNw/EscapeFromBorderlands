@@ -22,7 +22,8 @@ internal static class GrenadeControllerAccess
     private static Readers For(Player.BaseGrenadeHandsController controller)
     {
         var type = controller.GetType();
-        if (Cache.TryGetValue(type, out var readers)) return readers;
+        if (Cache.TryGetValue(type, out var readers))
+            return readers;
         Prepare(type);
         return Cache[type];
     }
@@ -30,14 +31,22 @@ internal static class GrenadeControllerAccess
     {
         try
         {
-            if (AccessTools.Property(runtime, name) is not null) return null;
+            if (AccessTools.Property(runtime, name) is not null)
+                return null;
             var field = AccessTools.Field(runtime, name);
-            if (field is null || field.DeclaringType != declaring || field.FieldType != typeof(T) || field.IsStatic) return null;
+            if (field is null || field.DeclaringType != declaring || field.FieldType != typeof(T) || field.IsStatic)
+                return null;
             var method = new DynamicMethod("EfbGrenadeRead_" + name, typeof(T), new[] { typeof(Player.BaseGrenadeHandsController) }, typeof(GrenadeControllerAccess), true);
-            var il = method.GetILGenerator(); il.Emit(OpCodes.Ldarg_0); il.Emit(OpCodes.Ldfld, field); il.Emit(OpCodes.Ret);
+            var il = method.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldfld, field);
+            il.Emit(OpCodes.Ret);
             return (Func<Player.BaseGrenadeHandsController, T?>)method.CreateDelegate(typeof(Func<Player.BaseGrenadeHandsController, T?>));
         }
-        catch { return null; }
+        catch
+        {
+            return null;
+        }
     }
     internal static Player? Owner(Player.BaseGrenadeHandsController controller)
     {
@@ -64,15 +73,16 @@ internal static class GrenadeControllerAccess
     }
     private static void Prepare(Type type)
     {
-        if (Cache.ContainsKey(type)) return;
+        if (Cache.ContainsKey(type))
+            return;
         var readers = new Readers();
         try
         {
-        // Actor() checks Player before _player; keep that property path intact.
-        if (AccessTools.Property(type, "Player") is null && AccessTools.Field(type, "Player") is null)
-            readers.Player = Compile<Player>(type, "_player", typeof(Player.ItemHandsController));
-        readers.Parts = Compile<Transform[]>(type, "transform_2", typeof(Player.BaseGrenadeHandsController));
-        readers.Emission = Compile<GrenadeEmission>(type, "grenadeEmission_0", typeof(Player.BaseGrenadeHandsController));
+            // Actor() checks Player before _player; keep that property path intact.
+            if (AccessTools.Property(type, "Player") is null && AccessTools.Field(type, "Player") is null)
+                readers.Player = Compile<Player>(type, "_player", typeof(Player.ItemHandsController));
+            readers.Parts = Compile<Transform[]>(type, "transform_2", typeof(Player.BaseGrenadeHandsController));
+            readers.Emission = Compile<GrenadeEmission>(type, "grenadeEmission_0", typeof(Player.BaseGrenadeHandsController));
         }
         catch { /* Optional preparation; normal reflection stays available. */ }
         Cache[type] = readers;

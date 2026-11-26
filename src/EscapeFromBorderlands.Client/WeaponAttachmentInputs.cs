@@ -15,7 +15,11 @@ internal static class WeaponAttachmentInputs
     // A single immutable root/plan pair prevents mismatched observations; reset
     // drops this bounded strong reference along with the weak plan table.
     private static Plan? Recent;
-    internal static void Reset() { Recent = null; Plans = new(); }
+    internal static void Reset()
+    {
+        Recent = null;
+        Plans = new();
+    }
     private sealed class Node
     {
         internal CompoundItem Owner = null!;
@@ -51,52 +55,73 @@ internal static class WeaponAttachmentInputs
 
         private bool StructureValid(Weapon weapon)
         {
-            if (!Built || !ReferenceEquals(Chambers, weapon.Chambers)) return false;
+            if (!Built || !ReferenceEquals(Chambers, weapon.Chambers))
+                return false;
             foreach (var node in Nodes)
                 if (!ReferenceEquals(node.Slots, node.Owner.Slots) ||
-                    (node.ArraySlots is { } slots ? slots.Length : node.Slots.Count) != node.Count) return false;
+                    (node.ArraySlots is { } slots ? slots.Length : node.Slots.Count) != node.Count)
+                    return false;
             return true;
         }
         internal bool Build(Weapon weapon)
         {
-            Built = Ready = false; Nodes.Clear();
-            Array.Clear(Inputs, 0, InputCount); InputCount = 0;
+            Built = Ready = false;
+            Nodes.Clear();
+            Array.Clear(Inputs, 0, InputCount);
+            InputCount = 0;
             Chambers = weapon.Chambers;
-            if (!Walk(weapon, 0)) return false;
-            for (var i = 0; i < Chambers.Length; i++) if (!Add(Chambers, i)) return false;
-            Built = true; return true;
+            if (!Walk(weapon, 0))
+                return false;
+            for (var i = 0; i < Chambers.Length; i++)
+                if (!Add(Chambers, i))
+                    return false;
+            Built = true;
+            return true;
         }
         private bool Add(IReadOnlyList<Slot> slots, int index)
         {
             var slot = slots[index];
-            if (!WeaponAttachmentTraversal.NativeType(slot.GetType())) return false;
-            var item = slot.ContainedItem; var mod = item as Mod;
-            if (mod is not null && !WeaponAttachmentTraversal.NativeType(mod.GetType())) return false;
-            if (InputCount == Inputs.Length) Array.Resize(ref Inputs, Math.Max(4, Inputs.Length * 2));
+            if (!WeaponAttachmentTraversal.NativeType(slot.GetType()))
+                return false;
+            var item = slot.ContainedItem;
+            var mod = item as Mod;
+            if (mod is not null && !WeaponAttachmentTraversal.NativeType(mod.GetType()))
+                return false;
+            if (InputCount == Inputs.Length)
+                Array.Resize(ref Inputs, Math.Max(4, Inputs.Length * 2));
             Inputs[InputCount++] = new Input { Slots = slots, ArraySlots = slots as Slot[], Index = index, Slot = slot, Item = item, Mod = mod, Stock = mod is StockItemClass };
             return true;
         }
         private bool Walk(CompoundItem owner, int depth)
         {
-            if (depth > 64) return false;
+            if (depth > 64)
+                return false;
             IReadOnlyList<Slot> slots = owner.Slots;
             Nodes.Add(new Node { Owner = owner, Slots = slots, ArraySlots = slots as Slot[], Count = slots.Count });
-            for (var i = 0; i < slots.Count; i++) if (!Add(slots, i)) return false;
+            for (var i = 0; i < slots.Count; i++)
+                if (!Add(slots, i))
+                    return false;
             for (var i = 0; i < slots.Count; i++)
             {
-                if (slots[i].ContainedItem is not GClass3248 collection) continue;
-                if (collection is not CompoundItem child) return false;
+                if (slots[i].ContainedItem is not GClass3248 collection)
+                    continue;
+                if (collection is not CompoundItem child)
+                    return false;
                 var shape = WeaponAttachmentTraversal.InputShape(child);
-                if (shape == 0) continue;
-                if (shape < 0 || !Walk(child, depth + 1)) return false;
+                if (shape == 0)
+                    continue;
+                if (shape < 0 || !Walk(child, depth + 1))
+                    return false;
             }
             return true;
         }
         internal bool TryRead(Weapon weapon, out (float recoil, float ergo, float accuracy) stats)
         {
             stats = default;
-            if (!StructureValid(weapon)) return false;
-            var folded = weapon.Folded; var baseErgo = weapon.Template.Ergonomics;
+            if (!StructureValid(weapon))
+                return false;
+            var folded = weapon.Folded;
+            var baseErgo = weapon.Template.Ergonomics;
             var changed = !Ready || folded != Folded || baseErgo != BaseErgo;
             for (var i = 0; i < InputCount; i++)
             {
@@ -106,28 +131,47 @@ internal static class WeaponAttachmentInputs
                 // reuse a sum after a partial read or a silent slot change.
                 var currentSlot = input.ArraySlots is { } slots ? slots[input.Index] : input.Slots[input.Index];
                 if (!ReferenceEquals(input.Slot, currentSlot) ||
-                    !ReferenceEquals(input.Item, input.Slot.ContainedItem)) { Ready = false; return false; }
-                if (input.Mod is null) continue;
+                    !ReferenceEquals(input.Item, input.Slot.ContainedItem))
+                {
+                    Ready = false;
+                    return false;
+                }
+                if (input.Mod is null)
+                    continue;
                 var template = input.Mod.Template;
-                var recoil = template.Recoil; var ergo = template.Ergonomics; var accuracy = input.Mod.Accuracy;
+                var recoil = template.Recoil;
+                var ergo = template.Ergonomics;
+                var accuracy = input.Mod.Accuracy;
                 if (input.Recoil != recoil || input.Ergo != ergo || input.Accuracy != accuracy)
                 {
                     changed = true;
-                    input.Recoil = recoil; input.Ergo = ergo; input.Accuracy = accuracy;
+                    input.Recoil = recoil;
+                    input.Ergo = ergo;
+                    input.Accuracy = accuracy;
                 }
             }
-            if (!changed) { stats = Stats; return true; }
-            double r = 0, e = 0; var a = 0;
+            if (!changed)
+            {
+                stats = Stats;
+                return true;
+            }
+            double r = 0, e = 0;
+            var a = 0;
             Ready = false;
             for (var i = 0; i < InputCount; i++)
             {
                 ref var input = ref Inputs[i];
-                if (input.Mod is null) continue;
-                if (!folded || !input.Stock) r += input.Recoil;
-                e += input.Ergo; a = checked(a + input.Accuracy);
+                if (input.Mod is null)
+                    continue;
+                if (!folded || !input.Stock)
+                    r += input.Recoil;
+                e += input.Ergo;
+                a = checked(a + input.Accuracy);
             }
             Stats = ((float)r / 100f, (float)e / Mathf.Max(1f, baseErgo), unchecked(-a) / 100f);
-            Folded = folded; BaseErgo = baseErgo; Ready = true;
+            Folded = folded;
+            BaseErgo = baseErgo;
+            Ready = true;
             stats = Stats;
             return true;
         }
@@ -138,17 +182,23 @@ internal static class WeaponAttachmentInputs
         var recent = Recent;
         if (recent is not null && ReferenceEquals(recent.Weapon, weapon))
         {
-            if (recent.TryRead(weapon, out stats)) return true;
+            if (recent.TryRead(weapon, out stats))
+                return true;
             return recent.Build(weapon) && recent.TryRead(weapon, out stats);
         }
-        if (!WeaponAttachmentTraversal.NativeType(weapon.GetType())) return false;
+        if (!WeaponAttachmentTraversal.NativeType(weapon.GetType()))
+            return false;
         // An empty weapon has no traversal to cache. Retain the live base
         // denominator (including unusual floating-point inputs).
         if (((IReadOnlyList<Slot>)weapon.Slots).Count == 0 && weapon.Chambers.Length == 0)
-        { stats = (0f, 0f / Mathf.Max(1f, weapon.Template.Ergonomics), 0f); return true; }
+        {
+            stats = (0f, 0f / Mathf.Max(1f, weapon.Template.Ergonomics), 0f);
+            return true;
+        }
         var plan = Plans.GetValue(weapon, static item => new Plan(item));
         Recent = plan;
-        if (plan.TryRead(weapon, out stats)) return true;
+        if (plan.TryRead(weapon, out stats))
+            return true;
         return plan.Build(weapon) && plan.TryRead(weapon, out stats);
     }
 }

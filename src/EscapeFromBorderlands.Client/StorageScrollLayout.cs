@@ -19,35 +19,48 @@ internal static class StorageScrollLayout
         internal Alignment(ScrollRect scroll) => Scroll = scroll;
         public Transform transform => Scroll.transform;
         public bool IsDestroyed() => Cancelled || Scroll == null;
-        public void Rebuild(CanvasUpdate phase) { }
-        public void GraphicUpdateComplete() { }
+        public void Rebuild(CanvasUpdate phase)
+        {
+        }
+        public void GraphicUpdateComplete()
+        {
+        }
         public void LayoutComplete()
         {
-            if (Pending.TryGetValue(Scroll, out var current) && ReferenceEquals(current, this)) Pending.Remove(Scroll);
-            if (Cancelled || Scroll == null || !Scroll.isActiveAndEnabled) return;
+            if (Pending.TryGetValue(Scroll, out var current) && ReferenceEquals(current, this))
+                Pending.Remove(Scroll);
+            if (Cancelled || Scroll == null || !Scroll.isActiveAndEnabled)
+                return;
             // Unity calls LayoutComplete after every queued PostLayout, before
             // graphic rebuilding/rendering. No extra canvas or subtree pass.
             DiagnosticPathTrace trace = default;
             DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.ScrollAlignment);
-                Scroll.horizontalNormalizedPosition = 0f;
-                var velocity = Scroll.velocity;
-                if (velocity.x != 0f) Scroll.velocity = new Vector2(0f, velocity.y);
-                trace.Phase(0);
+            Scroll.horizontalNormalizedPosition = 0f;
+            var velocity = Scroll.velocity;
+            if (velocity.x != 0f)
+                Scroll.velocity = new Vector2(0f, velocity.y);
+            trace.Phase(0);
         }
     }
     internal static bool TryDefer(Component component)
     {
         if (component is not ScrollRect scroll || !scroll.isActiveAndEnabled ||
             (scroll.GetType() != typeof(ScrollRect) && scroll.GetType() != typeof(EFT.UI.ScrollRectNoDrag)) ||
-            Rebuilt is null || Rebuilt.GetValue(scroll) is not false || CanvasUpdateRegistry.IsRebuildingLayout() || !CanPrepare()) return false;
-        if (Pending.ContainsKey(scroll)) return true;
+            Rebuilt is null || Rebuilt.GetValue(scroll) is not false || CanvasUpdateRegistry.IsRebuildingLayout() || !CanPrepare())
+            return false;
+        if (Pending.ContainsKey(scroll))
+            return true;
         var alignment = new Alignment(scroll);
         Pending.Add(scroll, alignment);
         try
         {
-            if (CanvasUpdateRegistry.TryRegisterCanvasElementForLayoutRebuild(alignment)) return true;
+            if (CanvasUpdateRegistry.TryRegisterCanvasElementForLayoutRebuild(alignment))
+                return true;
         }
-        catch (Exception) { Compatible = -1; }
+        catch (Exception)
+        {
+            Compatible = -1;
+        }
         alignment.Cancelled = true;
         Pending.Remove(scroll);
         return false;
@@ -55,13 +68,18 @@ internal static class StorageScrollLayout
     internal static void Cancel(Component component)
     {
         if (component is ScrollRect scroll && Pending.TryGetValue(scroll, out var alignment))
-        { alignment.Cancelled = true; Pending.Remove(scroll); }
+        {
+            alignment.Cancelled = true;
+            Pending.Remove(scroll);
+        }
     }
     internal static void Reset()
     {
         // Do not mutate Unity's queue while it may be dispatching callbacks.
-        foreach (var alignment in Pending.Values) alignment.Cancelled = true;
-        Pending.Clear(); Compatible = 0;
+        foreach (var alignment in Pending.Values)
+            alignment.Cancelled = true;
+        Pending.Clear();
+        Compatible = 0;
     }
 
     // A newly enabled native ScrollRect forces EVERY canvas to rebuild before
@@ -73,19 +91,24 @@ internal static class StorageScrollLayout
         if (component is not ScrollRect scroll || !scroll.isActiveAndEnabled ||
             (scroll.GetType() != typeof(ScrollRect) && scroll.GetType() != typeof(EFT.UI.ScrollRectNoDrag)) ||
             Rebuilt is null || Rebuilt.GetValue(scroll) is not false || CanvasUpdateRegistry.IsRebuildingLayout() ||
-            !CanPrepare()) return;
+            !CanPrepare())
+            return;
         try
         {
             scroll.Rebuild(CanvasUpdate.Prelayout);
             LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)scroll.transform);
             scroll.Rebuild(CanvasUpdate.PostLayout);
         }
-        catch (Exception) { Compatible = -1; } // The caller still runs the native setter.
+        catch (Exception)
+        {
+            Compatible = -1;
+        } // The caller still runs the native setter.
     }
 
     private static bool CanPrepare()
     {
-        if (Compatible != 0) return Compatible > 0;
+        if (Compatible != 0)
+            return Compatible > 0;
         // Hidden/overridden custom scroll behavior is excluded above. Foreign
         // patches on the native layout boundary also keep the original path.
         foreach (var method in new[] {
@@ -95,10 +118,18 @@ internal static class StorageScrollLayout
             AccessTools.Method(typeof(CanvasUpdateRegistry), "PerformUpdate"),
             AccessTools.Method(typeof(LayoutRebuilder), "ForceRebuildLayoutImmediate") })
         {
-            if (method is null) { Compatible = -1; return false; }
+            if (method is null)
+            {
+                Compatible = -1;
+                return false;
+            }
             if (Harmony.GetPatchInfo(method) is { } patches)
                 foreach (var owner in patches.Owners)
-                    if (owner != Plugin.PluginGuid) { Compatible = -1; return false; }
+                    if (owner != Plugin.PluginGuid)
+                    {
+                        Compatible = -1;
+                        return false;
+                    }
         }
         Compatible = 1;
         return true;

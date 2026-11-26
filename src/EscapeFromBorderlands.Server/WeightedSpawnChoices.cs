@@ -25,7 +25,8 @@ internal sealed class WeightedSpawnChoices
         for (var i = 0; i < _variants.Length; i++)
         {
             weight -= _variants[i].SpawnWeight;
-            if (weight < 0d) return (_variants[i], _ids[i]);
+            if (weight < 0d)
+                return (_variants[i], _ids[i]);
         }
         return (_variants[^1], _ids[^1]);
     }

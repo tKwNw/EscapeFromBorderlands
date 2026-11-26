@@ -10,9 +10,12 @@ internal static class InventoryPredicates
         var found = false;
         foreach (var item in bag.GetAllItems())
         {
-            if (Native.Component<FoodDrinkComponent>(item) is null || item.Template.ParentId == "5448e8d64bdc2dce718b4568") continue;
-            if (found && first != item.StringTemplateId) return true;
-            first = item.StringTemplateId; found = true;
+            if (Native.Component<FoodDrinkComponent>(item) is null || item.Template.ParentId == "5448e8d64bdc2dce718b4568")
+                continue;
+            if (found && first != item.StringTemplateId)
+                return true;
+            first = item.StringTemplateId;
+            found = true;
         }
         return false;
     }

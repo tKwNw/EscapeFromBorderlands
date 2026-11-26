@@ -75,8 +75,10 @@ internal static class FenceTrading
 
     private static void CleanAll()
     {
-        if (Traders?.TryGetValue(TradersId, out var trader) == true) Policy?.Filter(trader.Assort);
-        if (Fence is not null) CleanStored(Fence);
+        if (Traders?.TryGetValue(TradersId, out var trader) == true)
+            Policy?.Filter(trader.Assort);
+        if (Fence is not null)
+            CleanStored(Fence);
     }
 
     private static readonly SPTarkov.Server.Core.Models.Common.MongoId TradersId = SPTarkov.Server.Core.Models.Enums.Traders.FENCE;

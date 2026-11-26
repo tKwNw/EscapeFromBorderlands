@@ -23,10 +23,14 @@ internal static class MeleeRules
         var multiplier = effect.DamageMultiplier * (stab ? effect.StabDamageMultiplier : effect.SlashDamageMultiplier);
         if (effect.AttackInterval > 0 && attackNumber > 0 && attackNumber % effect.AttackInterval == 0)
             multiplier *= effect.IntervalDamageMultiplier;
-        if (behind) multiplier *= effect.RearDamageMultiplier;
-        if (bleeding) multiplier *= effect.BleedingTargetDamageMultiplier;
-        if (moving) multiplier *= effect.MovingDamageMultiplier;
-        if (leg) multiplier *= effect.LegDamageMultiplier;
+        if (behind)
+            multiplier *= effect.RearDamageMultiplier;
+        if (bleeding)
+            multiplier *= effect.BleedingTargetDamageMultiplier;
+        if (moving)
+            multiplier *= effect.MovingDamageMultiplier;
+        if (leg)
+            multiplier *= effect.LegDamageMultiplier;
         return multiplier * (1f + Math.Max(0f, Math.Min(effect.MaximumDamageBonus, buildup)));
     }
 

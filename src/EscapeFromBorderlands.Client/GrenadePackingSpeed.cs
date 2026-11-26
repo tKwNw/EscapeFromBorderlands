@@ -10,11 +10,17 @@ namespace EscapeFromBorderlands.Client;
 
 internal static class GrenadePackingSpeed
 {
-    private sealed class Entry { internal float InitialFactor; }
+    private sealed class Entry
+    {
+        internal float InitialFactor;
+    }
     private static ConditionalWeakTable<object, Entry> Operations = new();
     internal static void Reset() => Operations = new();
     internal static T Track<T>(T operation, float factor) where T : class
-    { Operations.Add(operation, new Entry { InitialFactor = factor }); return operation; }
+    {
+        Operations.Add(operation, new Entry { InitialFactor = factor });
+        return operation;
+    }
     internal static float Seconds(object operation, float nativeSeconds)
     {
         var initial = Operations.TryGetValue(operation, out var entry) ? entry.InitialFactor : 1f;
@@ -39,5 +45,8 @@ internal static class GrenadePackingDelayPatch
         Native.Set(__instance, "Float_1", GrenadePackingSpeed.Seconds(__instance, __state));
     }
     private static Exception? Finalizer(object __instance, float __state, Exception? __exception)
-    { Native.Set(__instance, "Float_1", __state); return __exception; }
+    {
+        Native.Set(__instance, "Float_1", __state);
+        return __exception;
+    }
 }

@@ -20,17 +20,21 @@ internal static class BackpackLayoutWarmup
     internal static void Queue(Item? item)
     {
         if (item is not CompoundItem || !RarityResolver.TryGetDefinition(item, out var definition) ||
-            definition.BackpackEffect is null && definition.ChestRigEffect is null) return;
-        if (Seen.TryAdd(definition.SourceTemplateId, 0)) Pending.Enqueue(definition);
+            definition.BackpackEffect is null && definition.ChestRigEffect is null)
+            return;
+        if (Seen.TryAdd(definition.SourceTemplateId, 0))
+            Pending.Enqueue(definition);
     }
     internal static void Maintain()
     {
         PrepareNext();
-        if (Pending.IsEmpty || Singleton<ItemFactoryClass>.Instance is not { } factory) return;
+        if (Pending.IsEmpty || Singleton<ItemFactoryClass>.Instance is not { } factory)
+            return;
         // One asynchronous request per frame. UI still uses the native Pop
         // method; an unready asset or a foreign resource patch keeps its normal
         // fallback instead of showing incomplete or rearranging compartments.
-        if (!Pending.TryDequeue(out var definition)) return;
+        if (!Pending.TryDequeue(out var definition))
+            return;
         try
         {
             ResourceRequest? request = null;
@@ -46,17 +50,28 @@ internal static class BackpackLayoutWarmup
     }
     private static void PrepareNext()
     {
-        if (Geometry.Count == 0) return;
+        if (Geometry.Count == 0)
+            return;
         var game = Singleton<AbstractGame>.Instance;
         // Prefab clones/rebuilds belong in menus or raid setup, never as new
         // background work while moving/fighting. First-open fallback remains.
         if (game is not null && (game is not LocalGame raid ||
-            raid.Status is GameStatus.Started or GameStatus.Stopping or GameStatus.SoftStopping)) return;
+            raid.Status is GameStatus.Started or GameStatus.Stopping or GameStatus.SoftStopping))
+            return;
         var next = Geometry.Dequeue();
-        if (next.Request is not null && !next.Request.isDone) { Geometry.Enqueue(next); return; }
-        try { BackpackVanillaGridLayout.Prepare(next.Definition); }
+        if (next.Request is not null && !next.Request.isDone)
+        {
+            Geometry.Enqueue(next);
+            return;
+        }
+        try
+        {
+            BackpackVanillaGridLayout.Prepare(next.Definition);
+        }
         catch (Exception error)
-        { Plugin.LogSource.LogWarning($"EFB layout preparation unavailable; native opening retained: {error.Message}"); }
+        {
+            Plugin.LogSource.LogWarning($"EFB layout preparation unavailable; native opening retained: {error.Message}");
+        }
     }
 }
 

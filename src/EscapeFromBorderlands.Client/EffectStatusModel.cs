@@ -36,13 +36,15 @@ internal static class EffectStatusModel
     {
         lock (NoticeLock)
         {
-            if (now < NextNoticeExpiry && !NoticesByOwner.ContainsKey(owner)) return;
+            if (now < NextNoticeExpiry && !NoticesByOwner.ContainsKey(owner))
+                return;
             try
             {
                 var next = float.PositiveInfinity;
                 foreach (var pair in TriggerNotices)
                 {
-                    if (pair.Value.Until <= now) ExpiredNotices.Add(pair.Key);
+                    if (pair.Value.Until <= now)
+                        ExpiredNotices.Add(pair.Key);
                     else
                     {
                         next = Math.Min(next, pair.Value.Until);
@@ -53,33 +55,85 @@ internal static class EffectStatusModel
                 foreach (var key in ExpiredNotices)
                 {
                     TriggerNotices.Remove(key);
-                    if (NoticesByOwner[key.Owner] == 1) NoticesByOwner.Remove(key.Owner);
-                    else NoticesByOwner[key.Owner]--;
+                    if (NoticesByOwner[key.Owner] == 1)
+                        NoticesByOwner.Remove(key.Owner);
+                    else
+                        NoticesByOwner[key.Owner]--;
                 }
                 NextNoticeExpiry = next;
             }
-            finally { ExpiredNotices.Clear(); }
+            finally
+            {
+                ExpiredNotices.Clear();
+            }
         }
     }
     internal readonly struct Cooldown
     {
-        internal Cooldown(string key, string name, string active = "") { Key = key; Name = name; ActiveKey = active; TimerKey = "cd:" + key; }
-        internal string Key { get; }
-        internal string Name { get; }
-        internal string ActiveKey { get; }
-        internal string TimerKey { get; }
+        internal Cooldown(string key, string name, string active = "")
+        {
+            Key = key;
+            Name = name;
+            ActiveKey = active;
+            TimerKey = "cd:" + key;
+        }
+        internal string Key
+        {
+            get;
+        }
+        internal string Name
+        {
+            get;
+        }
+        internal string ActiveKey
+        {
+            get;
+        }
+        internal string TimerKey
+        {
+            get;
+        }
     }
     internal readonly struct Status
     {
         internal Status(string key, string name, bool active, float seconds = 0f, float ready = 0f, string detail = "", bool visibleWhenInactive = false)
-        { Key = key; Name = name; Active = active; Seconds = seconds; Ready = ready; Detail = detail; VisibleWhenInactive = visibleWhenInactive; }
-        internal string Key { get; }
-        internal string Name { get; }
-        internal bool Active { get; }
-        internal float Seconds { get; }
-        internal float Ready { get; }
-        internal string Detail { get; }
-        internal bool VisibleWhenInactive { get; }
+        {
+            Key = key;
+            Name = name;
+            Active = active;
+            Seconds = seconds;
+            Ready = ready;
+            Detail = detail;
+            VisibleWhenInactive = visibleWhenInactive;
+        }
+        internal string Key
+        {
+            get;
+        }
+        internal string Name
+        {
+            get;
+        }
+        internal bool Active
+        {
+            get;
+        }
+        internal float Seconds
+        {
+            get;
+        }
+        internal float Ready
+        {
+            get;
+        }
+        internal string Detail
+        {
+            get;
+        }
+        internal bool VisibleWhenInactive
+        {
+            get;
+        }
         internal bool Visible => Active || Ready > 0f || VisibleWhenInactive;
         internal bool SameLabel(in Status other) => Active == other.Active && Key == other.Key &&
             Name == other.Name && Detail == other.Detail &&
@@ -95,7 +149,8 @@ internal static class EffectStatusModel
         index.Clear();
         foreach (var status in source)
         {
-            if (!status.Visible) continue;
+            if (!status.Visible)
+                continue;
             if (!index.TryGetValue(status.Key, out var row))
             {
                 index.Add(status.Key, destination.Count);
@@ -124,7 +179,8 @@ internal static class EffectStatusModel
         {
             var remaining = Remaining(timers, definition.TimerKey, now);
             var active = Remaining(timers, definition.ActiveKey, now);
-            if (remaining <= 0f && active <= 0f) continue;
+            if (remaining <= 0f && active <= 0f)
+                continue;
             statuses.Add(new Status(definition.Key, definition.Name, active > 0f, active, remaining));
         }
     }

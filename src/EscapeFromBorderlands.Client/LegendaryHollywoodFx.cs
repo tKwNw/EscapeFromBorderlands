@@ -25,7 +25,10 @@ internal static class LegendaryHollywoodFx
         internal GameObject Wrapper = null!;
         internal Mode[] Modes = Array.Empty<Mode>();
     }
-    private sealed class Lease { internal readonly List<Root> Roots = new(); }
+    private sealed class Lease
+    {
+        internal readonly List<Root> Roots = new();
+    }
     private static readonly Dictionary<object, Lease> Leases = new();
     private static readonly Dictionary<Component, object> Owners = new();
     private static readonly Dictionary<Type, FieldInfo?> RadiusFields = new();
@@ -34,7 +37,8 @@ internal static class LegendaryHollywoodFx
     private static object Hierarchy(object mode)
     {
         var type = mode.GetType();
-        if (!HierarchyModes.TryGetValue(type, out var value)) HierarchyModes[type] = value = Enum.Parse(type, "Hierarchy");
+        if (!HierarchyModes.TryGetValue(type, out var value))
+            HierarchyModes[type] = value = Enum.Parse(type, "Hierarchy");
         return value;
     }
     private static readonly HashSet<string> Reports = new(StringComparer.Ordinal);
@@ -56,23 +60,28 @@ internal static class LegendaryHollywoodFx
         {
             if (field.FieldType.FullName == Bundle)
             {
-                foreach (var main in BundleEmitters(field.GetValue(blast))) yield return main;
+                foreach (var main in BundleEmitters(field.GetValue(blast)))
+                    yield return main;
             }
             else if (field.FieldType.IsArray && field.FieldType.GetElementType()?.FullName == Bundle && field.GetValue(blast) is Array bundles)
                 foreach (var bundle in bundles)
-                    foreach (var main in BundleEmitters(bundle)) yield return main;
+                    foreach (var main in BundleEmitters(bundle))
+                        yield return main;
         }
     }
     private static IEnumerable<Component> BundleEmitters(object? bundle)
     {
-        if (bundle is null || AccessTools.Field(bundle.GetType(), "Emitters")?.GetValue(bundle) is not Array emitters) yield break;
+        if (bundle is null || AccessTools.Field(bundle.GetType(), "Emitters")?.GetValue(bundle) is not Array emitters)
+            yield break;
         foreach (var emitter in emitters)
-            if (emitter is not null && AccessTools.Field(emitter.GetType(), "Main")?.GetValue(emitter) is Component main) yield return main;
+            if (emitter is not null && AccessTools.Field(emitter.GetType(), "Main")?.GetValue(emitter) is Component main)
+                yield return main;
     }
     private static float Scale(object blast)
     {
         var request = LegendaryExplosionFx.Current;
-        if (request.Radius <= 0f) return 1f;
+        if (request.Radius <= 0f)
+            return 1f;
         var reference = request.Reference;
         if (reference <= 0f)
         {
@@ -93,17 +102,21 @@ internal static class LegendaryHollywoodFx
             var scale = Scale(blast);
             if (!Leases.TryGetValue(blast, out var lease))
             {
-                if (scale == 1f) return;
+                if (scale == 1f)
+                    return;
                 var emitters = Emitters(blast).Distinct().ToArray();
-                if (emitters.Length == 0) throw new InvalidOperationException("HollywoodFX blast exposes no supported particle emitters.");
+                if (emitters.Length == 0)
+                    throw new InvalidOperationException("HollywoodFX blast exposes no supported particle emitters.");
                 var roots = emitters.Where(p => !emitters.Any(other => other != p && p.transform.IsChildOf(other.transform))).ToArray();
                 if (roots.Any(p => Owners.TryGetValue(p, out var owner) && !ReferenceEquals(owner, blast)))
                     throw new InvalidOperationException("HollywoodFX emitter is shared between blast pool entries.");
-                lease = new Lease(); Leases.Add(blast, lease);
+                lease = new Lease();
+                Leases.Add(blast, lease);
                 foreach (var particle in roots)
                 {
                     var root = new Root { Particle = particle, Parent = particle.transform.parent, Wrapper = new GameObject("EFB explosion visual scale") };
-                    lease.Roots.Add(root); Owners[particle] = blast;
+                    lease.Roots.Add(root);
+                    Owners[particle] = blast;
                     root.Wrapper.transform.SetParent(root.Parent, false);
                     root.Wrapper.transform.localPosition = Vector3.zero;
                     root.Wrapper.transform.localRotation = Quaternion.identity;
@@ -115,7 +128,8 @@ internal static class LegendaryHollywoodFx
             }
             foreach (var root in lease.Roots)
             {
-                if (root.Particle == null || root.Wrapper == null) continue;
+                if (root.Particle == null || root.Wrapper == null)
+                    continue;
                 root.Wrapper.transform.localScale = Vector3.one * scale;
                 foreach (var mode in root.Modes)
                     if (mode.Particle != null)
@@ -125,13 +139,22 @@ internal static class LegendaryHollywoodFx
             {
                 var label = LegendaryExplosionFx.Current.Label ?? "legendary";
                 var key = label + ":" + scale;
-                if (Reports.Add(key)) Plugin.LogSource.LogInfo($"EFB explosion FX {label}: HollywoodFX renderer prepared at {scale:F2}x; {lease.Roots.Count} private emitter roots, including deferred particles.");
+                if (Reports.Add(key))
+                    Plugin.LogSource.LogInfo($"EFB explosion FX {label}: HollywoodFX renderer prepared at {scale:F2}x; {lease.Roots.Count} private emitter roots, including deferred particles.");
             }
         }
         catch (Exception e)
         {
-            if (Leases.TryGetValue(blast, out var lease)) { Restore(lease); Leases.Remove(blast); }
-            if (!Failed) { Failed = true; Plugin.LogSource.LogWarning("HollywoodFX legendary size adapter unavailable; preserving its normal explosion: " + e.Message); }
+            if (Leases.TryGetValue(blast, out var lease))
+            {
+                Restore(lease);
+                Leases.Remove(blast);
+            }
+            if (!Failed)
+            {
+                Failed = true;
+                Plugin.LogSource.LogWarning("HollywoodFX legendary size adapter unavailable; preserving its normal explosion: " + e.Message);
+            }
         }
     }
     private static void Restore(Lease lease)
@@ -146,17 +169,24 @@ internal static class LegendaryHollywoodFx
                     root.Particle.transform.SetParent(root.Parent, true);
                     root.Particle.transform.localScale = scale;
                     foreach (var mode in root.Modes)
-                        if (mode.Particle != null && mode.Original is not null) Native.Set(Native.Get(mode.Particle, "main")!, "scalingMode", mode.Original);
+                        if (mode.Particle != null && mode.Original is not null)
+                            Native.Set(Native.Get(mode.Particle, "main")!, "scalingMode", mode.Original);
                     Owners.Remove(root.Particle);
                 }
-                if (root.Wrapper != null) UnityEngine.Object.Destroy(root.Wrapper);
+                if (root.Wrapper != null)
+                    UnityEngine.Object.Destroy(root.Wrapper);
             }
             catch (Exception e)
             {
                 // Cleanup must never interrupt the third-party renderer or
                 // destroy a still-attached particle hierarchy.
-                if (root.Wrapper != null) root.Wrapper.transform.localScale = Vector3.one;
-                if (!Failed) { Failed = true; Plugin.LogSource.LogWarning("HollywoodFX visual scale cleanup deferred: " + e.Message); }
+                if (root.Wrapper != null)
+                    root.Wrapper.transform.localScale = Vector3.one;
+                if (!Failed)
+                {
+                    Failed = true;
+                    Plugin.LogSource.LogWarning("HollywoodFX visual scale cleanup deferred: " + e.Message);
+                }
             }
         }
     }
@@ -165,9 +195,16 @@ internal static class LegendaryHollywoodFx
     {
         try
         {
-            foreach (var lease in Leases.Values.ToArray()) SessionCleanup.Run("HollywoodFX lease", lease, static value => Restore(value));
+            foreach (var lease in Leases.Values.ToArray())
+                SessionCleanup.Run("HollywoodFX lease", lease, static value => Restore(value));
         }
-        finally { Leases.Clear(); Owners.Clear(); Reports.Clear(); Failed = false; }
+        finally
+        {
+            Leases.Clear();
+            Owners.Clear();
+            Reports.Clear();
+            Failed = false;
+        }
     }
 }
 [HarmonyPatch]

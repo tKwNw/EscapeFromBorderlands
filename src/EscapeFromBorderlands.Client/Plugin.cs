@@ -41,7 +41,8 @@ public sealed class Plugin : BaseUnityPlugin
             if (string.IsNullOrEmpty(configDirectory))
                 throw new InvalidOperationException("Cannot locate the BepInEx config directory.");
             var imported = LegacyClientConfigMigration.Migrate(configDirectory, destination);
-            if (imported <= 0) return;
+            if (imported <= 0)
+                return;
             Config.Reload();
             LogSource.LogInfo($"Migrated {imported} previous Escape From Borderlands client config entries; old settings remain backed up.");
         }
@@ -69,10 +70,18 @@ public sealed class Plugin : BaseUnityPlugin
             .ThenBy(t => t.FullName, StringComparer.Ordinal);
         foreach (var type in patchTypes)
         {
-            try { _harmony.CreateClassProcessor(type).Patch(); }
-            catch (Exception e) { failures++; LogSource.LogError($"Escape From Borderlands could not install {type.Name}: {e}"); }
+            try
+            {
+                _harmony.CreateClassProcessor(type).Patch();
+            }
+            catch (Exception e)
+            {
+                failures++;
+                LogSource.LogError($"Escape From Borderlands could not install {type.Name}: {e}");
+            }
         }
-        if (failures > 0) LogSource.LogError($"Escape From Borderlands: {failures} hook group(s) failed. The error above identifies each unavailable feature.");
+        if (failures > 0)
+            LogSource.LogError($"Escape From Borderlands: {failures} hook group(s) failed. The error above identifies each unavailable feature.");
         SceneManager.sceneUnloaded += GrenadeBreachDoors.SceneUnloaded;
         LogSource.LogInfo($"Escape From Borderlands {PluginVersion} loaded for SPT 4.0.13 with {RarityResolver.DefinitionCount} Legendary gun, melee, backpack, chest-rig, grenade, earpiece and headwear definitions from catalog revision {RarityResolver.CatalogRevision}. Early access testing build. Effects remain restricted to Escape From Borderlands template IDs.");
     }
@@ -97,19 +106,27 @@ public sealed class Plugin : BaseUnityPlugin
         if (!_consolidationChecked)
         {
             _consolidationChecked = true;
-            if (Singleton<GameWorld>.Instance is null && _harmony is not null) ConsolidatedHooks.Install(_harmony);
+            if (Singleton<GameWorld>.Instance is null && _harmony is not null)
+                ConsolidatedHooks.Install(_harmony);
         }
         var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
         if (!ReferenceEquals(_world, world))
         {
             _raidPlayers.Clear();
-            ResetSession(); _world = world;
-            if (_harmony is not null) HumanStaminaRoute.Reconcile(_harmony);
-            if (_harmony is not null) HumanCachedValueRoute.Reconcile(_harmony);
+            ResetSession();
+            _world = world;
+            if (_harmony is not null)
+                HumanStaminaRoute.Reconcile(_harmony);
+            if (_harmony is not null)
+                HumanCachedValueRoute.Reconcile(_harmony);
         }
         QuestHitCopyPolicy.Prepare();
         GrenadeInventoryPath.Prepare();
-        if (world is null) { CombatCodeWarmup.Maintain(); return; } // Menu storage still updates in LateUpdate.
+        if (world is null)
+        {
+            CombatCodeWarmup.Maintain();
+            return;
+        } // Menu storage still updates in LateUpdate.
         var trace = RaidUpdateTrace.Begin();
         EffectStatusHud.PrepareDuringSetup(world);
         trace.Phase("HUD setup");
@@ -122,18 +139,30 @@ public sealed class Plugin : BaseUnityPlugin
         {
             EquipmentPresence.Maintain(world, _raidPlayers);
             trace.Phase("equipment roster");
-            try { Headwear.Maintain(world); }
+            try
+            {
+                Headwear.Maintain(world);
+            }
             catch (Exception e)
             {
                 if (UnityEngine.Time.unscaledTime >= _nextHeadwearError)
-                { _nextHeadwearError = UnityEngine.Time.unscaledTime + 30; LogSource.LogWarning($"EFB headwear update will retry: {e.Message}"); }
+                {
+                    _nextHeadwearError = UnityEngine.Time.unscaledTime + 30;
+                    LogSource.LogWarning($"EFB headwear update will retry: {e.Message}");
+                }
             }
             trace.Phase("headwear");
-            try { Eyewear.Maintain(world); }
+            try
+            {
+                Eyewear.Maintain(world);
+            }
             catch (Exception e)
             {
                 if (UnityEngine.Time.unscaledTime >= _nextEyewearError)
-                { _nextEyewearError = UnityEngine.Time.unscaledTime + 30; LogSource.LogWarning($"EFB eyewear update will retry: {e.Message}"); }
+                {
+                    _nextEyewearError = UnityEngine.Time.unscaledTime + 30;
+                    LogSource.LogWarning($"EFB eyewear update will retry: {e.Message}");
+                }
             }
             trace.Phase("eyewear");
             AdvancedLegendaryActions.Maintain(world);
@@ -177,7 +206,8 @@ public sealed class Plugin : BaseUnityPlugin
 
     internal static void ResetSession()
     {
-        if (PlayerRefresh.Resetting) return;
+        if (PlayerRefresh.Resetting)
+            return;
         PlayerRefresh.Resetting = true;
         try
         {
@@ -220,8 +250,14 @@ public sealed class Plugin : BaseUnityPlugin
         }
         finally
         {
-            try { SessionCleanup.Complete(); }
-            finally { PlayerRefresh.Resetting = false; }
+            try
+            {
+                SessionCleanup.Complete();
+            }
+            finally
+            {
+                PlayerRefresh.Resetting = false;
+            }
         }
     }
 }
@@ -231,7 +267,8 @@ internal static class LegendaryWorldCleanupPatch
 {
     private static void Prefix(GameWorld __instance)
     {
-        if ((Singleton<GameWorld>.Instance == __instance || !Singleton<GameWorld>.Instantiated) && PlayerRefresh.CloseWorld(__instance)) Plugin.ResetSession();
+        if ((Singleton<GameWorld>.Instance == __instance || !Singleton<GameWorld>.Instantiated) && PlayerRefresh.CloseWorld(__instance))
+            Plugin.ResetSession();
     }
 }
 
@@ -240,6 +277,7 @@ internal static class LegendaryWorldDisposalPatch
 {
     private static void Prefix(GameWorld __instance)
     {
-        if ((Singleton<GameWorld>.Instance == __instance || !Singleton<GameWorld>.Instantiated) && PlayerRefresh.CloseWorld(__instance)) Plugin.ResetSession();
+        if ((Singleton<GameWorld>.Instance == __instance || !Singleton<GameWorld>.Instantiated) && PlayerRefresh.CloseWorld(__instance))
+            Plugin.ResetSession();
     }
 }

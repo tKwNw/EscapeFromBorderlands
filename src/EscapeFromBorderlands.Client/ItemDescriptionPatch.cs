@@ -39,7 +39,8 @@ internal static class ItemDescriptionPresentation
 
     internal static void Bind(ItemInfoWindowLabels labels, Item item, bool examined)
     {
-        if (Items.TryGetValue(labels, out var old) && ReferenceEquals(old.Item, item) && old.Examined == examined) return;
+        if (Items.TryGetValue(labels, out var old) && ReferenceEquals(old.Item, item) && old.Examined == examined)
+            return;
         OpenLabels.RemoveAll(reference => !reference.TryGetTarget(out var target) || (UnityEngine.Object)(object)target == null || ReferenceEquals(target, labels));
         OpenLabels.Add(new WeakReference<ItemInfoWindowLabels>(labels));
         Items.Remove(labels);
@@ -48,13 +49,16 @@ internal static class ItemDescriptionPresentation
 
     internal static string ForLabels(ItemInfoWindowLabels labels, string description)
     {
-        if (!Items.TryGetValue(labels, out var binding) || !binding.Examined) return description;
-        if (description != binding.Rendered) binding.BaseText = description;
+        if (!Items.TryGetValue(labels, out var binding) || !binding.Examined)
+            return description;
+        if (description != binding.Rendered)
+            binding.BaseText = description;
         description = binding.BaseText;
         var item = binding.Item;
         var template = item.StringTemplateId;
         var abilityBinding = HeadwearSettings.Label;
-        if (binding.Template == template && binding.Input == description && binding.AbilityBinding == abilityBinding && binding.Output is { } output) return output;
+        if (binding.Template == template && binding.Input == description && binding.AbilityBinding == abilityBinding && binding.Output is { } output)
+            return output;
         var composed = Compose(item, description);
         if (RarityResolver.TryGetDefinition(item, out var definition) && definition.GrenadeChargesPerRaid == 0)
         {
@@ -72,14 +76,21 @@ internal static class ItemDescriptionPresentation
         foreach (var reference in OpenLabels)
             if (reference.TryGetTarget(out var labels) && (UnityEngine.Object)(object)labels != null && Items.TryGetValue(labels, out var binding) && binding.Examined &&
                 RarityResolver.TryGetDefinition(binding.Item, out var definition) && definition.IsHeadwear)
-                try { SetDescription.Invoke(labels, new object[] { binding.BaseText }); }
-                catch (Exception e) { ReportFailure("headwear shortcut refresh", e); }
+                try
+                {
+                    SetDescription.Invoke(labels, new object[] { binding.BaseText });
+                }
+                catch (Exception e)
+                {
+                    ReportFailure("headwear shortcut refresh", e);
+                }
     }
 
     internal static string Compose(Item item, string description)
     {
         var roll = RarityResolver.Resolve(item);
-        if (roll is null) return description;
+        if (roll is null)
+            return description;
         var block = roll.BuildDescriptionBlock();
         if (roll.Definition.GrenadeChargesPerRaid > 0)
         {
@@ -92,21 +103,26 @@ internal static class ItemDescriptionPresentation
                 if (description.StartsWith(marker, StringComparison.Ordinal))
                 {
                     var end = description.IndexOf("</color>", StringComparison.Ordinal);
-                    if (end >= 0) description = description.Substring(end + "</color>".Length);
+                    if (end >= 0)
+                        description = description.Substring(end + "</color>".Length);
                 }
-                if (description.StartsWith("\n\n", StringComparison.Ordinal)) description = description.Substring(2);
+                if (description.StartsWith("\n\n", StringComparison.Ordinal))
+                    description = description.Substring(2);
             }
             block += "\n<color=#66D9EF>Charges this raid: " + ReusableGrenadeRuntime.Remaining(item) + "/" + roll.Definition.GrenadeChargesPerRaid + "</color>";
         }
-        if (description == block || description.StartsWith(block + "\n\n", StringComparison.Ordinal)) return description;
+        if (description == block || description.StartsWith(block + "\n\n", StringComparison.Ordinal))
+            return description;
         // Replace the server's signature fallback with this instance's full roll.
         if (roll.Definition.IsHeadwear || roll.Definition.IsEyewear || roll.Definition.IsEarpiece || roll.Definition.BackpackEffect is not null || roll.Definition.ChestRigEffect is not null || roll.Definition.GrenadeChargesPerRaid > 0)
         {
             var signature = roll.Definition.EffectText;
             foreach (var prefix in new[] { signature, "<color=#66D9EF>" + signature + "</color>" })
             {
-                if (description == prefix) description = string.Empty;
-                else if (description.StartsWith(prefix + "\n\n", StringComparison.Ordinal)) description = description.Substring(prefix.Length + 2);
+                if (description == prefix)
+                    description = string.Empty;
+                else if (description.StartsWith(prefix + "\n\n", StringComparison.Ordinal))
+                    description = description.Substring(prefix.Length + 2);
             }
         }
         return string.IsNullOrEmpty(description) ? block : block + "\n\n" + description;
@@ -127,16 +143,22 @@ internal static class ItemDescriptionPatch
         try
         {
             labels = LabelsField?.GetValue(__instance) as ItemInfoWindowLabels;
-            if (labels is null) return;
+            if (labels is null)
+                return;
             // A reused window can preserve text only for the same bound item.
             if (ItemField?.GetValue(__instance) is not Item item || !RarityResolver.TryGetDefinition(item, out _))
-            { ItemDescriptionPresentation.Unbind(labels); return; }
-            if (ExaminedProperty is null) throw new MissingMemberException(typeof(ItemSpecificationPanel).FullName, "Boolean_0");
+            {
+                ItemDescriptionPresentation.Unbind(labels);
+                return;
+            }
+            if (ExaminedProperty is null)
+                throw new MissingMemberException(typeof(ItemSpecificationPanel).FullName, "Boolean_0");
             ItemDescriptionPresentation.Bind(labels, item, ExaminedProperty.GetValue(__instance) is true);
         }
         catch (Exception error)
         {
-            if (labels is not null) ItemDescriptionPresentation.Unbind(labels);
+            if (labels is not null)
+                ItemDescriptionPresentation.Unbind(labels);
             ItemDescriptionPresentation.ReportFailure("description binding", error);
         }
     }
@@ -147,7 +169,13 @@ internal static class ItemDescriptionLabelPatch
 {
     private static void Prefix(ItemInfoWindowLabels __instance, ref string value)
     {
-        try { value = ItemDescriptionPresentation.ForLabels(__instance, value); }
-        catch (Exception error) { ItemDescriptionPresentation.ReportFailure("description", error); }
+        try
+        {
+            value = ItemDescriptionPresentation.ForLabels(__instance, value);
+        }
+        catch (Exception error)
+        {
+            ItemDescriptionPresentation.ReportFailure("description", error);
+        }
     }
 }

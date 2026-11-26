@@ -22,8 +22,14 @@ internal static class LegendaryFireModePatch
     private static int SessionGeneration;
     private static readonly FieldInfo PlayerField = AccessTools.Field(typeof(Player.ItemHandsController), "_player");
 
-    private sealed class InputState { public bool Held; public bool Accepted; public int ShotsAtPress; }
-    internal sealed class ModeScope { public Weapon Weapon = null!; public Weapon.EFireMode Original; public Weapon.EFireMode Carrier; }
+    private sealed class InputState
+    {
+        public bool Held; public bool Accepted; public int ShotsAtPress;
+    }
+    internal sealed class ModeScope
+    {
+        public Weapon Weapon = null!; public Weapon.EFireMode Original; public Weapon.EFireMode Carrier;
+    }
     internal struct TriggerCall
     {
         public bool Entered; public bool Root; public bool Synthetic; public bool PreviousHeld; public bool WasIdle;
@@ -55,16 +61,22 @@ internal static class LegendaryFireModePatch
     public static ModeScope? BeginCarrier(Weapon? weapon)
     {
         if (weapon is null || weapon.FireMode.FireMode != Weapon.EFireMode.burst ||
-            !RarityResolver.TryGetDefinition(weapon, out var definition)) return null;
+            !RarityResolver.TryGetDefinition(weapon, out var definition))
+            return null;
         return BeginCarrier(weapon, definition);
     }
 
     internal static ModeScope? BeginCarrier(Weapon weapon, VariantDefinition definition)
     {
         if (!NeedsCarrier(definition.SpecialId) || weapon.FireMode.FireMode != Weapon.EFireMode.burst ||
-            ModeScopes.ContainsKey(weapon)) return null;
-        var scope = new ModeScope { Weapon = weapon, Original = weapon.FireMode.FireMode,
-            Carrier = weapon is RevolverItemClass ? Weapon.EFireMode.doubleaction : Weapon.EFireMode.single };
+            ModeScopes.ContainsKey(weapon))
+            return null;
+        var scope = new ModeScope
+        {
+            Weapon = weapon,
+            Original = weapon.FireMode.FireMode,
+            Carrier = weapon is RevolverItemClass ? Weapon.EFireMode.doubleaction : Weapon.EFireMode.single
+        };
         ModeScopes.Add(weapon, scope);
         weapon.FireMode.FireMode = scope.Carrier;
         return scope;
@@ -72,9 +84,11 @@ internal static class LegendaryFireModePatch
 
     public static void EndCarrier(ModeScope? scope)
     {
-        if (scope is null) return;
+        if (scope is null)
+            return;
         // Do not undo a mode that another action intentionally selected.
-        if (scope.Weapon.FireMode.FireMode == scope.Carrier) scope.Weapon.FireMode.FireMode = scope.Original;
+        if (scope.Weapon.FireMode.FireMode == scope.Carrier)
+            scope.Weapon.FireMode.FireMode = scope.Original;
         ModeScopes.Remove(scope.Weapon);
     }
 
@@ -83,16 +97,25 @@ internal static class LegendaryFireModePatch
         SessionGeneration++;
         try
         {
-            foreach (var scope in ModeScopes.Values.ToArray()) SessionCleanup.Run("fire-mode carrier", scope, static value => EndCarrier(value));
+            foreach (var scope in ModeScopes.Values.ToArray())
+                SessionCleanup.Run("fire-mode carrier", scope, static value => EndCarrier(value));
         }
-        finally { ModeScopes.Clear(); Inputs.Clear(); CallDepth.Clear(); Synthetic.Clear(); ActiveSequences.Clear(); }
+        finally
+        {
+            ModeScopes.Clear();
+            Inputs.Clear();
+            CallDepth.Clear();
+            Synthetic.Clear();
+            ActiveSequences.Clear();
+        }
     }
 
     private static void Prefix(Player.FirearmController __instance, bool pressed, out TriggerCall __state)
     {
         __state = default;
         var weapon = __instance.Item;
-        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out var definition)) return;
+        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out var definition))
+            return;
 
         CallDepth.TryGetValue(__instance, out var depth);
         CallDepth[__instance] = depth + 1;
@@ -104,22 +127,30 @@ internal static class LegendaryFireModePatch
             __state.WasIdle = IsIdle(__instance);
             __state.AmmoBefore = LegendaryRuntime.RemainingAmmo(weapon);
             __state.ShotsBefore = LegendaryRuntime.ShotCount(weapon);
-            if (!Inputs.TryGetValue(__instance, out var input)) Inputs[__instance] = input = new InputState();
+            if (!Inputs.TryGetValue(__instance, out var input))
+                Inputs[__instance] = input = new InputState();
             __state.PreviousHeld = input.Held;
-            if (pressed && !input.Held) { input.Accepted = false; input.ShotsAtPress = __state.ShotsBefore; }
+            if (pressed && !input.Held)
+            {
+                input.Accepted = false;
+                input.ShotsAtPress = __state.ShotsBefore;
+            }
             input.Held = pressed;
-            if (!pressed && __state.PreviousHeld) LegendaryRuntime.NotifyTriggerReleased(weapon);
+            if (!pressed && __state.PreviousHeld)
+                LegendaryRuntime.NotifyTriggerReleased(weapon);
         }
         __state.Scope = BeginCarrier(weapon, definition);
     }
 
     private static void Postfix(Player.FirearmController __instance, bool pressed, ref TriggerCall __state)
     {
-        if (!__state.Entered) return;
+        if (!__state.Entered)
+            return;
         EndCarrier(__state.Scope);
         __state.Scope = null;
         if (!__state.Root || __state.Synthetic || __instance.Item is not Weapon weapon ||
-            !RarityResolver.TryGetDefinition(weapon, out var definition) || LogicalMode(weapon) != "burst" || !Inputs.TryGetValue(__instance, out var input)) return;
+            !RarityResolver.TryGetDefinition(weapon, out var definition) || LogicalMode(weapon) != "burst" || !Inputs.TryGetValue(__instance, out var input))
+            return;
         if (pressed && !__state.PreviousHeld)
         {
             input.Accepted = __state.WasIdle && (!IsIdle(__instance) || LegendaryRuntime.ShotCount(weapon) > __state.ShotsBefore || LegendaryRuntime.RemainingAmmo(weapon) < __state.AmmoBefore);
@@ -136,20 +167,26 @@ internal static class LegendaryFireModePatch
 
     private static Exception? Finalizer(Player.FirearmController __instance, TriggerCall __state, Exception? __exception)
     {
-        if (!__state.Entered) return __exception;
+        if (!__state.Entered)
+            return __exception;
         EndCarrier(__state.Scope);
         if (CallDepth.TryGetValue(__instance, out var depth))
         {
-            if (depth <= 1) CallDepth.Remove(__instance); else CallDepth[__instance] = depth - 1;
+            if (depth <= 1)
+                CallDepth.Remove(__instance);
+            else
+                CallDepth[__instance] = depth - 1;
         }
         return __exception;
     }
 
     private static void StartSequence(Player.FirearmController controller, Weapon weapon, string specialId, int shots, int rpm)
     {
-        if (shots <= 0 || Singleton<GameWorld>.Instance is not { } world) return;
+        if (shots <= 0 || Singleton<GameWorld>.Instance is not { } world)
+            return;
         var key = weapon.Id + ":" + specialId;
-        if (!ActiveSequences.Add(key)) return;
+        if (!ActiveSequences.Add(key))
+            return;
         world.StartCoroutine(FireSequence(world, controller, weapon, specialId, shots, rpm, key, LegendaryRuntime.ReloadGeneration(weapon), SessionGeneration));
     }
 
@@ -172,38 +209,58 @@ internal static class LegendaryFireModePatch
             for (var index = 0; index < shots; index++)
             {
                 yield return delay;
-                if (!CanContinue(world, controller, weapon, specialId, generation, session)) yield break;
+                if (!CanContinue(world, controller, weapon, specialId, generation, session))
+                    yield break;
                 // High Noon deliberately finishes the previous firing animation,
                 // allowing its cylinder volley to use the advertised cadence.
                 if (specialId == "wave015_high_noon" && controller.CurrentOperation is Player.FirearmController.GenericFireOperationClass)
                 {
                     var mode = BeginCarrier(weapon);
-                    try { controller.CurrentOperation.FastForward(); } finally { EndCarrier(mode); }
+                    try
+                    {
+                        controller.CurrentOperation.FastForward();
+                    }
+                    finally
+                    {
+                        EndCarrier(mode);
+                    }
                 }
                 var deadline = Time.time + 2f;
                 while (!IsIdle(controller) && Time.time < deadline)
                 {
-                    if (!CanContinue(world, controller, weapon, specialId, generation, session)) yield break;
+                    if (!CanContinue(world, controller, weapon, specialId, generation, session))
+                        yield break;
                     yield return null;
                 }
-                if (!IsIdle(controller) || !CanContinue(world, controller, weapon, specialId, generation, session)) yield break;
+                if (!IsIdle(controller) || !CanContinue(world, controller, weapon, specialId, generation, session))
+                    yield break;
                 Synthetic.Add(controller);
                 try
                 {
                     controller.SetTriggerPressed(true);
                     controller.SetTriggerPressed(false);
                 }
-                finally { Synthetic.Remove(controller); }
+                finally
+                {
+                    Synthetic.Remove(controller);
+                }
             }
         }
-        finally { if (session == SessionGeneration) ActiveSequences.Remove(key); }
+        finally
+        {
+            if (session == SessionGeneration)
+                ActiveSequences.Remove(key);
+        }
     }
 
     public static string? Caption(Weapon? weapon, string mode)
     {
-        if (!RarityResolver.TryGetDefinition(weapon, out var definition)) return null;
-        if (mode == "doublet" && definition.SpecialId == "wave015_out_with_a_bang") return "Final Stand";
-        if (mode != "burst") return null;
+        if (!RarityResolver.TryGetDefinition(weapon, out var definition))
+            return null;
+        if (mode == "doublet" && definition.SpecialId == "wave015_out_with_a_bang")
+            return "Final Stand";
+        if (mode != "burst")
+            return null;
         return definition.SpecialId switch
         {
             "wave015_binary_hunter" or "wave015_two_in_one" or "wave015_balance" => "Binary Trigger",
@@ -224,9 +281,11 @@ internal static class LegendaryFireModeNamePatch
     private static bool Prefix(object __instance)
     {
         var weapon = Singleton<GameWorld>.Instance?.MainPlayer?.HandsController?.Item as Weapon;
-        if (weapon is null) return true;
+        if (weapon is null)
+            return true;
         var caption = LegendaryFireModePatch.Caption(weapon, LegendaryFireModePatch.LogicalMode(weapon));
-        if (caption is null) return true;
+        if (caption is null)
+            return true;
         Show.Invoke(__instance, [caption, null]);
         return false;
     }

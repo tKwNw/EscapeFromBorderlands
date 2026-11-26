@@ -17,12 +17,14 @@ internal static class BackpackGeneratedGridPatch
 {
     private static bool Prefix(Item item, ContainedGridsView containedGridsTemplate, ref ContainedGridsView __result)
     {
-        if (!RarityResolver.TryGetDefinition(item, out var definition)) return true;
+        if (!RarityResolver.TryGetDefinition(item, out var definition))
+            return true;
         var storage = definition.BackpackEffect;
         var rig = definition.ChestRigEffect;
         var changed = storage is not null && (storage.ExtraGrids.Count > 0 || storage.ExtraColumns > 0 || storage.ExtraRows > 0) ||
             rig is not null && (rig.ExtraGrids.Count > 0 || rig.ExtraColumns > 0 || rig.ExtraRows > 0 || rig.ExpandEveryGrid);
-        if (!changed) return true;
+        if (!changed)
+            return true;
         // Generate enough native views for every grid, then arrange them using
         // the source backpack prefab rather than a generic horizontal row.
         __result = (ContainedGridsView)(object)UnityEngine.Object.Instantiate((UnityEngine.Object)(object)containedGridsTemplate);
@@ -42,15 +44,19 @@ internal static class BackpackVanillaGridLayout
     // Foreign factory/resource patches keep their original call timing.
     internal static void Prepare(VariantDefinition definition)
     {
-        if (!CanReadTemplate()) return;
-        if (Harmony.GetPatchInfo(Pop) is { } patches && patches.Owners.Any(owner => owner != Plugin.PluginGuid)) return;
-        if (Harmony.GetPatchInfo(Pop.GetGenericMethodDefinition()) is { } generic && generic.Owners.Any(owner => owner != Plugin.PluginGuid)) return;
+        if (!CanReadTemplate())
+            return;
+        if (Harmony.GetPatchInfo(Pop) is { } patches && patches.Owners.Any(owner => owner != Plugin.PluginGuid))
+            return;
+        if (Harmony.GetPatchInfo(Pop.GetGenericMethodDefinition()) is { } generic && generic.Owners.Any(owner => owner != Plugin.PluginGuid))
+            return;
         Source(definition);
     }
 
     private static bool CanReadTemplate()
     {
-        if (TemplateGeometry is { } known) return known;
+        if (TemplateGeometry is { } known)
+            return known;
         // A foreign constructor/factory patch may intentionally change an
         // instance's grids. Preserve that path instead of guessing its result.
         foreach (var method in Harmony.GetAllPatchedMethods())
@@ -64,7 +70,8 @@ internal static class BackpackVanillaGridLayout
 
     internal static BackpackGridLayout.Frame[]? Source(VariantDefinition definition)
     {
-        if (Sources.TryGetValue(definition.SourceTemplateId, out var cached)) return cached;
+        if (Sources.TryGetValue(definition.SourceTemplateId, out var cached))
+            return cached;
         try
         {
             var factory = Singleton<ItemFactoryClass>.Instance;
@@ -80,27 +87,34 @@ internal static class BackpackVanillaGridLayout
             else
             {
                 var source = factory.CreateItem(Guid.NewGuid().ToString("N").Substring(0, 24), definition.SourceTemplateId, null) as CompoundItem;
-                if (source is null) return null;
-                grids = source.Grids; layout = Native.Component<GridLayoutComponent>(source)?.Template.LayoutName;
+                if (source is null)
+                    return null;
+                grids = source.Grids;
+                layout = Native.Component<GridLayoutComponent>(source)?.Template.LayoutName;
             }
-            if (grids.Length == 0) return null;
+            if (grids.Length == 0)
+                return null;
             if (string.IsNullOrEmpty(layout))
             {
-                if (grids.Length != 1) return null;
+                if (grids.Length != 1)
+                    return null;
                 var size = ItemViewFactory.GetCellPixelSize(new XYCellSizeStruct(grids[0].GridWidth, grids[0].GridHeight));
                 return Sources[definition.SourceTemplateId] = new[] { new BackpackGridLayout.Frame(0f, 0f, size.X, size.Y) };
             }
             // Several native templates use identical prefab geometry. Cache
             // by layout AND dimensions so expanded or modded shapes cannot mix.
             var shape = layout + ":" + string.Join(";", grids.Select(grid => grid.GridWidth + "x" + grid.GridHeight));
-            if (Shapes.TryGetValue(shape, out var shared)) return Sources[definition.SourceTemplateId] = shared;
+            if (Shapes.TryGetValue(shape, out var shared))
+                return Sources[definition.SourceTemplateId] = shared;
             var prefab = Pop.Invoke(null, new object[] { "UI/Rig Layouts/" + layout });
-            if (prefab is null) throw new InvalidOperationException("Vanilla grid prefab was not found.");
+            if (prefab is null)
+                throw new InvalidOperationException("Vanilla grid prefab was not found.");
             return Sources[definition.SourceTemplateId] = Shapes[shape] = ReadPrefab(prefab, grids);
         }
         catch (Exception error)
         {
-            if (Warnings.Add(definition.SourceTemplateId)) Plugin.LogSource.LogWarning($"Backpack pocket layout unavailable for {definition.SourceShortName}: {error.Message}");
+            if (Warnings.Add(definition.SourceTemplateId))
+                Plugin.LogSource.LogWarning($"Backpack pocket layout unavailable for {definition.SourceShortName}: {error.Message}");
             return null;
         }
     }
@@ -127,8 +141,15 @@ internal static class BackpackVanillaGridLayout
                     if (behaviour.GetType().Name == "LayoutElement")
                     {
                         if (behaviour is UnityEngine.UI.LayoutElement element && element.GetType() == typeof(UnityEngine.UI.LayoutElement))
-                        { element.minWidth = size.X; element.minHeight = size.Y; }
-                        else { Native.Set(behaviour, "minWidth", (float)size.X); Native.Set(behaviour, "minHeight", (float)size.Y); }
+                        {
+                            element.minWidth = size.X;
+                            element.minHeight = size.Y;
+                        }
+                        else
+                        {
+                            Native.Set(behaviour, "minWidth", (float)size.X);
+                            Native.Set(behaviour, "minHeight", (float)size.Y);
+                        }
                     }
             }
             UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(root);
@@ -140,10 +161,14 @@ internal static class BackpackVanillaGridLayout
                 var size = ItemViewFactory.GetCellPixelSize(new XYCellSizeStruct(grids[i].GridWidth, grids[i].GridHeight));
                 frames[i] = new BackpackGridLayout.Frame(topLeft.x, -topLeft.y, size.X, size.Y);
             }
-            var left = frames.Min(f => f.X); var top = frames.Min(f => f.Y);
+            var left = frames.Min(f => f.X);
+            var top = frames.Min(f => f.Y);
             return frames.Select(f => new BackpackGridLayout.Frame(f.X - left, f.Y - top, f.Width, f.Height)).ToArray();
         }
-        finally { UnityEngine.Object.Destroy(snapshot); }
+        finally
+        {
+            UnityEngine.Object.Destroy(snapshot);
+        }
     }
 }
 
@@ -164,18 +189,21 @@ internal static class BackpackCompartmentLayoutPatch
     }
     private static void Postfix(GeneratedGridsView __instance, CompoundItem compoundItem, ItemUiContext itemUiContext)
     {
-        if (!RarityResolver.TryGetDefinition(compoundItem, out var d) || d.BackpackEffect is null && d.ChestRigEffect is null) return;
+        if (!RarityResolver.TryGetDefinition(compoundItem, out var d) || d.BackpackEffect is null && d.ChestRigEffect is null)
+            return;
         DiagnosticPathTrace trace = default;
         DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.Container);
         var original = BackpackVanillaGridLayout.Source(d);
         trace.Phase(0);
         var views = __instance.GridViews;
-        if (views.Length == 0 || original is null || views.Length < original.Length) return;
+        if (views.Length == 0 || original is null || views.Length < original.Length)
+            return;
         var root = (RectTransform)((Component)(object)__instance).transform;
         // A layout group would put the pockets back in a horizontal row during
         // the next Unity layout pass. All child GridViews remain native.
         foreach (var behaviour in ((Component)(object)__instance).GetComponents<Behaviour>())
-            if (behaviour.GetType().Name.Contains("LayoutGroup") || behaviour.GetType().Name == "ContentSizeFitter") behaviour.enabled = false;
+            if (behaviour.GetType().Name.Contains("LayoutGroup") || behaviour.GetType().Name == "ContentSizeFitter")
+                behaviour.enabled = false;
         var layout = Layouts.GetValue(__instance, _ => new ViewLayout());
         if (layout.Plan is null || layout.Plan.Count != views.Length)
         {
@@ -200,17 +228,25 @@ internal static class BackpackCompartmentLayoutPatch
             {
                 // A prior navigation binding retains the old array until
                 // Register restores its scales. Do not mutate that array.
-                if (!replacedRects) { layout.Rects = (RectTransform[])layout.Rects.Clone(); replacedRects = true; }
+                if (!replacedRects)
+                {
+                    layout.Rects = (RectTransform[])layout.Rects.Clone();
+                    replacedRects = true;
+                }
                 layout.Rects[i] = rect;
             }
             // Native Show or a window reparent can change the transforms even
             // when geometry is unchanged. Always restore the actual view.
             var corner = new Vector2(0f, 1f);
             var position = new Vector2(positions[i].X, -positions[i].Y);
-            if (!rect.anchorMin.Equals(corner)) rect.anchorMin = corner;
-            if (!rect.anchorMax.Equals(corner)) rect.anchorMax = corner;
-            if (!rect.pivot.Equals(corner)) rect.pivot = corner;
-            if (!rect.anchoredPosition.Equals(position)) rect.anchoredPosition = position;
+            if (!rect.anchorMin.Equals(corner))
+                rect.anchorMin = corner;
+            if (!rect.anchorMax.Equals(corner))
+                rect.anchorMax = corner;
+            if (!rect.pivot.Equals(corner))
+                rect.pivot = corner;
+            if (!rect.anchoredPosition.Equals(position))
+                rect.anchoredPosition = position;
         }
         trace.Phase(3);
         BackpackLayoutSizing.Apply(root, plan.Width, plan.Height);

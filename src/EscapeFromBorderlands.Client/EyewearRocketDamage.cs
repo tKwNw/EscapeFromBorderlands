@@ -13,15 +13,20 @@ namespace EscapeFromBorderlands.Client;
 // numeric outgoing factor at launch; no owner or inventory reference is held.
 internal static class EyewearRocketDamage
 {
-    private sealed class Snapshot { internal float Factor; }
+    private sealed class Snapshot
+    {
+        internal float Factor;
+    }
     private static ConditionalWeakTable<object, Snapshot> Sources = new();
 
     internal static void Reset() => Sources = new();
     internal static void Capture(object source, IPlayer? owner)
     {
         var factor = owner is Player player ? Eyewear.Outgoing(player) : 1;
-        if (factor == 1) Sources.Remove(source); // Also clears pooled old launches.
-        else Sources.GetOrCreateValue(source).Factor = factor;
+        if (factor == 1)
+            Sources.Remove(source); // Also clears pooled old launches.
+        else
+            Sources.GetOrCreateValue(source).Factor = factor;
     }
     internal static EyewearDamageSources.NativeScope Begin(object source) =>
         EyewearDamageSources.BeginNative(Sources.TryGetValue(source, out var saved) ? saved.Factor : 1);
@@ -57,5 +62,8 @@ internal static class EyewearRocketImpact
     private static void Prefix(object __instance, out EyewearDamageSources.NativeScope __state) =>
         __state = EyewearRocketDamage.Begin(__instance);
     private static Exception? Finalizer(EyewearDamageSources.NativeScope __state, Exception? __exception)
-    { EyewearDamageSources.EndNative(__state); return __exception; }
+    {
+        EyewearDamageSources.EndNative(__state);
+        return __exception;
+    }
 }

@@ -38,11 +38,13 @@ internal static class CustomBotSpawning
 
         internal WeightedSpawnChoices ForMode(string mode)
         {
-            if (_byMode.TryGetValue(mode, out var found)) return found;
+            if (_byMode.TryGetValue(mode, out var found))
+                return found;
             var candidates = definitions.Where(v => Compatible(v, mode)).ToArray();
             var choices = candidates.Length == 0 ? WeightedSpawnChoices.Empty : new WeightedSpawnChoices(candidates);
             // Do not retain arbitrary fire-mode strings supplied by mods.
-            if (_byMode.Count < 16) _byMode[mode] = choices;
+            if (_byMode.Count < 16)
+                _byMode[mode] = choices;
             return choices;
         }
     }
@@ -61,14 +63,19 @@ internal static class CustomBotSpawning
     {
         lock (Sync)
         {
-            Configuration = config; Templates = templates; Services = services; Warning = warning; Fits.Clear();
+            Configuration = config;
+            Templates = templates;
+            Services = services;
+            Warning = warning;
+            Fits.Clear();
             BySource = definitions.Where(v => v.SpawnEnabled && !v.IsMysteryFleaOffer && v.SpawnWeight > 0 &&
                     v.WeaponClass is not "grenadeLauncher" and not "specialWeapon")
                 .Where(v => double.IsFinite(v.SpawnWeight)).GroupBy(v => new MongoId(v.SourceTemplateId))
                 .ToDictionary(g => g.Key, g => new SourceChoices(g.ToArray()));
             CategoryMask = 0;
             foreach (var source in BySource.Values)
-                if (source.Category >= 0) CategoryMask |= 1 << source.Category;
+                if (source.Category >= 0)
+                    CategoryMask |= 1 << source.Category;
             RatesByGroup = new(StringComparer.Ordinal);
             foreach (var group in new[] { "scavs", "bosses", "pmcUsec", "pmcBear" }.Concat(BotSpawnGroups.Expanded))
                 RatesByGroup[group] = new GroupRates(group);
@@ -109,7 +116,8 @@ internal static class CustomBotSpawning
             var factions = factionService is null ? null : FactionsProperty?.GetValue(factionService) as IDictionary;
             if (factions is not { Count: > 0 })
             {
-                if (!MetadataEmpty) BotSpawnGroups.SetCustomRoles(new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase));
+                if (!MetadataEmpty)
+                    BotSpawnGroups.SetCustomRoles(new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase));
                 MetadataEmpty = true;
                 return;
             }
@@ -128,28 +136,36 @@ internal static class CustomBotSpawning
         {
             BotSpawnGroups.SetCustomRoles(new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase));
             MetadataEmpty = true;
-            if (!ReportedMetadata) { ReportedMetadata = true; Warning("[Escape From Borderlands] Custom bot faction metadata is unavailable; unclassified roles remain excluded. " + error.Message); }
+            if (!ReportedMetadata)
+            {
+                ReportedMetadata = true;
+                Warning("[Escape From Borderlands] Custom bot faction metadata is unavailable; unclassified roles remain excluded. " + error.Message);
+            }
         }
     }
 
     private static Type? Find(System.Reflection.Assembly[] assemblies, string name)
     {
         foreach (var assembly in assemblies)
-            if (assembly.GetType(name, false) is { } type) return type;
+            if (assembly.GetType(name, false) is { } type)
+                return type;
         return null;
     }
 
     private static object? Get(object? value, string name)
     {
-        if (value is null) return null;
+        if (value is null)
+            return null;
         var key = (value.GetType(), name);
-        if (!FactionProperties.TryGetValue(key, out var member)) FactionProperties[key] = member = key.Item1.GetProperty(name);
+        if (!FactionProperties.TryGetValue(key, out var member))
+            FactionProperties[key] = member = key.Item1.GetProperty(name);
         return member?.GetValue(value);
     }
     private static void VisitFaction(object? faction, string key, bool parentScav, bool parentInfected, IDictionary? names,
         Dictionary<string, bool> roles, HashSet<string> infectedRoles, HashSet<object> path)
     {
-        if (faction is null || !path.Add(faction)) return;
+        if (faction is null || !path.Add(faction))
+            return;
         var name = Get(faction, "Name")?.ToString() ?? key;
         var infected = parentInfected || key.Equals("infected", StringComparison.OrdinalIgnoreCase) || name.Equals("infected", StringComparison.OrdinalIgnoreCase);
         var scav = parentScav || infected || ScavFactions.Contains(key) || ScavFactions.Contains(name) || Get(faction, "IsScav") is true;
@@ -160,15 +176,19 @@ internal static class CustomBotSpawning
                 if (value is not null && names is not null && (value is not string || int.TryParse(role, out _)))
                 {
                     var number = Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
-                    if (names.Contains(number)) role = names[number]?.ToString() ?? role;
+                    if (names.Contains(number))
+                        role = names[number]?.ToString() ?? role;
                 }
-                if (NativeRoles.Contains(role) || long.TryParse(role, out _)) continue;
+                if (NativeRoles.Contains(role) || long.TryParse(role, out _))
+                    continue;
                 // Scav ancestry wins if a custom role belongs to several factions.
                 roles[role] = scav || roles.GetValueOrDefault(role);
-                if (infected) infectedRoles.Add(role);
+                if (infected)
+                    infectedRoles.Add(role);
             }
         if (Get(faction, "SubFactions") is IEnumerable children)
-            foreach (var child in children) VisitFaction(child, "", scav, infected, names, roles, infectedRoles, path);
+            foreach (var child in children)
+                VisitFaction(child, "", scav, infected, names, roles, infectedRoles, path);
         path.Remove(faction);
     }
 
@@ -177,7 +197,8 @@ internal static class CustomBotSpawning
     {
         var generated = await pending.ConfigureAwait(false);
         var result = generated as BotBase[] ?? generated.ToArray();
-        if (result.Length == 0) return result;
+        if (result.Length == 0)
+            return result;
         var timing = ServerPerformanceTrace.Measure("bot post-generation");
         var changed = 0;
         lock (Sync)
@@ -185,8 +206,14 @@ internal static class CustomBotSpawning
             RefreshMetadata();
             foreach (var bot in result)
             {
-                try { changed += Apply(bot, Random.Shared.NextDouble); }
-                catch (Exception error) { Warning("[Escape From Borderlands] A generated bot loadout could not be converted; its remaining original gear is retained. " + error.Message); }
+                try
+                {
+                    changed += Apply(bot, Random.Shared.NextDouble);
+                }
+                catch (Exception error)
+                {
+                    Warning("[Escape From Borderlands] A generated bot loadout could not be converted; its remaining original gear is retained. " + error.Message);
+                }
             }
         }
         timing.Complete(result.Length, changed);
@@ -202,9 +229,11 @@ internal static class CustomBotSpawning
         {
             for (var i = 0; i < Fractions.Length; i++)
             {
-                if ((CategoryMask & (1 << i)) == 0) continue;
+                if ((CategoryMask & (1 << i)) == 0)
+                    continue;
                 Fractions[i] = Configuration.BotFractionForGroup("shared", group, RarityConfiguration.Categories[i]);
-                if (Fractions[i] > 0d) Mask |= 1 << i;
+                if (Fractions[i] > 0d)
+                    Mask |= 1 << i;
             }
         }
     }
@@ -214,7 +243,8 @@ internal static class CustomBotSpawning
         var role = bot.Info?.Settings?.Role;
         var inventory = bot.Inventory;
         if (!Configuration.Enabled || string.IsNullOrWhiteSpace(role) ||
-            inventory?.Items is null || inventory.Equipment is null || inventory.ExtensionData?.ContainsKey(Evaluated) == true) return 0;
+            inventory?.Items is null || inventory.Equipment is null || inventory.ExtensionData?.ContainsKey(Evaluated) == true)
+            return 0;
         var group = BotSpawnGroups.Group(role);
         // The inventory marker survives normal JSON/cache clones. No growing
         // global set and no repeat chance when a cached bot is returned again.
@@ -222,7 +252,8 @@ internal static class CustomBotSpawning
         inventory.ExtensionData[Evaluated] = true;
         // Rates are replaced when the finalized spawn configuration is
         // installed. Role classification still observes live metadata.
-        if (group is null || !RatesByGroup.TryGetValue(group, out var rates) || rates.Mask == 0) return 0;
+        if (group is null || !RatesByGroup.TryGetValue(group, out var rates) || rates.Mask == 0)
+            return 0;
         var enabledMask = rates.Mask;
         var categories = RarityConfiguration.Categories;
 
@@ -231,19 +262,25 @@ internal static class CustomBotSpawning
         foreach (var item in inventory.Items)
         {
             if (item is null || !BySource.TryGetValue(item.Template, out var source) || source.Category < 0 ||
-                (enabledMask & (1 << source.Category)) == 0) continue;
+                (enabledMask & (1 << source.Category)) == 0)
+                continue;
             var equipped = item.ParentId == equipmentId;
             var category = categories[source.Category];
             if (category != "grenades" && (!equipped ||
                 (item.SlotId == "Headwear" ? category is not "armoredHeadwear" and not "unarmoredHeadwear" :
                     item.SlotId is not ("FirstPrimaryWeapon" or "SecondPrimaryWeapon" or "Holster" or "Scabbard" or "Backpack" or "TacticalVest" or "ArmorVest" or "Earpiece" or "Eyewear") ||
-                    RarityConfiguration.Category(item.SlotId) != category))) continue;
-            if (random() >= rates.Fractions[source.Category]) continue;
+                    RarityConfiguration.Category(item.SlotId) != category)))
+                continue;
+            if (random() >= rates.Fractions[source.Category])
+                continue;
             var choices = source.ForMode(item.Upd?.FireMode?.FireMode ?? "");
-            if (choices.IsEmpty) continue;
+            if (choices.IsEmpty)
+                continue;
             var chosen = choices.Pick(random());
-            if (chosen.Variant.IsHeadwear) HeadwearTemplates.Convert(item, chosen.Id, inventory.Items);
-            else item.Template = chosen.Id;
+            if (chosen.Variant.IsHeadwear)
+                HeadwearTemplates.Convert(item, chosen.Id, inventory.Items);
+            else
+                item.Template = chosen.Id;
             changed++;
         }
         return changed;
@@ -253,19 +290,24 @@ internal static class CustomBotSpawning
     {
         // Special soft panels cannot replace generated vanilla plates without
         // altering attachments. Prefer another compatible signature instead.
-        if (variant.ChestRigEffect?.SoftArmorClass > 0) return false;
-        if (!string.IsNullOrEmpty(mode) && variant.FireModes.Count > 0 && !variant.FireModes.Contains(mode, StringComparer.OrdinalIgnoreCase)) return false;
+        if (variant.ChestRigEffect?.SoftArmorClass > 0)
+            return false;
+        if (!string.IsNullOrEmpty(mode) && variant.FireModes.Count > 0 && !variant.FireModes.Contains(mode, StringComparer.OrdinalIgnoreCase))
+            return false;
         var key = (variant.SourceTemplateId, variant.TemplateId);
-        if (Fits.TryGetValue(key, out var fits)) return fits;
+        if (Fits.TryGetValue(key, out var fits))
+            return fits;
         if (!Templates.TryGetValue(new MongoId(variant.SourceTemplateId), out var source) ||
-            !Templates.TryGetValue(new MongoId(variant.TemplateId), out var target)) return Fits[key] = false;
+            !Templates.TryGetValue(new MongoId(variant.TemplateId), out var target))
+            return Fits[key] = false;
         var grids = target.Properties?.Grids?.ToArray() ?? [];
         foreach (var original in source.Properties?.Grids ?? [])
         {
             var replacement = grids.FirstOrDefault(g => g.Name == original.Name);
             if (replacement?.Properties is not { } next || original.Properties is not { } old ||
                 next.CellsH.GetValueOrDefault() < old.CellsH.GetValueOrDefault() || next.CellsV.GetValueOrDefault() < old.CellsV.GetValueOrDefault() ||
-                LegendaryGridExclusions.FilterKey(next.Filters) != LegendaryGridExclusions.FilterKey(old.Filters)) return Fits[key] = false;
+                LegendaryGridExclusions.FilterKey(next.Filters) != LegendaryGridExclusions.FilterKey(old.Filters))
+                return Fits[key] = false;
         }
         return Fits[key] = true;
     }

@@ -15,7 +15,8 @@ internal static class RecoilOwnerLookup
         {
             var effect = player.ProceduralWeaponAnimation?.Shootingg?.CurrentRecoilEffect;
             if (effect is not null && (ReferenceEquals(effect.HandPositionRecoilEffect, process) ||
-                ReferenceEquals(effect.HandRotationRecoilEffect, process) || ReferenceEquals(effect.CameraRotationRecoilEffect, process))) return player;
+                ReferenceEquals(effect.HandRotationRecoilEffect, process) || ReferenceEquals(effect.CameraRotationRecoilEffect, process)))
+                return player;
         }
         return null;
     }

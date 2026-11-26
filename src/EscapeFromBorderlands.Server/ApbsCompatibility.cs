@@ -52,11 +52,16 @@ public sealed class ApbsCompatibility(
         try
         {
             var equipmentHelper = FindLoadedType(ApbsBotEquipmentHelperTypeNames);
-            if (equipmentHelper is not null) FactionEquipmentSpawning.InstallApbs(equipmentHelper);
+            if (equipmentHelper is not null)
+                FactionEquipmentSpawning.InstallApbs(equipmentHelper);
             foreach (var name in new[] { "ProgressiveBotSystem.Services.CustomBotLootCacheService", "_progressiveBotSystem.Services.CustomBotLootCacheService" })
-                if (FindLoadedType(new[] { name }) is { } cacheType) ReusableGrenadeSpawning.InstallApbsCache(cacheType);
+                if (FindLoadedType(new[] { name }) is { } cacheType)
+                    ReusableGrenadeSpawning.InstallApbsCache(cacheType);
         }
-        catch (Exception exception) { releaseLog.Warning($"[Escape From Borderlands] APBS role/loot adapters could not be installed: {exception.Message}"); }
+        catch (Exception exception)
+        {
+            releaseLog.Warning($"[Escape From Borderlands] APBS role/loot adapters could not be installed: {exception.Message}");
+        }
 
         if (!config.AutoDetectApbs)
         {
@@ -66,8 +71,10 @@ public sealed class ApbsCompatibility(
                 {
                     var dataLoader = ResolveLiveDataLoader(dataLoaderType, out _);
                     var removed = dataLoader is null ? -1 : RemoveImportedEfb(dataLoaderType, dataLoader);
-                    if (removed < 0) releaseLog.Warning("[Escape From Borderlands] APBS's live tier datasets were unavailable; imported EFB entries could not be cleared for standalone mode.");
-                    else releaseLog.Info($"[Escape From Borderlands] Cleared {removed} imported EFB entries from APBS dirty/clean datasets before selecting standalone spawning. Other mods' weights were preserved.");
+                    if (removed < 0)
+                        releaseLog.Warning("[Escape From Borderlands] APBS's live tier datasets were unavailable; imported EFB entries could not be cleared for standalone mode.");
+                    else
+                        releaseLog.Info($"[Escape From Borderlands] Cleared {removed} imported EFB entries from APBS dirty/clean datasets before selecting standalone spawning. Other mods' weights were preserved.");
                 }
                 catch (Exception exception)
                 {
@@ -113,8 +120,10 @@ public sealed class ApbsCompatibility(
             releaseLog.Info($"[Escape From Borderlands] APBS live data source: {resolutionSource}.");
 
             var removed = RemoveImportedEfb(dataLoaderType, dataLoader);
-            if (removed < 0) releaseLog.Warning("[Escape From Borderlands] APBS tier data unavailable; returned equipment copies are still cleaned before generation.");
-            else releaseLog.Info($"[Escape From Borderlands] Removed {removed} imported EFB pool entries. Final bot conversion owns all configured category chances, independently of APBS modded-item settings.");
+            if (removed < 0)
+                releaseLog.Warning("[Escape From Borderlands] APBS tier data unavailable; returned equipment copies are still cleaned before generation.");
+            else
+                releaseLog.Info($"[Escape From Borderlands] Removed {removed} imported EFB pool entries. Final bot conversion owns all configured category chances, independently of APBS modded-item settings.");
         }
         catch (Exception exception)
         {
@@ -133,18 +142,22 @@ public sealed class ApbsCompatibility(
         foreach (var name in new[] { "AllTierDataDirty", "AllTierDataClean" })
         {
             var data = dataLoaderType.GetProperty(name)?.GetValue(dataLoader);
-            if (data?.GetType().GetProperty("Tiers")?.GetValue(data) is not IDictionary tiers) continue;
+            if (data?.GetType().GetProperty("Tiers")?.GetValue(data) is not IDictionary tiers)
+                continue;
             found = true;
             foreach (DictionaryEntry tier in tiers)
             {
                 var equipmentData = tier.Value?.GetType().GetProperty("EquipmentData")?.GetValue(tier.Value);
-                if (equipmentData is null) continue;
+                if (equipmentData is null)
+                    continue;
                 foreach (var botProperty in equipmentData.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
                 {
                     var bot = botProperty.GetValue(equipmentData);
-                    if (bot?.GetType().GetProperty("Equipment")?.GetValue(bot) is not IDictionary equipment) continue;
+                    if (bot?.GetType().GetProperty("Equipment")?.GetValue(bot) is not IDictionary equipment)
+                        continue;
                     foreach (DictionaryEntry slot in equipment)
-                        if (slot.Value is IDictionary pool) removed += RemoveMatching(pool, ids);
+                        if (slot.Value is IDictionary pool)
+                            removed += RemoveMatching(pool, ids);
                 }
             }
         }

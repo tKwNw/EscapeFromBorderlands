@@ -24,29 +24,46 @@ internal sealed class RaidPlayerWorkset
     private int ExtraRevision;
 
     internal RaidPlayerWorkset(Action<RaidPlayerWorkset> additional, Func<int>? additionalChanges = null)
-    { Additional = additional; AdditionalChanges = additionalChanges; Order = Compare; AddPlayer = Add; }
+    {
+        Additional = additional;
+        AdditionalChanges = additionalChanges;
+        Order = Compare;
+        AddPlayer = Add;
+    }
     private int Compare(Player a, Player b) => Snapshot!.Order(a).CompareTo(Snapshot.Order(b));
     internal RaidPlayerWorkset Select(RaidPlayerSnapshot snapshot, GearKind gear, bool humans = false, bool humansOnly = false)
-    { Snapshot = snapshot; Gear = gear; Humans = humans; HumansOnly = humansOnly; Rebuild(); return this; }
+    {
+        Snapshot = snapshot;
+        Gear = gear;
+        Humans = humans;
+        HumansOnly = humansOnly;
+        Rebuild();
+        return this;
+    }
     private void Rebuild()
     {
-        Candidates.Clear(); Seen.Clear();
+        Candidates.Clear();
+        Seen.Clear();
         if (HumansOnly)
         {
             // Human-only maintenance should scale with the human roster, not
             // the number of bots wearing Legendary bags or rigs.
             var humans = Snapshot!.Humans;
             for (var i = 0; i < humans.Count; i++)
-                if (Humans || EquipmentPresence.IsIndexedWearer(humans[i], Gear)) Add(humans[i]);
+                if (Humans || EquipmentPresence.IsIndexedWearer(humans[i], Gear))
+                    Add(humans[i]);
         }
-        else EquipmentPresence.AddWearers(Gear, this);
+        else
+            EquipmentPresence.AddWearers(Gear, this);
         if (Humans && !HumansOnly)
         {
             var humans = Snapshot!.Humans;
-            for (var i = 0; i < humans.Count; i++) Add(humans[i]);
+            for (var i = 0; i < humans.Count; i++)
+                Add(humans[i]);
         }
         // All human actors already include every possible additional member.
-        if (!(HumansOnly && Humans)) Additional(this);
+        if (!(HumansOnly && Humans))
+            Additional(this);
         // Discover additional live state each pass (several providers have no
         // revision). Reuse the ordered selection when membership/order agree.
         // This also detects direct roster reorder without inventory events.
@@ -55,55 +72,109 @@ internal sealed class RaidPlayerWorkset
         if (unchanged)
             foreach (var player in Players)
             {
-                if (!Seen.Contains(player)) { unchanged = false; break; }
+                if (!Seen.Contains(player))
+                {
+                    unchanged = false;
+                    break;
+                }
                 var order = Snapshot!.Order(player);
-                if (order <= previousOrder) { unchanged = false; break; }
+                if (order <= previousOrder)
+                {
+                    unchanged = false;
+                    break;
+                }
                 previousOrder = order;
             }
         if (!unchanged)
         {
             Candidates.Sort(Order);
-            var previous = Players; Players = Candidates; Candidates = previous;
+            var previous = Players;
+            Players = Candidates;
+            Candidates = previous;
         }
         Candidates.Clear();
         Revision = EquipmentPresence.Revision;
         ExtraRevision = AdditionalChanges?.Invoke() ?? 0;
     }
     internal void Add(Player player)
-    { if ((!HumansOnly || ActorCapabilities.IsHuman(player)) && Snapshot!.Contains(player) && Seen.Add(player)) Candidates.Add(player); }
+    {
+        if ((!HumansOnly || ActorCapabilities.IsHuman(player)) && Snapshot!.Contains(player) && Seen.Add(player))
+            Candidates.Add(player);
+    }
     internal void AddProfile(string id) => Snapshot!.AddProfile(id, AddPlayer);
     internal void Add(HashSet<Player> players)
     {
-        if (!HumansOnly) { foreach (var p in players) Add(p); return; }
+        if (!HumansOnly)
+        {
+            foreach (var p in players)
+                Add(p);
+            return;
+        }
         var humans = Snapshot!.Humans;
-        for (var i = 0; i < humans.Count; i++) if (players.Contains(humans[i])) Add(humans[i]);
+        for (var i = 0; i < humans.Count; i++)
+            if (players.Contains(humans[i]))
+                Add(humans[i]);
     }
     internal void Add<T>(Dictionary<Player, T> states)
     {
-        if (!HumansOnly) { foreach (var p in states.Keys) Add(p); return; }
+        if (!HumansOnly)
+        {
+            foreach (var p in states.Keys)
+                Add(p);
+            return;
+        }
         var humans = Snapshot!.Humans;
-        for (var i = 0; i < humans.Count; i++) if (states.ContainsKey(humans[i])) Add(humans[i]);
+        for (var i = 0; i < humans.Count; i++)
+            if (states.ContainsKey(humans[i]))
+                Add(humans[i]);
     }
-    internal void Clear() { Players.Clear(); Candidates.Clear(); Seen.Clear(); Snapshot = null; }
-    private void EndPass() { Candidates.Clear(); Seen.Clear(); Snapshot = null; }
+    internal void Clear()
+    {
+        Players.Clear();
+        Candidates.Clear();
+        Seen.Clear();
+        Snapshot = null;
+    }
+    private void EndPass()
+    {
+        Candidates.Clear();
+        Seen.Clear();
+        Snapshot = null;
+    }
     public Enumerator GetEnumerator() => new(this);
     internal struct Enumerator : IDisposable
     {
         private readonly RaidPlayerWorkset Work;
         private int Index, LastOrder, Revision;
-        public Player Current { get; private set; }
+        public Player Current
+        {
+            get; private set;
+        }
         internal Enumerator(RaidPlayerWorkset work)
-        { Work = work; Index = 0; LastOrder = -1; Revision = work.Revision; Current = null!; }
+        {
+            Work = work;
+            Index = 0;
+            LastOrder = -1;
+            Revision = work.Revision;
+            Current = null!;
+        }
         public bool MoveNext()
         {
             if (Revision != EquipmentPresence.Revision || Work.ExtraRevision != (Work.AdditionalChanges?.Invoke() ?? 0))
-            { Work.Rebuild(); Revision = Work.Revision; Index = 0; }
+            {
+                Work.Rebuild();
+                Revision = Work.Revision;
+                Index = 0;
+            }
             while (Index < Work.Players.Count)
             {
                 var player = Work.Players[Index++];
                 var order = Work.Snapshot!.Order(player);
-                if (order <= LastOrder) continue;
-                LastOrder = order; Current = player; return true;
+                if (order <= LastOrder)
+                    continue;
+                LastOrder = order;
+                Current = player;
+                return true;
             }
             return false;
         }

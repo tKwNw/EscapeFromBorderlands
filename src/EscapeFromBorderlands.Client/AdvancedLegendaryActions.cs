@@ -61,12 +61,21 @@ internal static class AdvancedLegendaryActions
                 SessionCleanup.Run("smoke asset cancellation", cancellation, static value => value.Cancel());
                 SessionCleanup.Run("smoke asset disposal", cancellation, static value => value.Dispose());
             }
-            foreach (var smoke in Smokes.ToArray()) SessionCleanup.Run("short smoke", smoke, static value => RemoveSmoke(value));
+            foreach (var smoke in Smokes.ToArray())
+                SessionCleanup.Run("short smoke", smoke, static value => RemoveSmoke(value));
         }
         finally
         {
-            AssetCancellation = null; AssetLoad = null; AssetWorld = null; Smokes.Clear();
-            lock (Sync) { PendingMisses.Clear(); PendingShotCleanups.Clear(); PendingTransfers.Clear(); }
+            AssetCancellation = null;
+            AssetLoad = null;
+            AssetWorld = null;
+            Smokes.Clear();
+            lock (Sync)
+            {
+                PendingMisses.Clear();
+                PendingShotCleanups.Clear();
+                PendingTransfers.Clear();
+            }
         }
     }
 
@@ -74,17 +83,23 @@ internal static class AdvancedLegendaryActions
     {
         if (world is not null && Singleton<ObjectsFactory>.Instantiated && Singleton<ItemFactory>.Instantiated && AssetWorld != world)
             PreloadSmoke(world);
-        if (Smokes.Count == 0) return;
+        if (Smokes.Count == 0)
+            return;
         SmokeUpdateSnapshot.AddRange(Smokes);
         try
         {
             foreach (var smoke in SmokeUpdateSnapshot)
             {
-                if (smoke.World != world || smoke.Grenade == null || Time.time >= smoke.EndTime) RemoveSmoke(smoke);
-                else smoke.Grenade.UpdateEmissionArea(smoke.AreaTime);
+                if (smoke.World != world || smoke.Grenade == null || Time.time >= smoke.EndTime)
+                    RemoveSmoke(smoke);
+                else
+                    smoke.Grenade.UpdateEmissionArea(smoke.AreaTime);
             }
         }
-        finally { SmokeUpdateSnapshot.Clear(); }
+        finally
+        {
+            SmokeUpdateSnapshot.Clear();
+        }
     }
 
     private static void PreloadSmoke(GameWorld world)
@@ -119,7 +134,8 @@ internal static class AdvancedLegendaryActions
         if (world is null)
         {
             LegendaryRuntime.ResolveDeferredMiss(weaponId, fireIndex);
-            lock (Sync) PendingMisses.Remove(key);
+            lock (Sync)
+                PendingMisses.Remove(key);
             return;
         }
         world.StartCoroutine(ResolveMissNextFrame(key, weaponId, fireIndex, SessionGeneration));
@@ -133,19 +149,24 @@ internal static class AdvancedLegendaryActions
             return;
         }
 
-        if (AssetWorld != world) PreloadSmoke(world);
+        if (AssetWorld != world)
+            PreloadSmoke(world);
         world.StartCoroutine(DeploySmokeWhenReady(world, player.Position + Vector3.up * 0.15f, player.ProfileId, durationSeconds, statusName, statusKey));
     }
 
     public static void DeploySmokeAt(Player player, Vector3 position, float durationSeconds, string statusName = "", string statusKey = "", bool instant = false)
-    { DeploySmokeAt(player.ProfileId, position, durationSeconds, statusName, statusKey, instant); }
+    {
+        DeploySmokeAt(player.ProfileId, position, durationSeconds, statusName, statusKey, instant);
+    }
 
     public static void DeploySmokeAt(string ownerProfileId, Vector3 position, float durationSeconds, string statusName = "", string statusKey = "", bool instant = false,
         LegendaryGrenadeEffects.Payload? trace = null)
     {
         var world = Singleton<GameWorld>.Instance;
-        if (world?.GrenadeFactory is null) return;
-        if (AssetWorld != world) PreloadSmoke(world);
+        if (world?.GrenadeFactory is null)
+            return;
+        if (AssetWorld != world)
+            PreloadSmoke(world);
         world.StartCoroutine(DeploySmokeWhenReady(world, position, ownerProfileId, durationSeconds, statusName, statusKey, instant, trace));
     }
 
@@ -156,10 +177,12 @@ internal static class AdvancedLegendaryActions
         var deadline = Time.time + 30f;
         while (load is not null && !load.IsCompleted && Time.time < deadline)
         {
-            if (Singleton<GameWorld>.Instance != world || AssetWorld != world) yield break;
+            if (Singleton<GameWorld>.Instance != world || AssetWorld != world)
+                yield break;
             yield return null;
         }
-        if (Singleton<GameWorld>.Instance != world || AssetWorld != world) yield break;
+        if (Singleton<GameWorld>.Instance != world || AssetWorld != world)
+            yield break;
         if (load is null || !load.IsCompleted || load.IsFaulted || load.IsCanceled)
         {
             Plugin.LogSource.LogWarning("Like A Ghost smoke asset was unavailable; deployment was skipped safely.");
@@ -183,14 +206,24 @@ internal static class AdvancedLegendaryActions
             settings.Offset = Vector3.zero;
             settings.gameObject.SetActive(true);
             var grenade = (SmokeGrenade)world.GrenadeFactory.Create(settings, position, Quaternion.identity, Vector3.zero, item, profileId, withBallisticCalculator: false);
-            smoke = new ShortSmoke { World = world, Grenade = grenade, Id = id, EndTime = Time.time + Math.Max(1f, durationSeconds),
-                OwnerProfileId = profileId, StatusName = statusName, StatusKey = statusKey,
+            smoke = new ShortSmoke
+            {
+                World = world,
+                Grenade = grenade,
+                Id = id,
+                EndTime = Time.time + Math.Max(1f, durationSeconds),
+                OwnerProfileId = profileId,
+                StatusName = statusName,
+                StatusKey = statusKey,
                 Area = AccessTools.Field(typeof(SmokeGrenadeSettings), "_emissionArea").GetValue(settings) as Component,
-                AreaTime = instant ? LegendaryGrenadeEffects.SmokePeakTime(settings._sizeOverTime) : 0.35f };
+                AreaTime = instant ? LegendaryGrenadeEffects.SmokePeakTime(settings._sizeOverTime) : 0.35f
+            };
             Smokes.Add(smoke);
             // Only this grenade instance gets a short lifetime. Cancel native
             // fuse/emission timers before starting its visual and AI screen.
-            grenade.StopTimer(); grenade.StopAllCoroutines(); grenade.RemoveRigidbody();
+            grenade.StopTimer();
+            grenade.StopAllCoroutines();
+            grenade.RemoveRigidbody();
             AccessTools.Field(typeof(SmokeGrenade), "float_9").SetValue(grenade,
                 grenade.EmitTime * Math.Max(1f, durationSeconds) / Math.Max(0.01f, grenade.LifeTime));
             grenade.SetEmission(Time.time);
@@ -211,16 +244,23 @@ internal static class AdvancedLegendaryActions
         }
         catch (Exception exception)
         {
-            if (smoke is not null) RemoveSmoke(smoke);
-            else if (settings is not null) UnityEngine.Object.Destroy(settings.gameObject);
+            if (smoke is not null)
+                RemoveSmoke(smoke);
+            else if (settings is not null)
+                UnityEngine.Object.Destroy(settings.gameObject);
             Plugin.LogSource.LogWarning($"Like A Ghost smoke deployment failed safely: {exception.Message}");
         }
-        finally { if (pooledItem is not null) AssetPoolObject.ReturnToPool(pooledItem); }
+        finally
+        {
+            if (pooledItem is not null)
+                AssetPoolObject.ReturnToPool(pooledItem);
+        }
     }
 
     internal static void AppendSmokeStatuses(Player player, List<EffectStatusModel.Status> statuses)
     {
-        if (Smokes.Count == 0) return;
+        if (Smokes.Count == 0)
+            return;
         var now = Time.time;
         var id = player.ProfileId;
         foreach (var smoke in Smokes)
@@ -231,7 +271,8 @@ internal static class AdvancedLegendaryActions
     private static float SmokeRadius(ShortSmoke smoke)
     {
         var area = smoke.Area;
-        if (area is null) return smoke.Grenade.Radius;
+        if (area is null)
+            return smoke.Grenade.Radius;
         var radius = area.GetType().GetProperty("radius")?.GetValue(area);
         return radius is float value ? value * Math.Abs(area.transform.lossyScale.x) : smoke.Grenade.Radius;
     }
@@ -251,7 +292,8 @@ internal static class AdvancedLegendaryActions
         if (world is null)
         {
             LegendaryRuntime.CleanupShotApplication(weaponId, fireIndex);
-            lock (Sync) PendingShotCleanups.Remove(key);
+            lock (Sync)
+                PendingShotCleanups.Remove(key);
             return;
         }
         world.StartCoroutine(CleanupShotNextFrame(key, weaponId, fireIndex, SessionGeneration));
@@ -270,7 +312,11 @@ internal static class AdvancedLegendaryActions
             return;
         }
 
-        lock (Sync) { if (!PendingTransfers.Add(weapon.Id)) return; }
+        lock (Sync)
+        {
+            if (!PendingTransfers.Add(weapon.Id))
+                return;
+        }
         _ = TransferMatchingRoundAsync(player, weapon, magazine, ammoTemplateId, Singleton<GameWorld>.Instance, SessionGeneration);
     }
 
@@ -296,7 +342,8 @@ internal static class AdvancedLegendaryActions
             if (!operation.Failed)
             {
                 var result = await player.InventoryController.TryRunNetworkTransaction(operation);
-                if (result.Failed) Plugin.LogSource.LogWarning("Don't Stop Won't Stop ammunition transfer was rejected by the inventory controller.");
+                if (result.Failed)
+                    Plugin.LogSource.LogWarning("Don't Stop Won't Stop ammunition transfer was rejected by the inventory controller.");
                 else if (session == SessionGeneration && world == Singleton<GameWorld>.Instance && RarityResolver.TryGetDefinition(weapon, out var definition))
                     EffectStatusModel.Notify(player.ProfileId, "gun:" + weapon.Id, definition.ShortName, Time.time, "ammunition transferred");
             }
@@ -305,13 +352,21 @@ internal static class AdvancedLegendaryActions
         {
             Plugin.LogSource.LogWarning($"Don't Stop Won't Stop ammunition transfer failed safely: {exception.Message}");
         }
-        finally { lock (Sync) { if (session == SessionGeneration) PendingTransfers.Remove(weapon.Id); } }
+        finally
+        {
+            lock (Sync)
+            {
+                if (session == SessionGeneration)
+                    PendingTransfers.Remove(weapon.Id);
+            }
+        }
     }
 
     private static IEnumerator ResolveMissNextFrame((string Weapon, int FireIndex) key, string weaponId, int fireIndex, int session)
     {
         yield return null;
-        if (session != SessionGeneration) yield break;
+        if (session != SessionGeneration)
+            yield break;
         LegendaryRuntime.ResolveDeferredMiss(weaponId, fireIndex);
         lock (Sync)
         {
@@ -322,7 +377,8 @@ internal static class AdvancedLegendaryActions
     private static IEnumerator CleanupShotNextFrame((string Weapon, int FireIndex) key, string weaponId, int fireIndex, int session)
     {
         yield return null;
-        if (session != SessionGeneration) yield break;
+        if (session != SessionGeneration)
+            yield break;
         LegendaryRuntime.CleanupShotApplication(weaponId, fireIndex);
         lock (Sync)
         {
@@ -338,7 +394,8 @@ internal static class AdvancedLegendaryActions
             var emission = smoke.Emission;
             if (emission != null)
             {
-                emission.StopAllCoroutines(); emission.method_10();
+                emission.StopAllCoroutines();
+                emission.method_10();
                 // Clear every native particle system before returning the
                 // effect to its pool, including fill and lingering particles.
                 var particle = AccessTools.Field(typeof(GrenadeEmission), "_particleSystem").GetValue(emission) as Component;
@@ -349,19 +406,25 @@ internal static class AdvancedLegendaryActions
                         AccessTools.Method(system.GetType(), "Clear", [typeof(bool)])?.Invoke(system, [true]);
                     }
                 AccessTools.Field(typeof(GrenadeEmission), "_defaultStartFillDelay").SetValue(emission, smoke.OriginalFillDelay);
-                if (Singleton<Effects>.Instantiated) Singleton<Effects>.Instance.DisposeEmissionEffect(emission);
-                else UnityEngine.Object.Destroy(emission.gameObject);
+                if (Singleton<Effects>.Instantiated)
+                    Singleton<Effects>.Instance.DisposeEmissionEffect(emission);
+                else
+                    UnityEngine.Object.Destroy(emission.gameObject);
             }
             if (smoke.Area != null)
             {
                 smoke.Area.gameObject.SetActive(false);
-                if (smoke.Grenade != null) smoke.Area.transform.parent = smoke.Grenade.transform;
-                else UnityEngine.Object.Destroy(smoke.Area.gameObject);
+                if (smoke.Grenade != null)
+                    smoke.Area.transform.parent = smoke.Grenade.transform;
+                else
+                    UnityEngine.Object.Destroy(smoke.Area.gameObject);
             }
-            if (smoke.World != null) smoke.World.UnregisterGrenade(smoke.Id);
+            if (smoke.World != null)
+                smoke.World.UnregisterGrenade(smoke.Id);
             if (smoke.Grenade != null)
             {
-                smoke.Grenade.StopTimer(); smoke.Grenade.StopAllCoroutines();
+                smoke.Grenade.StopTimer();
+                smoke.Grenade.StopAllCoroutines();
                 UnityEngine.Object.Destroy(smoke.Grenade.gameObject);
             }
         }

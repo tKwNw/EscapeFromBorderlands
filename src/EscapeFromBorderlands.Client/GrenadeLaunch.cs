@@ -13,6 +13,7 @@ internal static class GrenadeLaunch
     {
         var a = first.GetComponent<Collider>();
         var b = second.GetComponent<Collider>();
-        if (a != null && b != null) Physics.IgnoreCollision(a, b, true);
+        if (a != null && b != null)
+            Physics.IgnoreCollision(a, b, true);
     }
 }

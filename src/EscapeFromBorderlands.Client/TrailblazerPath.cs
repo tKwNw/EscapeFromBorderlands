@@ -13,20 +13,39 @@ internal sealed class TrailblazerPath
     private Vector3 Previous;
     private float Remainder;
     private bool HasPrevious;
-    internal TrailblazerPath(Vector3 start) { Previous = start; HasPrevious = Finite(start); }
+    internal TrailblazerPath(Vector3 start)
+    {
+        Previous = start;
+        HasPrevious = Finite(start);
+    }
     private static bool Finite(Vector3 point) =>
         float.IsFinite(point.x) && float.IsFinite(point.y) && float.IsFinite(point.z);
     internal void Advance<T>(Vector3 position, T state, Action<T, Vector3> drop)
     {
-        if (!Finite(position)) { HasPrevious = false; Remainder = 0f; return; }
-        if (!HasPrevious) { Previous = position; HasPrevious = true; Remainder = 0f; return; }
+        if (!Finite(position))
+        {
+            HasPrevious = false;
+            Remainder = 0f;
+            return;
+        }
+        if (!HasPrevious)
+        {
+            Previous = position;
+            HasPrevious = true;
+            Remainder = 0f;
+            return;
+        }
         var start = Previous;
         var delta = position - start;
         var distance = (float)Math.Sqrt(delta.x * delta.x + delta.z * delta.z);
         Previous = position;
         if (!Finite(delta) || !float.IsFinite(distance) || distance > MaximumDropsPerAdvance * 5f)
-        { Remainder = 0f; return; }
-        if (distance <= .00001f) return;
+        {
+            Remainder = 0f;
+            return;
+        }
+        if (distance <= .00001f)
+            return;
         var next = 5f - Remainder;
         for (var emitted = 0; emitted < MaximumDropsPerAdvance && next <= distance + .00001f; emitted++)
         {

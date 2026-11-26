@@ -22,7 +22,8 @@ internal static class LegendaryMeleeVaultSpeedPatch
     {
         var effect = MeleeRuntime.Effect(MeleeRuntime.Owner(__instance));
         var factor = effect?.VaultSpeedMultiplier ?? 1f;
-        if (factor == 1f) return;
+        if (factor == 1f)
+            return;
         __instance.VaultingSpeed *= factor;
         __instance.PlayerAnimator.SetVaultingSpeed(__instance.VaultingSpeed);
     }
@@ -47,13 +48,19 @@ internal static class LegendaryMeleeWeightPatch
     {
         __state = new Snapshot { Inventory = MeleeWeightScope.Inventory, Multiplier = MeleeWeightScope.Multiplier };
         var player = PlayerField.GetValue(__instance) as Player;
-        if (!ActorCapabilities.IsHuman(player)) { MeleeWeightScope.Inventory = null; MeleeWeightScope.Multiplier = 1f; return; }
+        if (!ActorCapabilities.IsHuman(player))
+        {
+            MeleeWeightScope.Inventory = null;
+            MeleeWeightScope.Multiplier = 1f;
+            return;
+        }
         MeleeWeightScope.Inventory = player?.InventoryController?.Inventory;
         MeleeWeightScope.Multiplier = AdvancedMeleeRuntime.Resetting ? 1f : MeleeRuntime.Effect(player)?.WeightMultiplier ?? 1f;
     }
     private static Exception? Finalizer(Snapshot __state, Exception? __exception)
     {
-        MeleeWeightScope.Inventory = __state.Inventory; MeleeWeightScope.Multiplier = __state.Multiplier;
+        MeleeWeightScope.Inventory = __state.Inventory;
+        MeleeWeightScope.Multiplier = __state.Multiplier;
         return __exception;
     }
 }

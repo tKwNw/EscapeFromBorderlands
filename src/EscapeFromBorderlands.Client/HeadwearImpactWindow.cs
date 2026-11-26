@@ -11,11 +11,21 @@ internal sealed class HeadwearImpactWindow
     internal bool Hit(string source, int shot, float now, bool ready)
     {
         var key = (source, shot);
-        if (!Seen.Add(key)) return false;
+        if (!Seen.Add(key))
+            return false;
         Order.Enqueue(key);
-        if (Order.Count > 64) Seen.Remove(Order.Dequeue());
-        if (!ready) { Last = float.NegativeInfinity; return false; }
-        if (now - Last <= 5f) { Last = float.NegativeInfinity; return true; }
+        if (Order.Count > 64)
+            Seen.Remove(Order.Dequeue());
+        if (!ready)
+        {
+            Last = float.NegativeInfinity;
+            return false;
+        }
+        if (now - Last <= 5f)
+        {
+            Last = float.NegativeInfinity;
+            return true;
+        }
         Last = now;
         return false;
     }

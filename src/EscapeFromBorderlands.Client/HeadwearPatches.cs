@@ -32,10 +32,22 @@ internal static class HatDeath
 {
     private static void Prefix(Player __instance, IPlayer? ___LastAggressor, ref DamageInfoStruct ___LastDamageInfo)
     {
-        try { Headwear.Dead(__instance, ___LastAggressor, in ___LastDamageInfo); }
-        catch (Exception e) { Plugin.LogSource.LogWarning($"EFB headwear kill processing: {e.Message}"); }
-        try { Eyewear.Dead(__instance, ___LastAggressor, in ___LastDamageInfo); }
-        catch (Exception e) { Plugin.LogSource.LogWarning($"EFB eyewear kill processing: {e.Message}"); }
+        try
+        {
+            Headwear.Dead(__instance, ___LastAggressor, in ___LastDamageInfo);
+        }
+        catch (Exception e)
+        {
+            Plugin.LogSource.LogWarning($"EFB headwear kill processing: {e.Message}");
+        }
+        try
+        {
+            Eyewear.Dead(__instance, ___LastAggressor, in ___LastDamageInfo);
+        }
+        catch (Exception e)
+        {
+            Plugin.LogSource.LogWarning($"EFB eyewear kill processing: {e.Message}");
+        }
     }
 }
 [HarmonyPatch(typeof(Player), nameof(Player.ApplyShot))]
@@ -43,7 +55,8 @@ internal static class HatHit
 {
     private static void Postfix(Player __instance, DamageInfoStruct damageInfo, ShotIdStruct shotId, ShotInfoClass __result)
     {
-        if (__result is not null) Headwear.BulletImpact(__instance, damageInfo, shotId);
+        if (__result is not null)
+            Headwear.BulletImpact(__instance, damageInfo, shotId);
     }
     private static void Prefix(Player __instance, DamageInfoStruct damageInfo, EBodyPart bodyPartType)
     {
@@ -65,7 +78,13 @@ internal static class HatDamage
     {
         __state = default;
         HeadwearDiagnostics.Damage(Headwear.Get(__instance.Player), damageInfo, "ApplyDamage entry", damage);
-        if (Headwear.Immune(__instance.Player, damageInfo)) { damage = 0; damageInfo.Damage = 0; damageInfo.BleedBlock = true; return; }
+        if (Headwear.Immune(__instance.Player, damageInfo))
+        {
+            damage = 0;
+            damageInfo.Damage = 0;
+            damageInfo.BleedBlock = true;
+            return;
+        }
         if (damage > 0 && __instance.IsAlive &&
             Headwear.Get(__instance.Player) is { Key: "HW005-1" or "HW019-1" or "HW038-2" or "HW067-3" or "HW073-3" or "HW085-1" } s)
             __state = (s, __instance.GetBodyPartHealth(EBodyPart.Common, false).Current);
@@ -95,7 +114,11 @@ internal static class HatArmorImpact
             damageInfo.Weapon is Weapon && (damageInfo.BlockedBy == __instance.Item.Id || damageInfo.DeflectedBy == __instance.Item.Id))
             Headwear.Stopped(s, __instance, ref damageInfo);
     }
-    private static Exception? Finalizer((ArmorComponent?, Headwear.State?, float) __state, Exception? __exception) { Impact = __state; return __exception; }
+    private static Exception? Finalizer((ArmorComponent?, Headwear.State?, float) __state, Exception? __exception)
+    {
+        Impact = __state;
+        return __exception;
+    }
     internal static float Factor(ArmorComponent armor) => Impact.Armor == armor ? Impact.Factor : 1;
 }
 [HarmonyPatch(typeof(ArmorComponent), nameof(ArmorComponent.ApplyDurabilityDamage))]
@@ -108,10 +131,17 @@ internal static class HatExplosionWear
 {
     private static void Prefix(ArmorComponent __instance, ref float armorDamage, DamageInfoStruct damageInfo)
     {
-        if (Headwear.ImmuneArmor(__instance, damageInfo)) { armorDamage = 0; return; }
-        if (Headwear.ForArmor(__instance) is not { } s) return;
-        if (Headwear.Section(s, __instance.Item)) armorDamage *= Headwear.Factor(s, HatStat.Durability);
-        if (s is { Key: "HW071-1", Visor: true }) armorDamage *= .25f;
+        if (Headwear.ImmuneArmor(__instance, damageInfo))
+        {
+            armorDamage = 0;
+            return;
+        }
+        if (Headwear.ForArmor(__instance) is not { } s)
+            return;
+        if (Headwear.Section(s, __instance.Item))
+            armorDamage *= Headwear.Factor(s, HatStat.Durability);
+        if (s is { Key: "HW071-1", Visor: true })
+            armorDamage *= .25f;
     }
 }
 [HarmonyPatch(typeof(ArmorComponent), nameof(ArmorComponent.Deflects))]
@@ -124,18 +154,25 @@ internal static class HatRicochet
         foreach (var code in instructions)
         {
             yield return code;
-            if (!code.Calls(getter)) continue;
+            if (!code.Calls(getter))
+                continue;
             yield return new CodeInstruction(OpCodes.Ldarg_0);
             yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HatRicochet), nameof(Chance)));
             count++;
         }
-        if (count != 1) throw new InvalidOperationException($"Expected one native ricochet vector, found {count}.");
+        if (count != 1)
+            throw new InvalidOperationException($"Expected one native ricochet vector, found {count}.");
     }
     private static Vector3 Chance(Vector3 original, ArmorComponent armor)
     {
-        if (original.x <= 0 || Headwear.ForArmor(armor) is not { } s || !Headwear.Section(s, armor.Item)) return original;
+        if (original.x <= 0 || Headwear.ForArmor(armor) is not { } s || !Headwear.Section(s, armor.Item))
+            return original;
         var factor = Headwear.Factor(s, HatStat.Ricochet);
-        if (factor != 1) { original.x = Math.Min(.99f, original.x * factor); original.y = Math.Min(.99f, original.y * factor); }
+        if (factor != 1)
+        {
+            original.x = Math.Min(.99f, original.x * factor);
+            original.y = Math.Min(.99f, original.y * factor);
+        }
         return original;
     }
 }
@@ -154,7 +191,8 @@ internal static class HatFirearmErgo
     private static void Postfix(Weapon __instance, ref float __result)
     {
         var factor = Headwear.Factor(Headwear.Owner(__instance), HatStat.Ergo);
-        if (factor != 1) __result = Math.Min(100, __result * factor);
+        if (factor != 1)
+            __result = Math.Min(100, __result * factor);
     }
 }
 [HarmonyPatch(typeof(Player.FirearmController), nameof(Player.FirearmController.InitiateShot))]
@@ -168,15 +206,22 @@ internal static class HatCartridge
         Current = factor == 1 ? null : (__instance.Item, factor);
     }
     private static void Postfix(Player.FirearmController __instance) => Headwear.Fired(WeaponCombatState.Owner(__instance));
-    private static Exception? Finalizer((Weapon, float)? __state, Exception? __exception) { Current = __state; return __exception; }
+    private static Exception? Finalizer((Weapon, float)? __state, Exception? __exception)
+    {
+        Current = __state;
+        return __exception;
+    }
 }
 [HarmonyPatch(typeof(Player.FirearmController), nameof(Player.FirearmController.GetMalfunctionState))]
 internal static class HatMalfunction
 {
     private static bool Prefix(Player.FirearmController __instance, ref Weapon.EMalfunctionState __result, ref Weapon.EMalfunctionSource __6)
     {
-        if (__instance.Item.AmmoCaliber != "Caliber762x39" || !Headwear.Is(WeaponCombatState.Owner(__instance), "HW032-1")) return true;
-        __result = default; __6 = default; return false;
+        if (__instance.Item.AmmoCaliber != "Caliber762x39" || !Headwear.Is(WeaponCombatState.Owner(__instance), "HW032-1"))
+            return true;
+        __result = default;
+        __6 = default;
+        return false;
     }
 }
 [HarmonyPatch(typeof(Player.FirearmController), nameof(Player.FirearmController.UpdateHipInaccuracy))]
@@ -187,8 +232,10 @@ internal static class HatHipSpread
     {
         var p = WeaponCombatState.Owner(__instance);
         var factor = Headwear.Factor(p, HatStat.Hip);
-        if (p?.ProceduralWeaponAnimation is not { } animation || factor == 1) return;
-        __instance.HipInaccuracy *= factor; animation.Breath.HipPenalty = __instance.HipInaccuracy;
+        if (p?.ProceduralWeaponAnimation is not { } animation || factor == 1)
+            return;
+        __instance.HipInaccuracy *= factor;
+        animation.Breath.HipPenalty = __instance.HipInaccuracy;
     }
 }
 [HarmonyPatch(typeof(EffectsController), "method_7")]
@@ -203,14 +250,16 @@ internal static class HatDamageCamera
         {
             if (code.Calls(apply))
             {
-                var load = new CodeInstruction(OpCodes.Ldarg_0); code.MoveLabelsTo(load);
+                var load = new CodeInstruction(OpCodes.Ldarg_0);
+                code.MoveLabelsTo(load);
                 yield return load;
                 yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HatDamageCamera), nameof(Camera)));
                 count++;
             }
             yield return code;
         }
-        if (count != 1) throw new InvalidOperationException($"Expected one damage camera force, found {count}.");
+        if (count != 1)
+            throw new InvalidOperationException($"Expected one damage camera force, found {count}.");
     }
     private static float Camera(float native, EffectsController e) => native * Headwear.Factor(PlayerField.GetValue(e) as Player, HatStat.Camera);
 }
@@ -224,12 +273,14 @@ internal static class HatFreelook
         {
             yield return code;
             if (code.opcode != OpCodes.Ldfld || code.operand is not FieldInfo field || field.DeclaringType != typeof(EFTHardSettings) ||
-                field.Name is not ("MOUSE_LOOK_HORIZONTAL_LIMIT" or "MOUSE_LOOK_VERTICAL_LIMIT")) continue;
+                field.Name is not ("MOUSE_LOOK_HORIZONTAL_LIMIT" or "MOUSE_LOOK_VERTICAL_LIMIT"))
+                continue;
             yield return new CodeInstruction(OpCodes.Ldarg_0);
             yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HatFreelook), nameof(Range)));
             count++;
         }
-        if (count != 2) throw new InvalidOperationException($"Expected both native freelook limits, found {count}.");
+        if (count != 2)
+            throw new InvalidOperationException($"Expected both native freelook limits, found {count}.");
     }
     private static Vector2 Range(Vector2 range, Player player) => range * Headwear.Factor(player, HatStat.Freelook);
 }
@@ -268,7 +319,8 @@ internal static class HatProneTransition
             }
             yield return code;
         }
-        if (count != 1) throw new InvalidOperationException("Native prone transition speed unavailable.");
+        if (count != 1)
+            throw new InvalidOperationException("Native prone transition speed unavailable.");
     }
     private static float ScaledSpeed(MovementContext m) => m.TransitionSpeed * Headwear.Factor(BackpackRuntime.Actor(m), HatStat.Stance);
 }
@@ -297,7 +349,8 @@ internal static class HatSway
     {
         var s = Headwear.Get(__instance);
         var factor = Headwear.Factor(s, HatStat.Sway) * Eyewear.Factor(Eyewear.Get(__instance), HatStat.Sway);
-        if (factor != 1) Strength.SetValue(__instance, (float)Strength.GetValue(__instance)! * factor);
+        if (factor != 1)
+            Strength.SetValue(__instance, (float)Strength.GetValue(__instance)! * factor);
         HatRecoilRecovery.Bind(__instance, s);
     }
 }
@@ -307,8 +360,10 @@ internal static class HatRecoilRecovery
     private static readonly ConditionalWeakTable<RecoilProcessBase, Headwear.State> Owners = new();
     internal static void Bind(ProceduralWeaponAnimation p, Headwear.State? s)
     {
-        if (s?.Key != "HW091-3" || p.Shootingg?.CurrentRecoilEffect?.HandRotationRecoilEffect is not RecoilProcessBase recoil) return;
-        Owners.Remove(recoil); Owners.Add(recoil, s);
+        if (s?.Key != "HW091-3" || p.Shootingg?.CurrentRecoilEffect?.HandRotationRecoilEffect is not RecoilProcessBase recoil)
+            return;
+        Owners.Remove(recoil);
+        Owners.Add(recoil, s);
     }
     private static IEnumerable<MethodBase> TargetMethods() => new[]
     {
@@ -318,11 +373,17 @@ internal static class HatRecoilRecovery
     private static void Prefix(RecoilProcessBase __instance, out float? __state)
     {
         __state = null;
-        if (!Owners.TryGetValue(__instance, out var s) || !s.Active || Headwear.Get(s.Player) != s) return;
-        __state = __instance.ReturnSpeed; __instance.ReturnSpeed *= Headwear.Factor(s, HatStat.Recovery);
+        if (!Owners.TryGetValue(__instance, out var s) || !s.Active || Headwear.Get(s.Player) != s)
+            return;
+        __state = __instance.ReturnSpeed;
+        __instance.ReturnSpeed *= Headwear.Factor(s, HatStat.Recovery);
     }
     private static Exception? Finalizer(RecoilProcessBase __instance, float? __state, Exception? __exception)
-    { if (__state.HasValue) __instance.ReturnSpeed = __state.Value; return __exception; }
+    {
+        if (__state.HasValue)
+            __instance.ReturnSpeed = __state.Value;
+        return __exception;
+    }
 }
 [HarmonyPatch(typeof(Player), nameof(Player.ApplyHitDebuff))]
 internal static class HatSuppression
@@ -341,26 +402,37 @@ internal static class HatSkillGain
         {
             if (code.Calls(award))
             {
-                var load = new CodeInstruction(OpCodes.Ldarg_0); code.MoveLabelsTo(load);
+                var load = new CodeInstruction(OpCodes.Ldarg_0);
+                code.MoveLabelsTo(load);
                 yield return load;
                 yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(HatSkillGain), nameof(Award)));
                 count++;
             }
             yield return code;
         }
-        if (count != 1) throw new InvalidOperationException("Native skill award unavailable.");
+        if (count != 1)
+            throw new InvalidOperationException("Native skill award unavailable.");
     }
     private static float Award(float value, SkillClass skill) => value * Headwear.Factor(Headwear.Get(skill.SkillManager), HatStat.Skill);
 }
 [HarmonyPatch(typeof(SmokeGrenade), nameof(SmokeGrenade.OnExplosion))]
-internal static class HatSmokeStart { private static void Postfix(SmokeGrenade __instance) => Headwear.SmokeChanged(__instance, true); }
+internal static class HatSmokeStart
+{
+    private static void Postfix(SmokeGrenade __instance) => Headwear.SmokeChanged(__instance, true);
+}
 [HarmonyPatch(typeof(SmokeGrenade), "InvokeEmissionEndEvent")]
-internal static class HatSmokeEnd { private static void Postfix(SmokeGrenade __instance) => Headwear.SmokeChanged(__instance, false); }
+internal static class HatSmokeEnd
+{
+    private static void Postfix(SmokeGrenade __instance) => Headwear.SmokeChanged(__instance, false);
+}
 [HarmonyPatch(typeof(Player), nameof(Player.SetExfiltrationPoint))]
 internal static class HatExfilEnter
 {
     private static void Postfix(Player __instance, ExfiltrationPoint __0, bool __1)
-    { if (__0 != null) Headwear.ExfilChanged(__instance, __0, __1); }
+    {
+        if (__0 != null)
+            Headwear.ExfilChanged(__instance, __0, __1);
+    }
 }
 [HarmonyPatch(typeof(EndByExitTrigerScenario), "method_0")]
 internal static class HatExfilStart
@@ -368,13 +440,20 @@ internal static class HatExfilStart
     private static void Postfix(EndByExitTrigerScenario __instance, ExfiltrationPoint trigger, Player player)
     {
         if (Native.Get(__instance, "list_0") is List<EndByExitTrigerScenario.Class984> entries &&
-            entries.Any(e => e.Player == player && e.Trigger == trigger)) Headwear.ExfilChanged(player, trigger, true, true);
+            entries.Any(e => e.Player == player && e.Trigger == trigger))
+            Headwear.ExfilChanged(player, trigger, true, true);
     }
 }
 [HarmonyPatch(typeof(EndByExitTrigerScenario), "method_1")]
-internal static class HatExfilCancel { private static void Postfix(ExfiltrationPoint trigger, Player player) => Headwear.ExfilChanged(player, trigger, false); }
+internal static class HatExfilCancel
+{
+    private static void Postfix(ExfiltrationPoint trigger, Player player) => Headwear.ExfilChanged(player, trigger, false);
+}
 [HarmonyPatch(typeof(ExfiltrationPoint), nameof(ExfiltrationPoint.OnPlayerExit))]
-internal static class HatExfilExit { private static void Postfix(ExfiltrationPoint __instance, Player __0) => Headwear.ExfilChanged(__0, __instance, false); }
+internal static class HatExfilExit
+{
+    private static void Postfix(ExfiltrationPoint __instance, Player __0) => Headwear.ExfilChanged(__0, __instance, false);
+}
 [HarmonyPatch(typeof(GClass3515), "method_6")]
 internal static class HatCorpseSearch
 {
@@ -390,9 +469,11 @@ internal static class HatCorpseSearch
         var world = PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance);
         var generation = PlayerRefresh.Generation;
         await search;
-        if (!PlayerRefresh.IsCurrentSession(world, generation)) return;
+        if (!PlayerRefresh.IsCurrentSession(world, generation))
+            return;
         if (!op.Boolean_0 && !op.IplayerSearchController_0.ContainsUnknownItems(op.Item) &&
-            !root.GetAllItems().OfType<SearchableItemItemClass>().Any(i => op.IplayerSearchController_0.ContainsUnknownItems(i))) Headwear.Searched(p, root);
+            !root.GetAllItems().OfType<SearchableItemItemClass>().Any(i => op.IplayerSearchController_0.ContainsUnknownItems(i)))
+            Headwear.Searched(p, root);
     }
 }
 [HarmonyPatch(typeof(Player.BaseGrenadeHandsController), "method_10")]
@@ -400,7 +481,8 @@ internal static class HatGrenadeRelease
 {
     private static void Postfix(Player.BaseGrenadeHandsController __instance, Grenade __result)
     {
-        if (__result != null && __instance.Item is ThrowWeapItemClass item) Headwear.Thrown(BackpackRuntime.Actor(__instance), __result, item);
+        if (__result != null && __instance.Item is ThrowWeapItemClass item)
+            Headwear.Thrown(BackpackRuntime.Actor(__instance), __result, item);
     }
 }
 [HarmonyPatch(typeof(GClass2080), nameof(GClass2080.ApplyLightAndSoundHealthEffects))]
@@ -422,42 +504,60 @@ internal static partial class Headwear
     internal static float BeginDraw(Player? p, Weapon weapon, float native)
     {
         native *= Eyewear.Factor(p, HatStat.Draw);
-        if (Get(p) is not { } s || p is null) return native;
+        if (Get(p) is not { } s || p is null)
+            return native;
         var factor = Factor(s, HatStat.Draw);
-        if (s.Key == "HW042-1" && s.DrawCharges > 0) factor *= 1.60f;
+        if (s.Key == "HW042-1" && s.DrawCharges > 0)
+            factor *= 1.60f;
         if (s.Key == "HW008-2")
         {
             var gear = p.InventoryController.Inventory.Equipment;
             var one = gear.GetSlot(EquipmentSlot.FirstPrimaryWeapon)?.ContainedItem;
             var two = gear.GetSlot(EquipmentSlot.SecondPrimaryWeapon)?.ContainedItem;
             var old = s.Weapon == weapon ? s.PreviousWeapon : s.Weapon;
-            if (one is Weapon && two is Weapon && (weapon == one && old == two || weapon == two && old == one)) factor *= 1.60f;
+            if (one is Weapon && two is Weapon && (weapon == one && old == two || weapon == two && old == one))
+                factor *= 1.60f;
         }
-        s.Drawing = factor != 1; s.DrawSpeed = native;
+        s.Drawing = factor != 1;
+        s.DrawSpeed = native;
         return native * factor;
     }
     internal static void EndDraw(Player? p)
     {
-        if (Get(p) is not { Drawing: true } s) return;
-        if (s.Key == "HW042-1" && s.DrawCharges > 0) s.DrawCharges--;
+        if (Get(p) is not { Drawing: true } s)
+            return;
+        if (s.Key == "HW042-1" && s.DrawCharges > 0)
+            s.DrawCharges--;
         s.Drawing = false;
-        if (p?.HandsController is Player.FirearmController f) f.FirearmsAnimator.SetAnimationSpeed(s.DrawSpeed);
+        if (p?.HandsController is Player.FirearmController f)
+            f.FirearmsAnimator.SetAnimationSpeed(s.DrawSpeed);
     }
     internal static void SprintHands(Player? p, FirearmsAnimator animator, bool sprint)
     {
-        if (Get(p) is not { } s) return;
-        var previous = s.HandsSprint; s.HandsSprint = sprint;
-        if (sprint) { RestoreSnap(s); return; }
+        if (Get(p) is not { } s)
+            return;
+        var previous = s.HandsSprint;
+        s.HandsSprint = sprint;
+        if (sprint)
+        {
+            RestoreSnap(s);
+            return;
+        }
         var factor = Factor(s, HatStat.SprintReady);
-        if (!previous || factor == 1 || animator is null || Native.Get(animator, "Animator") is not { } raw) return;
+        if (!previous || factor == 1 || animator is null || Native.Get(animator, "Animator") is not { } raw)
+            return;
         s.SnapSpeed = Native.Number(raw, "speed");
-        if (s.SnapSpeed <= 0) return;
-        s.Snap = animator; s.SnapUntil = Time.time + .30f / factor;
-        s.SnapApplied = s.SnapSpeed * factor; animator.SetAnimationSpeed(s.SnapApplied);
+        if (s.SnapSpeed <= 0)
+            return;
+        s.Snap = animator;
+        s.SnapUntil = Time.time + .30f / factor;
+        s.SnapApplied = s.SnapSpeed * factor;
+        animator.SetAnimationSpeed(s.SnapApplied);
     }
     private static void RestoreSnap(State s)
     {
-        if (s.Snap is not { } animator) return;
+        if (s.Snap is not { } animator)
+            return;
         s.Snap = null;
         if (animator != null && Native.Get(animator, "Animator") is { } raw && Math.Abs(Native.Number(raw, "speed") - s.SnapApplied) < .001f)
             animator.SetAnimationSpeed(s.SnapSpeed);

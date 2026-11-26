@@ -12,11 +12,15 @@ internal sealed class SmokeParticleScale
     private readonly Component Particle;
     private readonly object OriginalMode;
     private SmokeParticleScale(Component particle, object originalMode)
-    { Particle = particle; OriginalMode = originalMode; }
+    {
+        Particle = particle;
+        OriginalMode = originalMode;
+    }
 
     internal static SmokeParticleScale[] Apply(GrenadeEmission emission)
     {
-        if (Native.Get(emission, "_particleSystem") is not Component root) return Array.Empty<SmokeParticleScale>();
+        if (Native.Get(emission, "_particleSystem") is not Component root)
+            return Array.Empty<SmokeParticleScale>();
         return emission.GetComponentsInChildren(root.GetType(), true).Select(system =>
         {
             var main = Native.Get(system, "main")!;
@@ -28,6 +32,7 @@ internal sealed class SmokeParticleScale
 
     internal void Restore()
     {
-        if (Particle != null) Native.Set(Native.Get(Particle, "main")!, "scalingMode", OriginalMode);
+        if (Particle != null)
+            Native.Set(Native.Get(Particle, "main")!, "scalingMode", OriginalMode);
     }
 }

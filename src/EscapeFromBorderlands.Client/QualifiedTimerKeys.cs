@@ -12,10 +12,16 @@ internal sealed class QualifiedTimerKeys
     internal string Read(string prefix, string key)
     {
         key ??= string.Empty;
-        if (!string.Equals(Prefix, prefix, StringComparison.Ordinal)) { Keys.Clear(); Prefix = prefix; }
-        if (Keys.TryGetValue(key, out var full)) return full;
+        if (!string.Equals(Prefix, prefix, StringComparison.Ordinal))
+        {
+            Keys.Clear();
+            Prefix = prefix;
+        }
+        if (Keys.TryGetValue(key, out var full))
+            return full;
         full = prefix + ":" + key;
-        if (Keys.Count < Capacity) Keys.Add(key, full);
+        if (Keys.Count < Capacity)
+            Keys.Add(key, full);
         return full;
     }
 }

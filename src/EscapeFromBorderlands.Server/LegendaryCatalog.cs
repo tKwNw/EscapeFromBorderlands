@@ -5,12 +5,24 @@ namespace EscapeFromBorderlands.Server;
 
 internal sealed class LegendaryCatalog
 {
-    public int SchemaVersion { get; set; }
-    public int CatalogRevision { get; set; }
-    public int VanillaWeaponCount { get; set; }
+    public int SchemaVersion
+    {
+        get; set;
+    }
+    public int CatalogRevision
+    {
+        get; set;
+    }
+    public int VanillaWeaponCount
+    {
+        get; set;
+    }
     public List<string> VanillaMeleeTemplateIds { get; set; } = new();
     public List<string> UnlootableMeleeTemplateIds { get; set; } = new();
-    public int LegendaryCount { get; set; }
+    public int LegendaryCount
+    {
+        get; set;
+    }
     public List<LegacyAliasDefinition> LegacyAliases { get; set; } = [];
     public List<VariantDefinition> Variants { get; set; } = [];
 
@@ -51,33 +63,67 @@ internal sealed class LegacyAliasDefinition
 internal sealed class VariantDefinition
 {
     public bool IsEyewear => WeaponClass == "eyewear";
-    public bool IsEarpiece { get; set; } public bool IsHeadwear => WeaponClass is "armoredHeadwear" or "unarmoredHeadwear";
+    public bool IsEarpiece
+    {
+        get; set;
+    }
+    public bool IsHeadwear => WeaponClass is "armoredHeadwear" or "unarmoredHeadwear";
     public bool SpawnEnabled { get; set; } = true;
-    public bool IsMysteryFleaOffer { get; set; }
+    public bool IsMysteryFleaOffer
+    {
+        get; set;
+    }
     public string FleaRevealTemplateId { get; set; } = string.Empty;
     public double SpawnWeight { get; set; } = 1d;
-    public int StorageRollVersion { get; set; }
-    public int StorageRows { get; set; }
-    public int StorageColumns { get; set; }
-    public int BackpackBaseColumns { get; set; }
+    public int StorageRollVersion
+    {
+        get; set;
+    }
+    public int StorageRows
+    {
+        get; set;
+    }
+    public int StorageColumns
+    {
+        get; set;
+    }
+    public int BackpackBaseColumns
+    {
+        get; set;
+    }
     public string StorageFamilyId { get; set; } = string.Empty;
     internal VariantDefinition Copy() => (VariantDefinition)MemberwiseClone();
     public string SourceTemplateId { get; set; } = string.Empty;
     public string SourceShortName { get; set; } = string.Empty;
     public string SourceFullName { get; set; } = string.Empty;
     public string WeaponClass { get; set; } = string.Empty;
-    public bool Automatic { get; set; }
+    public bool Automatic
+    {
+        get; set;
+    }
     public string CaliberKey { get; set; } = string.Empty;
-    public int CaliberAverageVelocity { get; set; }
+    public int CaliberAverageVelocity
+    {
+        get; set;
+    }
     public string TemplateId { get; set; } = string.Empty;
     public string PresetId { get; set; } = string.Empty;
     public string Tier { get; set; } = string.Empty;
-    public int AffixCount { get; set; }
-    public int GrenadeChargesPerRaid { get; set; }
+    public int AffixCount
+    {
+        get; set;
+    }
+    public int GrenadeChargesPerRaid
+    {
+        get; set;
+    }
     public int GrenadeRechargeSeconds { get; set; } = 180;
     public string GrenadeCategory { get; set; } = "fragmentation";
     public string BackgroundColor { get; set; } = string.Empty;
-    public double PriceMultiplier { get; set; }
+    public double PriceMultiplier
+    {
+        get; set;
+    }
     public string DisplayName { get; set; } = string.Empty;
     public string ShortName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -88,15 +134,36 @@ internal sealed class VariantDefinition
     public int PayoffIndex { get; set; } = -1;
     public int SecondaryPayoffIndex { get; set; } = -1;
     public string SpecialId { get; set; } = string.Empty;
-    public MeleeEffectDefinition? MeleeEffect { get; set; }
-    public BackpackEffectDefinition? BackpackEffect { get; set; }
-    public ChestRigEffectDefinition? ChestRigEffect { get; set; }
+    public MeleeEffectDefinition? MeleeEffect
+    {
+        get; set;
+    }
+    public BackpackEffectDefinition? BackpackEffect
+    {
+        get; set;
+    }
+    public ChestRigEffectDefinition? ChestRigEffect
+    {
+        get; set;
+    }
     public string LocaleDescription => BackpackEffect is null && ChestRigEffect is null && GrenadeChargesPerRaid == 0 && !IsEarpiece && !IsHeadwear && !IsEyewear ? Description
         : "<color=#66D9EF>" + EffectText + "</color>" + (string.IsNullOrEmpty(Description) ? "" : "\n\n" + Description);
     public List<string> FireModes { get; set; } = [];
-    public int? BurstShotsCount { get; set; }
-    public int? BaseFireRate { get; set; }
-    public int? SingleFireRate { get; set; }
+    public int? BurstShotsCount
+    {
+        get; set;
+    }
+    public int? BaseFireRate
+    {
+        get; set;
+    }
+    public int? SingleFireRate
+    {
+        get; set;
+    }
     public string Tone { get; set; } = string.Empty;
-    public bool IsMeme { get; set; }
+    public bool IsMeme
+    {
+        get; set;
+    }
 }

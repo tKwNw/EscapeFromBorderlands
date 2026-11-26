@@ -41,8 +41,16 @@ internal static partial class Headwear
 
     private static void ResetAbilities()
     {
-        Current = null; Pending = null; ClaimedAbility = false; ReleaseFrame = -1; M67Load = null; M67World = null;
-        GrenadeSafety.Clear(); Radius.Clear(); SafeOwner = null; FlashExplosion = false;
+        Current = null;
+        Pending = null;
+        ClaimedAbility = false;
+        ReleaseFrame = -1;
+        M67Load = null;
+        M67World = null;
+        GrenadeSafety.Clear();
+        Radius.Clear();
+        SafeOwner = null;
+        FlashExplosion = false;
     }
     private static string NewId() => Guid.NewGuid().ToString("N").Substring(0, 24);
     private static bool Hotkey(State? s) => s?.Key is "HW009-2" or "HW023-1" or "HW027-1" or "HW054-3";
@@ -51,15 +59,18 @@ internal static partial class Headwear
         if (Current is { } t)
         {
             var p = t.State.Player;
-            if (!PlayerRefresh.CanObserve(p)) Current = null;
+            if (!PlayerRefresh.CanObserve(p))
+                Current = null;
             else if (p.HandsController?.Item == t.Gun)
             {
                 t.Drawn = true;
-                if ((t.Fired >= t.Capacity || Get(p) != t.State) && !t.Restoring && Time.time >= t.Retry && HandsReady(p)) Restore(t);
+                if ((t.Fired >= t.Capacity || Get(p) != t.State) && !t.Restoring && Time.time >= t.Retry && HandsReady(p))
+                    Restore(t);
             }
             else if (t.Drawn || Time.time >= t.Deadline)
             {
-                if (t.Fired > 0) Cool(t);
+                if (t.Fired > 0)
+                    Cool(t);
                 Current = null;
             }
         }
@@ -67,7 +78,8 @@ internal static partial class Headwear
 
     internal static void ProcessAbilityInput(List<ECommand> commands, GClass2408[]? bindings)
     {
-        if (PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance) is not { MainPlayer: { } p } world) return;
+        if (PlayerRefresh.ActiveWorld(Singleton<GameWorld>.Instance) is not { MainPlayer: { } p } world)
+            return;
 
         var frame = Time.frameCount;
         if (ClaimedAbility && !HeadwearSettings.IsHeld(ClaimedKey))
@@ -82,18 +94,22 @@ internal static partial class Headwear
             ClaimedKey = HeadwearSettings.Shortcut.MainKey;
             Activate(world, s);
         }
-        if ((!ClaimedAbility && ReleaseFrame != frame) || bindings is null) return;
+        if ((!ClaimedAbility && ReleaseFrame != frame) || bindings is null)
+            return;
         // The game has calculated its commands but has not dispatched them yet.
         // Only consume grenade bindings sharing the claimed ability key; keep other
         // grenade keys and unclaimed presses intact.
         for (var i = commands.Count - 1; i >= 0; i--)
         {
             var command = commands[i];
-            if (command is not (ECommand.PressThrowGrenade or ECommand.ThrowGrenade or ECommand.NextGrenadeStage)) continue;
+            if (command is not (ECommand.PressThrowGrenade or ECommand.ThrowGrenade or ECommand.NextGrenadeStage))
+                continue;
             foreach (var binding in bindings)
             {
-                if (binding is not KeyBindingClass { InputKeys: { } keys } keyBinding || keyBinding.Ecommand_0 != command) continue;
-                if (!Array.Exists(keys, key => key is GClass2412 input && input.Key == ClaimedKey)) continue;
+                if (binding is not KeyBindingClass { InputKeys: { } keys } keyBinding || keyBinding.Ecommand_0 != command)
+                    continue;
+                if (!Array.Exists(keys, key => key is GClass2412 input && input.Key == ClaimedKey))
+                    continue;
                 commands.RemoveAt(i);
                 break;
             }
@@ -107,19 +123,35 @@ internal static partial class Headwear
         !hands.IsInInteractionStrictCheck() && !hands.InCanNotBeInterruptedOperation() && !p.InventoryController.IsChangingWeapon;
     private static void Activate(GameWorld world, State s)
     {
-        if (Current is not null || Pending is not null || !RequestValid(world, s)) return;
-        if (s.Key is not ("HW009-2" or "HW027-1") && !HandsReady(s.Player)) return;
+        if (Current is not null || Pending is not null || !RequestValid(world, s))
+            return;
+        if (s.Key is not ("HW009-2" or "HW027-1") && !HandsReady(s.Player))
+            return;
         try
         {
             switch (s.Key)
             {
-                case "HW009-2": PrepareWeapon(world, s, true); break;
-                case "HW027-1": PrepareWeapon(world, s, false); break;
-                case "HW023-1": CastSmoke(s, 10); s.Buff(10, 300); break;
-                case "HW054-3": PrepareGrenades(world, s); break;
+                case "HW009-2":
+                    PrepareWeapon(world, s, true);
+                    break;
+                case "HW027-1":
+                    PrepareWeapon(world, s, false);
+                    break;
+                case "HW023-1":
+                    CastSmoke(s, 10);
+                    s.Buff(10, 300);
+                    break;
+                case "HW054-3":
+                    PrepareGrenades(world, s);
+                    break;
             }
         }
-        catch (Exception e) { if (Pending == s) Pending = null; Plugin.LogSource.LogWarning($"EFB {s.Roll.Definition.ShortName}: {e.Message}"); }
+        catch (Exception e)
+        {
+            if (Pending == s)
+                Pending = null;
+            Plugin.LogSource.LogWarning($"EFB {s.Roll.Definition.ShortName}: {e.Message}");
+        }
     }
     private static Task Load(Item item) => Singleton<PoolManagerClass>.Instance.LoadBundlesAndCreatePools(
         PoolManagerClass.PoolsCategory.Raid, PoolManagerClass.AssemblyType.Local,
@@ -165,7 +197,8 @@ internal static partial class Headwear
     }
     private static void LoadRocket(ItemFactoryClass factory, Slot chamber, string? defaultAmmo)
     {
-        if (chamber.ContainedItem is RocketItemClass { IsUsed: false } loaded && chamber.CheckCompatibility(loaded)) return;
+        if (chamber.ContainedItem is RocketItemClass { IsUsed: false } loaded && chamber.CheckCompatibility(loaded))
+            return;
 
         RocketItemClass? CreateRocket(string? id) => !string.IsNullOrEmpty(id) &&
             factory.ItemTemplates.TryGetValue(id, out var template) && template is RocketTemplateClass &&
@@ -176,11 +209,14 @@ internal static partial class Headwear
             foreach (var filter in chamber.Filters ?? Array.Empty<ItemFilter>())
             {
                 foreach (var templateId in filter.Filter ?? Array.Empty<MongoID>())
-                    if ((replacement = CreateRocket(templateId)) is not null) break;
-                if (replacement is not null) break;
+                    if ((replacement = CreateRocket(templateId)) is not null)
+                        break;
+                if (replacement is not null)
+                    break;
             }
         }
-        if (replacement is null) throw new InvalidOperationException("No compatible native rocket found for Prince Kassad.");
+        if (replacement is null)
+            throw new InvalidOperationException("No compatible native rocket found for Prince Kassad.");
         ReplaceRound(chamber, replacement);
     }
     private static void ReplaceRound(Slot slot, AmmoItemClass round)
@@ -191,66 +227,101 @@ internal static partial class Headwear
     private static IEnumerator Draw(GameWorld world, State s, Weapon gun, int capacity, Task load)
     {
         var end = Time.time + 10;
-        while (Pending == s && RequestValid(world, s) && !load.IsCompleted && Time.time < end) yield return null;
-        if (Pending != s) yield break;
+        while (Pending == s && RequestValid(world, s) && !load.IsCompleted && Time.time < end)
+            yield return null;
+        if (Pending != s)
+            yield break;
         if (!RequestValid(world, s) || load.Status != TaskStatus.RanToCompletion)
         {
             Pending = null;
-            if (load.IsFaulted) Plugin.LogSource.LogWarning($"EFB temporary weapon assets: {load.Exception?.GetBaseException().Message}");
+            if (load.IsFaulted)
+                Plugin.LogSource.LogWarning($"EFB temporary weapon assets: {load.Exception?.GetBaseException().Message}");
             yield break;
         }
         // Keep one requested draw through a short native hands transition.
         // A different hat, inventory interaction or raid end cancels it.
         end = Time.time + 1.5f;
-        while (Pending == s && RequestValid(world, s) && !HandsReady(s.Player) && Time.time < end) yield return null;
-        if (Pending != s) yield break;
+        while (Pending == s && RequestValid(world, s) && !HandsReady(s.Player) && Time.time < end)
+            yield return null;
+        if (Pending != s)
+            yield break;
         Pending = null;
-        if (!RequestValid(world, s) || !HandsReady(s.Player)) yield break;
+        if (!RequestValid(world, s) || !HandsReady(s.Player))
+            yield break;
         var t = new Summon { State = s, Gun = gun, Capacity = capacity, Previous = s.Player.HandsController?.Item, Deadline = Time.time + 15 };
         Current = t;
         try
         {
             s.Player.Proceed(gun, result =>
             {
-                if (Current != t) return;
-                if (result.Failed) { Current = null; Plugin.LogSource.LogWarning("EFB temporary weapon: " + result.Error); }
-                else t.Drawn = true;
+                if (Current != t)
+                    return;
+                if (result.Failed)
+                {
+                    Current = null;
+                    Plugin.LogSource.LogWarning("EFB temporary weapon: " + result.Error);
+                }
+                else
+                    t.Drawn = true;
             });
         }
-        catch (Exception e) { Current = null; Plugin.LogSource.LogWarning("EFB temporary weapon: " + e.Message); }
+        catch (Exception e)
+        {
+            Current = null;
+            Plugin.LogSource.LogWarning("EFB temporary weapon: " + e.Message);
+        }
     }
     private static void Restore(Summon t)
     {
         var p = t.State.Player;
         t.Restoring = true;
-        void Retry(bool failed) { if (failed) { t.Retry = Time.time + .5f; t.Restoring = false; } }
+        void Retry(bool failed)
+        {
+            if (failed)
+            {
+                t.Retry = Time.time + .5f;
+                t.Restoring = false;
+            }
+        }
         try
         {
-            if (t.Previous is { CurrentAddress: not null } prev) p.SetInHands(prev, result => Retry(result.Failed));
-            else p.SetEmptyHands(result => Retry(result.Failed));
+            if (t.Previous is { CurrentAddress: not null } prev)
+                p.SetInHands(prev, result => Retry(result.Failed));
+            else
+                p.SetEmptyHands(result => Retry(result.Failed));
         }
-        catch (Exception e) { Retry(true); Plugin.LogSource.LogWarning("EFB temporary weapon return: " + e.Message); }
+        catch (Exception e)
+        {
+            Retry(true);
+            Plugin.LogSource.LogWarning("EFB temporary weapon return: " + e.Message);
+        }
     }
     private static void Cool(Summon t)
     {
-        if (t.Cooling) return;
-        t.Cooling = true; t.State.Cool(300);
+        if (t.Cooling)
+            return;
+        t.Cooling = true;
+        t.State.Cool(300);
     }
     internal static bool TemporaryHeld(Player p) => Current is { } t && t.State.Player == p && p.HandsController?.Item == t.Gun;
     internal static bool Temporary(Item? item) => Current is { } t && t.Gun == item;
     private static Player? TemporaryOwner(Weapon weapon) => Current is { } t && t.Gun == weapon ? t.State.Player : null;
     private static void FiredTemporary(Player p)
     {
-        if (!TemporaryHeld(p) || Current is not { } t || t.Fired >= t.Capacity) return;
-        if (++t.Fired == t.Capacity) Cool(t);
+        if (!TemporaryHeld(p) || Current is not { } t || t.Fired >= t.Capacity)
+            return;
+        if (++t.Fired == t.Capacity)
+            Cool(t);
     }
     internal static void RocketFired(Player.FirearmController controller)
     {
-        if (Current is { State.Key: "HW009-2" } t && t.Gun == controller.Item) FiredTemporary(t.State.Player);
+        if (Current is { State.Key: "HW009-2" } t && t.Gun == controller.Item)
+            FiredTemporary(t.State.Player);
     }
     internal static void CorpseHands(Player p)
     {
-        if (TemporaryHeld(p) && Native.Get(p, "_itemInHands") is { } binding) Native.Set(binding, "Value", null);
+        if (TemporaryHeld(p) && Native.Get(p, "_itemInHands") is { } binding)
+            Native.Set(binding, "Value", null);
     }
     private static void CastSmoke(State s, float duration) =>
         AdvancedLegendaryActions.DeploySmokeAt(s.Player, s.Player.Position + Vector3.up * .15f, duration, instant: true);
@@ -267,11 +338,16 @@ internal static partial class Headwear
     private static IEnumerator ThrowSix(GameWorld world, State s, Task load)
     {
         var deadline = Time.time + 10;
-        while (Pending == s && RequestValid(world, s) && !load.IsCompleted && Time.time < deadline) yield return null;
-        if (Pending != s) yield break;
+        while (Pending == s && RequestValid(world, s) && !load.IsCompleted && Time.time < deadline)
+            yield return null;
+        if (Pending != s)
+            yield break;
         Pending = null;
-        if (!RequestValid(world, s) || load.Status != TaskStatus.RanToCompletion || world.GrenadeFactory is not { } factory) yield break;
-        var owner = s.Player; var position = owner.Position; var spawned = 0;
+        if (!RequestValid(world, s) || load.Status != TaskStatus.RanToCompletion || world.GrenadeFactory is not { } factory)
+            yield break;
+        var owner = s.Player;
+        var position = owner.Position;
+        var spawned = 0;
         for (var i = 0; i < 6; i++)
         {
             try
@@ -279,8 +355,14 @@ internal static partial class Headwear
                 var item = (ThrowWeapItemClass)Singleton<ItemFactoryClass>.Instance.CreateItem(NewId(), M67, null);
                 var pooled = Singleton<PoolManagerClass>.Instance.CreateItem(item, true);
                 GrenadeSettings settings;
-                try { settings = UnityEngine.Object.Instantiate(pooled.GetComponent<GrenadePrefab>().GrenadeItself); }
-                finally { AssetPoolObject.ReturnToPool(pooled); }
+                try
+                {
+                    settings = UnityEngine.Object.Instantiate(pooled.GetComponent<GrenadePrefab>().GrenadeItself);
+                }
+                finally
+                {
+                    AssetPoolObject.ReturnToPool(pooled);
+                }
                 var (start, velocity) = CrazyIvanToss(position, i);
                 // Create applies its force as an impulse on the next physics step.
                 // Use no impulse when setting the actual launch velocity ourselves.
@@ -289,12 +371,17 @@ internal static partial class Headwear
                 Native.Set(g, "Velocity", velocity);
                 GrenadeSafety[item.Id] = owner.ProfileId;
                 world.RegisterGrenade(g);
-                if (Singleton<BotEventHandler>.Instantiated) Native.Call(Singleton<BotEventHandler>.Instance, "ThrowGrenade", g, start, velocity, .5f);
+                if (Singleton<BotEventHandler>.Instantiated)
+                    Native.Call(Singleton<BotEventHandler>.Instance, "ThrowGrenade", g, start, velocity, .5f);
                 spawned++;
             }
-            catch (Exception e) { Plugin.LogSource.LogWarning("EFB Crazy Ivan: " + e.Message); }
+            catch (Exception e)
+            {
+                Plugin.LogSource.LogWarning("EFB Crazy Ivan: " + e.Message);
+            }
         }
-        if (spawned > 0) s.Cool(600);
+        if (spawned > 0)
+            s.Cool(600);
     }
     private static (Vector3 Start, Vector3 Velocity) CrazyIvanToss(Vector3 origin, int index)
     {
@@ -308,17 +395,22 @@ internal static partial class Headwear
     private static bool Flash(Player p)
     {
         var world = Singleton<GameWorld>.Instance;
-        if (world is null || Linecast is null) return false;
+        if (world is null || Linecast is null)
+            return false;
         var origin = p.PlayerBones.Head.position;
         foreach (var candidate in world.RegisteredPlayers)
         {
-            if (candidate is not Player target || target.HealthController?.IsAlive != true || !AdvancedMeleeRuntime.Enemy(p, target) || Is(target, "HW046-3")) continue;
-            var delta = origin - target.PlayerBones.Head.position; var range = delta.magnitude;
-            if (range > 15 || Linecast.Invoke(null, new object[] { origin, target.PlayerBones.Head.position, (int)LayerMaskClass.GrenadeObstaclesColliderMask }) is true) continue;
+            if (candidate is not Player target || target.HealthController?.IsAlive != true || !AdvancedMeleeRuntime.Enemy(p, target) || Is(target, "HW046-3"))
+                continue;
+            var delta = origin - target.PlayerBones.Head.position;
+            var range = delta.magnitude;
+            if (range > 15 || Linecast.Invoke(null, new object[] { origin, target.PlayerBones.Head.position, (int)LayerMaskClass.GrenadeObstaclesColliderMask }) is true)
+                continue;
             var strength = Mathf.Max(.15f, (1 - range / 15) * Mathf.Max(.2f, Vector3.Dot(delta.normalized, target.LookDirection)));
             target.ActiveHealthController.DoStun(5, strength);
             target.ActiveHealthController.DoBurnEyes(origin, strength, strength, 5);
-            if (target.AIData?.BotOwner is { BotState: EBotState.Active } bot) bot.FlashGrenade.AddBlindEffect(5 * strength, origin);
+            if (target.AIData?.BotOwner is { BotState: EBotState.Active } bot)
+                bot.FlashGrenade.AddBlindEffect(5 * strength, origin);
         }
         return true;
     }
@@ -329,10 +421,15 @@ internal static partial class Headwear
         var old = (SafeOwner, FlashExplosion);
         SafeOwner = item is null ? null : GrenadeSafety.GetValueOrDefault(item.Id);
         FlashExplosion = grenade is StunGrenade || explosive.Blindness.sqrMagnitude > 0 && explosive.MaxExplosionDistance <= 0;
-        if (item is not null && Radius.Contains(item.Id)) explosive = new ChestRigExplosive(explosive, 1, 2);
+        if (item is not null && Radius.Contains(item.Id))
+            explosive = new ChestRigExplosive(explosive, 1, 2);
         return old;
     }
-    internal static void EndExplosion((string?, bool) old) { SafeOwner = old.Item1; FlashExplosion = old.Item2; }
+    internal static void EndExplosion((string?, bool) old)
+    {
+        SafeOwner = old.Item1;
+        FlashExplosion = old.Item2;
+    }
     internal static bool FlashImmune(Player p) => SafeOwner == p.ProfileId || FlashExplosion && Is(p, "HW046-3");
     internal static bool Immune(Player p, DamageInfoStruct hit) =>
         hit.Weapon is ThrowWeapItemClass g && GrenadeSafety.GetValueOrDefault(g.Id) == p.ProfileId ||
@@ -357,10 +454,13 @@ internal static class HatTemporaryInput
 {
     private static bool Prefix(Class1730 __instance, ECommand __0, ref InputNode.ETranslateResult __result)
     {
-        if (!Headwear.TemporaryHeld(__instance.Player_0)) return true;
+        if (!Headwear.TemporaryHeld(__instance.Player_0))
+            return true;
         var name = __0.ToString();
-        if (!name.Contains("Reload") && !name.Contains("Unload") && !name.Contains("Chamber") && !name.Contains("Throw")) return true;
-        __result = InputNode.ETranslateResult.Block; return false;
+        if (!name.Contains("Reload") && !name.Contains("Unload") && !name.Contains("Chamber") && !name.Contains("Throw"))
+            return true;
+        __result = InputNode.ETranslateResult.Block;
+        return false;
     }
 }
 [HarmonyPatch]
@@ -382,5 +482,8 @@ internal static class HatExplosion
     private static void Prefix(Grenade grenade, Item originalWeaponItem, ref IExplosiveItem grenadeItem, out (string?, bool) __state) =>
         __state = Headwear.BeginExplosion(grenade, originalWeaponItem, ref grenadeItem);
     private static Exception? Finalizer((string?, bool) __state, Exception? __exception)
-    { Headwear.EndExplosion(__state); return __exception; }
+    {
+        Headwear.EndExplosion(__state);
+        return __exception;
+    }
 }

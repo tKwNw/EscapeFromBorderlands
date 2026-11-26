@@ -10,7 +10,8 @@ internal static class BodyPartText
     private static Dictionary<EBodyPart, string> Build()
     {
         var names = new Dictionary<EBodyPart, string>();
-        foreach (EBodyPart part in Enum.GetValues(typeof(EBodyPart))) names[part] = part.ToString();
+        foreach (EBodyPart part in Enum.GetValues(typeof(EBodyPart)))
+            names[part] = part.ToString();
         return names;
     }
     // Preserve the native enum spelling (including aliases/unknown values),

@@ -47,9 +47,11 @@ internal sealed class BackpackFleaRolls
 
     internal string PurchasedTemplate(string templateId, Func<double> randomUnit)
     {
-        if (_revealedTemplates.TryGetValue(templateId, out var revealed)) return revealed;
+        if (_revealedTemplates.TryGetValue(templateId, out var revealed))
+            return revealed;
         if (!_variants.TryGetValue(templateId, out var offer) || !offer.IsMysteryFleaOffer ||
-            !_layouts.TryGetValue(offer.StorageFamilyId, out var layouts)) return templateId;
+            !_layouts.TryGetValue(offer.StorageFamilyId, out var layouts))
+            return templateId;
         return layouts.Pick(Math.Clamp(randomUnit(), 0d, 1d)).Variant.TemplateId;
     }
 
@@ -59,19 +61,23 @@ internal sealed class BackpackFleaRolls
         // own root ID and split multi-buys. Keep the native IDs, children,
         // callback, payment and failed-purchase handling intact. Convert before
         // InventoryHelper checks stash placement, so it validates the real bag.
-        if (request.ItemsWithModsToAdd is not { } groups) return;
+        if (request.ItemsWithModsToAdd is not { } groups)
+            return;
         // Concrete collections already own the records. Materialize a
         // deferred projection exactly once before changing any roots.
-        var items = groups is List<List<Item>> or List<Item>[] ? groups : groups.ToList();
+        var items = groups is List<List<Item>> or List<Item>[]? groups : groups.ToList();
         foreach (var group in items)
         {
-            if (group.Count == 0) continue;
+            if (group.Count == 0)
+                continue;
             var root = group[0];
-            if (_fixedById.TryGetValue(root.Template, out var fixedId)) root.Template = fixedId;
+            if (_fixedById.TryGetValue(root.Template, out var fixedId))
+                root.Template = fixedId;
             else if (_layoutById.TryGetValue(root.Template, out var choices))
                 root.Template = choices.Pick(Math.Clamp(randomUnit(), 0d, 1d)).Id;
         }
-        if (!ReferenceEquals(items, groups)) request.ItemsWithModsToAdd = items;
+        if (!ReferenceEquals(items, groups))
+            request.ItemsWithModsToAdd = items;
     }
 }
 
@@ -83,7 +89,8 @@ internal static class BackpackFleaMarket
     internal static void Install(IEnumerable<VariantDefinition> definitions, bool tradingEnabled)
     {
         _rolls = new BackpackFleaRolls(definitions, tradingEnabled);
-        if (_installed) return;
+        if (_installed)
+            return;
         var harmony = new Harmony("com.tkw.escapefromborderlands.server.backpack-flea");
         harmony.Patch(AccessTools.Method(typeof(RagfairOfferGenerator), "CreateOffersFromAssort"),
             prefix: new HarmonyMethod(typeof(BackpackFleaMarket), nameof(Generate)));

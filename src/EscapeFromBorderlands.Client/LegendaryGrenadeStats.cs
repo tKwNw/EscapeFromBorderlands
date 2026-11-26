@@ -29,21 +29,27 @@ internal static class LegendaryGrenadeStats
     internal static void Bind(ThrowWeapItemClass item)
     {
         var roll = RarityResolver.Resolve(item);
-        if (roll?.Definition.GrenadeChargesPerRaid is not > 0) return;
+        if (roll?.Definition.GrenadeChargesPerRaid is not > 0)
+            return;
         // Use the same explosion adapter as the thrown projectile. The inventory
         // getters and shared template remain vanilla, so gameplay is never scaled twice.
         var explosive = new LegendaryGrenadeExplosive(item, new LegendaryGrenadeEffects.Payload { Roll = roll });
         void Native(EItemAttributeId id, Func<float> value, Func<string> text)
         {
             var attribute = item.Attributes.FirstOrDefault(a => a.Id.Equals(id));
-            if (attribute == null) return;
+            if (attribute == null)
+                return;
             attribute.Base = value;
             attribute.StringValue = text;
         }
         void Extra(LegendaryGrenadeStatId id, string name, Func<float> value, Func<string> text, string tooltip, bool lessIsGood = false)
         {
             var attribute = item.Attributes.FirstOrDefault(a => a.Id.Equals(id));
-            if (attribute == null) { attribute = new ItemAttributeClass(id); item.Attributes.Add(attribute); }
+            if (attribute == null)
+            {
+                attribute = new ItemAttributeClass(id);
+                item.Attributes.Add(attribute);
+            }
             attribute.Name = name;
             attribute.Base = value;
             attribute.StringValue = text;
@@ -121,14 +127,20 @@ internal static class LegendaryGrenadeInspectStatsPatch
 {
     private static readonly FieldInfo ItemField = AccessTools.Field(typeof(ItemSpecificationPanel), "item_0");
     private static void Prefix(ItemSpecificationPanel __instance)
-    { if (ItemField.GetValue(__instance) is ThrowWeapItemClass item) LegendaryGrenadeStats.Bind(item); }
+    {
+        if (ItemField.GetValue(__instance) is ThrowWeapItemClass item)
+            LegendaryGrenadeStats.Bind(item);
+    }
 }
 
 [HarmonyPatch(typeof(ItemSpecificationPanel), "method_6")]
 internal static class LegendaryGrenadeCompareStatsPatch
 {
     private static void Prefix(Item compareItem)
-    { if (compareItem is ThrowWeapItemClass item) LegendaryGrenadeStats.Bind(item); }
+    {
+        if (compareItem is ThrowWeapItemClass item)
+            LegendaryGrenadeStats.Bind(item);
+    }
 }
 
 [HarmonyPatch(typeof(StaticIcons), nameof(StaticIcons.GetAttributeIcon))]

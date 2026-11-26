@@ -11,18 +11,28 @@ internal static class NativeShallowClone
     private static readonly Func<object, object> CopyObject = Bind();
     private static Func<object, object> Bind()
     {
-        try { return (Func<object, object>)Delegate.CreateDelegate(typeof(Func<object, object>), Method); }
-        catch { return value => Method.Invoke(value, null)!; }
+        try
+        {
+            return (Func<object, object>)Delegate.CreateDelegate(typeof(Func<object, object>), Method);
+        }
+        catch
+        {
+            return value => Method.Invoke(value, null)!;
+        }
     }
     internal static object Copy(object value) => CopyObject(value);
     private static bool Prepared;
     internal static void Prepare()
     {
-        if (Prepared) return;
+        if (Prepared)
+            return;
         // Warm the delegate/reflection fallback with a plain managed object.
         // No native hit or projectile is constructed or modified.
         Prepared = true;
-        try { _ = CopyObject(new object()); }
+        try
+        {
+            _ = CopyObject(new object());
+        }
         catch (Exception) { /* Optional warmup must not interrupt menu Update. */ }
     }
 }
