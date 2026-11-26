@@ -21,7 +21,10 @@ internal static class LegendaryGrenadeSettings
     }
     // Freeze the settings per raid so editing them cannot move an existing deadline.
     private static float? RaidRecharge, RaidBigOneRecharge, RaidNineBangerRecharge;
-    internal static void Reset() { RaidRecharge = RaidBigOneRecharge = RaidNineBangerRecharge = null; }
+    internal static void Reset()
+    {
+        RaidRecharge = RaidBigOneRecharge = RaidNineBangerRecharge = null;
+    }
     private static float Valid(float value, float fallback) => float.IsNaN(value) || float.IsInfinity(value) ? fallback : Math.Max(1f, value);
     internal static float DrawSoundVolume
     {

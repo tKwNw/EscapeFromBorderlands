@@ -17,8 +17,14 @@ namespace EscapeFromBorderlands.Client;
 // changing the inventory item or manufacturing replacement ammunition.
 internal static class EyewearAmmoIdentity
 {
-    internal sealed class Identity { internal string Value = ""; internal AmmoItemClass Ammo = null!; }
-    internal struct Scope { internal Identity? Previous; internal bool Entered; internal int Generation; }
+    internal sealed class Identity
+    {
+        internal string Value = ""; internal AmmoItemClass Ammo = null!;
+    }
+    internal struct Scope
+    {
+        internal Identity? Previous; internal bool Entered; internal int Generation;
+    }
     [ThreadStatic] private static Identity? Current;
     private static ConditionalWeakTable<EftBulletClass, Identity> Bullets = new();
     private static int LiveCount;
@@ -26,27 +32,50 @@ internal static class EyewearAmmoIdentity
     private static int Generation;
 
     internal static void Reset()
-    { Current = null; Bullets = new(); LiveCount = 0; Sequence = 0; unchecked { Generation++; } }
+    {
+        Current = null;
+        Bullets = new();
+        LiveCount = 0;
+        Sequence = 0;
+        unchecked
+        {
+            Generation++;
+        }
+    }
     internal static Scope Begin(Player? player, AmmoItemClass ammo)
     {
-        if (Eyewear.Get(player)?.Key != "EW022") return default;
+        if (Eyewear.Get(player)?.Key != "EW022")
+            return default;
         var scope = new Scope { Previous = Current, Entered = true, Generation = Generation };
         Current = new Identity { Ammo = ammo, Value = ammo.Id + ":efb:" + Generation.ToString("x") + ":" + (++Sequence).ToString("x") };
         return scope;
     }
-    internal static void End(Scope scope) { if (scope.Entered && scope.Generation == Generation) Current = scope.Previous; }
+    internal static void End(Scope scope)
+    {
+        if (scope.Entered && scope.Generation == Generation)
+            Current = scope.Previous;
+    }
     internal static void Created(EftBulletClass shot, EftBulletClass? parent)
     {
-        if (LiveCount == 0 && Current is null) return;
-        if (Bullets.Remove(shot)) LiveCount--; // The native pool may reuse this exact object.
+        if (LiveCount == 0 && Current is null)
+            return;
+        if (Bullets.Remove(shot))
+            LiveCount--; // The native pool may reuse this exact object.
         Identity? identity = null;
-        if (parent is not null) Bullets.TryGetValue(parent, out identity);
-        if (identity is null && Current is { } current && ReferenceEquals(shot.Ammo, current.Ammo)) identity = current;
-        if (identity is null) return;
+        if (parent is not null)
+            Bullets.TryGetValue(parent, out identity);
+        if (identity is null && Current is { } current && ReferenceEquals(shot.Ammo, current.Ammo))
+            identity = current;
+        if (identity is null)
+            return;
         Bullets.Add(shot, identity);
         LiveCount++;
     }
-    internal static void Released(EftBulletClass shot) { if (LiveCount != 0 && Bullets.Remove(shot)) LiveCount--; }
+    internal static void Released(EftBulletClass shot)
+    {
+        if (LiveCount != 0 && Bullets.Remove(shot))
+            LiveCount--;
+    }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static string NativeId(EftBulletClass shot) => LiveCount != 0 && Bullets.TryGetValue(shot, out var identity)
         ? identity.Value : shot.Ammo.Id;
@@ -59,7 +88,10 @@ internal static class EyewearRetainedShotScope
     private static void Prefix(Player? ____player, AmmoItemClass ammo, out EyewearAmmoIdentity.Scope __state) =>
         __state = EyewearAmmoIdentity.Begin(____player, ammo);
     private static Exception? Finalizer(EyewearAmmoIdentity.Scope __state, Exception? __exception)
-    { EyewearAmmoIdentity.End(__state); return __exception; }
+    {
+        EyewearAmmoIdentity.End(__state);
+        return __exception;
+    }
 }
 
 [HarmonyPatch(typeof(EftBulletClass), nameof(EftBulletClass.Create))]
@@ -97,10 +129,12 @@ internal static class EyewearNativeShotIdentity
                 instruction.operand = AccessTools.Method(typeof(EyewearAmmoIdentity), nameof(EyewearAmmoIdentity.NativeId));
                 code[i + 1].MoveLabelsTo(instruction);
                 instruction.blocks.AddRange(code[i + 1].blocks);
-                i++; changed++;
+                i++;
+                changed++;
             }
             yield return instruction;
         }
-        if (changed != 1) throw new InvalidOperationException("Unsupported native ballistic identity shape.");
+        if (changed != 1)
+            throw new InvalidOperationException("Unsupported native ballistic identity shape.");
     }
 }

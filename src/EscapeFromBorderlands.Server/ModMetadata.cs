@@ -15,6 +15,9 @@ public record ModMetadata : IModMetadata
     public bool HasPrepatcher { get; init; } = false;
     public List<string>? Incompatibilities { get; init; } = [];
     public Dictionary<string, SemRange>? ModDependencies { get; init; } = [];
-    public string? Url { get; init; }
+    public string? Url
+    {
+        get; init;
+    }
     public string License { get; init; } = "MIT";
 }

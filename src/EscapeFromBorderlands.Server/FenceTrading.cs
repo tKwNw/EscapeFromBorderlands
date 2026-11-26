@@ -65,7 +65,8 @@ internal static class FenceTrading
     private static void BeforeOffers(FenceService __instance) => CleanStored(__instance);
     private static void AfterOffers(TraderAssort __result)
     {
-        if (Policy is not { } policy) return;
+        if (Policy is not { } policy)
+            return;
         var timing = ServerPerformanceTrace.Measure("Fence offer filter");
         timing.Complete(__result?.Items?.Count ?? 0, policy.Filter(__result));
     }
@@ -80,8 +81,10 @@ internal static class FenceTrading
 
     private static void CleanAll()
     {
-        if (Traders?.TryGetValue(TradersId, out var trader) == true) Policy?.Filter(trader.Assort);
-        if (Fence is not null) CleanStored(Fence);
+        if (Traders?.TryGetValue(TradersId, out var trader) == true)
+            Policy?.Filter(trader.Assort);
+        if (Fence is not null)
+            CleanStored(Fence);
     }
 
     private static readonly SPTarkov.Server.Core.Models.Common.MongoId TradersId = SPTarkov.Server.Core.Models.Enums.Traders.FENCE;

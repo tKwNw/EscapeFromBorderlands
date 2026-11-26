@@ -29,20 +29,23 @@ internal sealed class OwnedLegendaryRolls
         foreach (var preview in variants.Where(v => v.IsMysteryFleaOffer))
         {
             var id = new MongoId(preview.TemplateId);
-            if (!templates.TryGetValue(id, out var source)) continue;
+            if (!templates.TryGetValue(id, out var source))
+                continue;
             var candidates = concrete.Where(v =>
                 (!string.IsNullOrEmpty(preview.FleaRevealTemplateId)
                     ? v.TemplateId == preview.FleaRevealTemplateId
                     : !string.IsNullOrEmpty(preview.StorageFamilyId) && v.StorageFamilyId == preview.StorageFamilyId &&
                       v.StorageRollVersion == BackpackStorageVariants.CurrentLayoutVersion) &&
                 templates.TryGetValue(new MongoId(v.TemplateId), out var target) && Fits(source, target)).ToArray();
-            if (candidates.Length > 0) _choices[id] = new(candidates);
+            if (candidates.Length > 0)
+                _choices[id] = new(candidates);
         }
     }
 
     private static bool Fits(TemplateItem source, TemplateItem target)
     {
-        if (source.Properties is not { } from || target.Properties is not { } to) return false;
+        if (source.Properties is not { } from || target.Properties is not { } to)
+            return false;
         // A previously acquired preview can already contain items. Never
         // shrink/remove a grid or change its restrictions during identification.
         var grids = to.Grids?.ToArray() ?? [];
@@ -52,18 +55,21 @@ internal sealed class OwnedLegendaryRolls
             if (grid.Properties is not { } old || match?.Properties is not { } next ||
                 next.CellsH.GetValueOrDefault() < old.CellsH.GetValueOrDefault() ||
                 next.CellsV.GetValueOrDefault() < old.CellsV.GetValueOrDefault() ||
-                JsonSerializer.Serialize(next.Filters) != JsonSerializer.Serialize(old.Filters)) return false;
+                JsonSerializer.Serialize(next.Filters) != JsonSerializer.Serialize(old.Filters))
+                return false;
         }
         return true;
     }
 
     internal int Identify(IEnumerable<Item>? items)
     {
-        if (items is null) return 0;
+        if (items is null)
+            return 0;
         var changed = 0;
         foreach (var item in items)
         {
-            if (item is null || !_choices.TryGetValue(item.Template, out var choices)) continue;
+            if (item is null || !_choices.TryGetValue(item.Template, out var choices))
+                continue;
             // Repeat delivery attempts/reloads resolve a given preview instance
             // identically without consuming spawn RNG or retaining a global cache.
             var hash = SHA256.HashData(Encoding.UTF8.GetBytes($"efb:identify:{item.Id}:{item.Template}"));
@@ -83,7 +89,8 @@ internal static class OwnedLegendaryIdentification
     internal static void Install(IEnumerable<VariantDefinition> definitions, Dictionary<MongoId, TemplateItem> templates)
     {
         _rolls = new(definitions, templates);
-        if (_installed) return;
+        if (_installed)
+            return;
         var harmony = new Harmony("com.tkw.escapefromborderlands.server.identification");
         harmony.Patch(AccessTools.Method(typeof(ProfileController), nameof(ProfileController.GetCompleteProfile)),
             postfix: new HarmonyMethod(typeof(OwnedLegendaryIdentification), nameof(ProfileLoaded)));
@@ -102,22 +109,28 @@ internal static class OwnedLegendaryIdentification
     // no per-frame inventory walk and no change to trader/flea preview stock.
     private static void ProfileLoaded(List<PmcData>? __result)
     {
-        if (__result is null) return;
-        foreach (var profile in __result) _rolls.Identify(profile?.Inventory?.Items);
+        if (__result is null)
+            return;
+        foreach (var profile in __result)
+            _rolls.Identify(profile?.Inventory?.Items);
     }
 
     private static void BeforeAddMany(AddItemsDirectRequest request)
     {
-        if (request.ItemsWithModsToAdd is not { } groups) return;
-        var items = groups is List<List<Item>> or List<Item>[] ? groups : groups.ToList();
-        foreach (var group in items) _rolls.Identify(group);
-        if (!ReferenceEquals(items, groups)) request.ItemsWithModsToAdd = items;
+        if (request.ItemsWithModsToAdd is not { } groups)
+            return;
+        var items = groups is List<List<Item>> or List<Item>[]? groups : groups.ToList();
+        foreach (var group in items)
+            _rolls.Identify(group);
+        if (!ReferenceEquals(items, groups))
+            request.ItemsWithModsToAdd = items;
     }
 
     private static void BeforeAddOne(AddItemDirectRequest request) => _rolls.Identify(request.ItemWithModsToAdd);
     private static void CultistRewards(List<List<Item>> rewards)
     {
-        foreach (var group in rewards) _rolls.Identify(group);
+        foreach (var group in rewards)
+            _rolls.Identify(group);
     }
     private static void RaidReturned(EndLocalRaidRequestData request) => _rolls.Identify(request.Results?.Profile?.Inventory?.Items);
 }

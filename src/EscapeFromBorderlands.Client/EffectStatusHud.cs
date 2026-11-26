@@ -35,13 +35,18 @@ internal static class EffectStatusHud
     private static float NextUpdate, NextFailureReport, NextPreparation;
     private static bool PreviousAutoHide, PanelShown, AwaitingNativeShow, PreparationSettled;
     private static int PanelChanges, PanelReopens, RootsCreated, RowsCreated, ClocksCreated, PreparedRoots, PreparedRows;
-    internal static bool HoldingVisible { get; private set; }
+    internal static bool HoldingVisible
+    {
+        get; private set;
+    }
     internal static void Attach(CharacterHealthPanel panel)
     {
         if (ReferenceEquals(Panel, panel))
         {
-            if (AwaitingNativeShow) PanelChanges++;
-            else PanelReopens++;
+            if (AwaitingNativeShow)
+                PanelChanges++;
+            else
+                PanelReopens++;
         }
         else
         {
@@ -59,7 +64,8 @@ internal static class EffectStatusHud
     internal static void PrepareDuringSetup(GameWorld world)
     {
         if (PreparationSettled || Singleton<AbstractGame>.Instance is not LocalGame raid ||
-            !ReferenceEquals(raid.GameWorld, world)) return;
+            !ReferenceEquals(raid.GameWorld, world))
+            return;
         var status = raid.Status;
         if (status is GameStatus.Started or GameStatus.Stopping or GameStatus.SoftStopping)
         {
@@ -67,7 +73,8 @@ internal static class EffectStatusHud
             return;
         }
         if (status is not (GameStatus.Running or GameStatus.Runned or GameStatus.Starting) ||
-            StatusHudSettings.Enabled?.Value == false || Time.unscaledTime < NextPreparation) return;
+            StatusHudSettings.Enabled?.Value == false || Time.unscaledTime < NextPreparation)
+            return;
 
         var trace = RaidUpdateTrace.Begin();
         var preparingVisuals = false;
@@ -91,7 +98,8 @@ internal static class EffectStatusHud
                 Panel = panel;
                 PanelShown = false;
             }
-            if (!PanelShown && Root == null) AwaitingNativeShow = true;
+            if (!PanelShown && Root == null)
+                AwaitingNativeShow = true;
             if (HoldingVisible || Root != null && Root.activeSelf)
             {
                 PreparationSettled = true;
@@ -99,7 +107,8 @@ internal static class EffectStatusHud
             }
             preparingVisuals = true;
             var clockReady = ClockSprite != null && ClockTexture != null;
-            if (!CanReuseRows(parent) || Root != null && !clockReady) ClearVisuals();
+            if (!CanReuseRows(parent) || Root != null && !clockReady)
+                ClearVisuals();
             if (!TryTextSource(out _))
             {
                 NextPreparation = Time.unscaledTime + .25f;
@@ -128,22 +137,30 @@ internal static class EffectStatusHud
         }
         catch (Exception error)
         {
-            if (preparingVisuals) ClearVisuals();
+            if (preparingVisuals)
+                ClearVisuals();
             NextPreparation = Time.unscaledTime + 1f;
             ReportFailure("setup", error);
         }
-        finally { trace.Finish("combined HUD setup"); }
+        finally
+        {
+            trace.Finish("combined HUD setup");
+        }
     }
     internal static void Reset()
     {
         EffectStatusModel.ResetNotices();
         ClearVisuals();
-        if (ClockSprite != null) UnityEngine.Object.Destroy(ClockSprite);
-        if (ClockTexture != null) UnityEngine.Object.Destroy(ClockTexture);
-        ClockSprite = null; ClockTexture = null;
+        if (ClockSprite != null)
+            UnityEngine.Object.Destroy(ClockSprite);
+        if (ClockTexture != null)
+            UnityEngine.Object.Destroy(ClockTexture);
+        ClockSprite = null;
+        ClockTexture = null;
         // Show can run before the first Update of a raid. Retain a live
         // binding until the panel is replaced; no visual survives this reset.
-        if (AwaitingNativeShow || (UnityEngine.Object?)(object?)Panel == null) Panel = null;
+        if (AwaitingNativeShow || (UnityEngine.Object?)(object?)Panel == null)
+            Panel = null;
         PanelShown = false;
         AwaitingNativeShow = PreparationSettled = false;
         NextUpdate = NextFailureReport = NextPreparation = 0f;
@@ -158,31 +175,52 @@ internal static class EffectStatusHud
     internal static void ReleasePanel() => Panel = null;
     private static void ClearVisuals()
     {
-        try { Hide(); } catch { /* native UI may already be closing */ }
-        if (Root != null) UnityEngine.Object.Destroy(Root);
-        Root = null; Anchor = null;
-        Rows.Clear(); LaidOutRows = -1; HoldingVisible = false; TextTemplate = null;
+        try
+        {
+            Hide();
+        }
+        catch { /* native UI may already be closing */ }
+        if (Root != null)
+            UnityEngine.Object.Destroy(Root);
+        Root = null;
+        Anchor = null;
+        Rows.Clear();
+        LaidOutRows = -1;
+        HoldingVisible = false;
+        TextTemplate = null;
     }
     private static void Hide()
     {
-        if (Root != null && Root.activeSelf) Root.SetActive(false);
-        if (!HoldingVisible) return;
+        if (Root != null && Root.activeSelf)
+            Root.SetActive(false);
+        if (!HoldingVisible)
+            return;
         HoldingVisible = false;
-        if ((UnityEngine.Object?)(object?)Panel != null) Native.Call(Panel!, "AnimatedShow", PreviousAutoHide);
+        if ((UnityEngine.Object?)(object?)Panel != null)
+            Native.Call(Panel!, "AnimatedShow", PreviousAutoHide);
     }
     internal static void Maintain(GameWorld? world)
     {
-        if (StatusHudSettings.Enabled?.Value == false) { HeadwearDiagnostics.Hud("availability", "disabled"); Hide(); return; }
+        if (StatusHudSettings.Enabled?.Value == false)
+        {
+            HeadwearDiagnostics.Hud("availability", "disabled");
+            Hide();
+            return;
+        }
         var now = Time.time;
-        if (now < NextUpdate || Panel is null || AwaitingNativeShow) return;
+        if (now < NextUpdate || Panel is null || AwaitingNativeShow)
+            return;
         if ((UnityEngine.Object?)(object?)Panel == null)
         {
-            ClearVisuals(); Panel = null; PanelShown = false;
+            ClearVisuals();
+            Panel = null;
+            PanelShown = false;
             return;
         }
         HeadwearDiagnostics.Hud("availability", "panel present");
         NextUpdate = now + .05f;
-        if (!((Component)(object)Panel).gameObject.activeInHierarchy) return;
+        if (!((Component)(object)Panel).gameObject.activeInHierarchy)
+            return;
         var trace = RaidUpdateTrace.Begin();
         try
         {
@@ -194,31 +232,41 @@ internal static class EffectStatusHud
             {
                 if (visibility.Backpacks)
                 {
-                    if (BackpackRuntime.Records.TryGetValue(player.ProfileId, out var record)) EffectStatusModel.AppendCooldowns(statuses, record.Until, now);
+                    if (BackpackRuntime.Records.TryGetValue(player.ProfileId, out var record))
+                        EffectStatusModel.AppendCooldowns(statuses, record.Until, now);
                     BackpackEffectStatus.Add(statuses, BackpackRuntime.Get(player));
                     BackpackNative.AppendUseStatuses(player, statuses);
                 }
                 trace.Phase("HUD backpack status");
                 if (visibility.Guns && player.HandsController is Player.FirearmController firearm &&
-                    LegendaryRuntime.CurrentStatus(player, firearm.Weapon) is { } gun) statuses.Add(gun);
+                    LegendaryRuntime.CurrentStatus(player, firearm.Weapon) is { } gun)
+                    statuses.Add(gun);
                 trace.Phase("HUD firearm status");
-                if (visibility.Melee) statuses.AddRange(AdvancedMeleeRuntime.Statuses(player));
-                if (visibility.Guns || visibility.Backpacks) AdvancedLegendaryActions.AppendSmokeStatuses(player, statuses);
+                if (visibility.Melee)
+                    statuses.AddRange(AdvancedMeleeRuntime.Statuses(player));
+                if (visibility.Guns || visibility.Backpacks)
+                    AdvancedLegendaryActions.AppendSmokeStatuses(player, statuses);
                 trace.Phase("HUD melee and short smoke status");
-                if (visibility.Grenades) ReusableGrenadeRuntime.AppendStatuses(player, statuses, ref trace);
+                if (visibility.Grenades)
+                    ReusableGrenadeRuntime.AppendStatuses(player, statuses, ref trace);
                 EffectStatusModel.AppendNotices(statuses, player.ProfileId, now);
             }
             trace.Phase("HUD notices");
-            if (visibility.Rigs && ChestRigRuntime.Get(player) is not null) statuses.AddRange(ChestRigRuntime.Statuses(player));
+            if (visibility.Rigs && ChestRigRuntime.Get(player) is not null)
+                statuses.AddRange(ChestRigRuntime.Statuses(player));
             trace.Phase("HUD rig status");
-            if (visibility.Earpieces && EarpieceRuntime.Get(player) is not null) statuses.AddRange(EarpieceRuntime.Statuses(player));
-            if (visibility.Headwear && Headwear.Get(player) is not null) statuses.AddRange(Headwear.Status(player));
-            if (visibility.Eyewear && Eyewear.Get(player) is not null) statuses.AddRange(Eyewear.Status(player));
+            if (visibility.Earpieces && EarpieceRuntime.Get(player) is not null)
+                statuses.AddRange(EarpieceRuntime.Statuses(player));
+            if (visibility.Headwear && Headwear.Get(player) is not null)
+                statuses.AddRange(Headwear.Status(player));
+            if (visibility.Eyewear && Eyewear.Get(player) is not null)
+                statuses.AddRange(Eyewear.Status(player));
             trace.Phase("HUD headset status");
             EffectStatusModel.CopyVisible(statuses, Visible, StatusIndex);
             statuses = Visible;
             for (var i = statuses.Count - 1; i >= 0; i--)
-                if (!visibility.Allows(statuses[i].Key)) statuses.RemoveAt(i);
+                if (!visibility.Allows(statuses[i].Key))
+                    statuses.RemoveAt(i);
             HeadwearDiagnostics.Rows(statuses);
             if (statuses.Count == 0)
             {
@@ -229,7 +277,8 @@ internal static class EffectStatusHud
             var parent = (RectTransform)((Component)(object)Panel!).transform;
             var clockReady = ClockSprite != null && ClockTexture != null;
             if ((Root == null ? Rows.Count > 0 : !clockReady) ||
-                PanelShown && !CanReuseRows(parent)) ClearVisuals();
+                PanelShown && !CanReuseRows(parent))
+                ClearVisuals();
             if (PanelShown || Anchor == null)
             {
                 var effects = Native.Get(Panel, "_effectsPanel") as GameObject;
@@ -237,7 +286,13 @@ internal static class EffectStatusHud
             }
             var ready = TryTextSource(out var textAssets);
             trace.Phase("HUD text source lookup");
-            if (!ready) { HeadwearDiagnostics.Hud("render", "text assets unavailable"); Hide(); NextUpdate = Time.time + .25f; return; }
+            if (!ready)
+            {
+                HeadwearDiagnostics.Hud("render", "text assets unavailable");
+                Hide();
+                NextUpdate = Time.time + .25f;
+                return;
+            }
             if (Root == null)
             {
                 Create(parent);
@@ -248,21 +303,27 @@ internal static class EffectStatusHud
                 CreateClock();
                 trace.Phase("HUD clock artwork");
             }
-            if (Root == null) return;
+            if (Root == null)
+                return;
             var layout = (RectTransform)Root.transform;
             var origin = Anchor != null ? parent.InverseTransformPoint(Anchor.TransformPoint(new Vector3(Anchor.rect.xMin, Anchor.rect.yMin, 0f))) : Vector3.zero;
             var position = new Vector2(origin.x - parent.rect.xMin + StatusHudSettings.HorizontalOffset.Value,
                 origin.y - parent.rect.yMax - 8f - StatusHudSettings.VerticalOffset.Value);
-            if (layout.anchoredPosition != position) layout.anchoredPosition = position;
+            if (layout.anchoredPosition != position)
+                layout.anchoredPosition = position;
             var scale = Vector3.one * StatusHudSettings.Scale.Value;
-            if (layout.localScale != scale) layout.localScale = scale;
+            if (layout.localScale != scale)
+                layout.localScale = scale;
             var needsTextRebind = PanelShown || !Root.activeSelf;
-            if (!Root.activeSelf) Root.SetActive(true);
+            if (!Root.activeSelf)
+                Root.SetActive(true);
             if (needsTextRebind)
             {
-                foreach (var row in Rows) row.TextLayout.Revalidate();
+                foreach (var row in Rows)
+                    row.TextLayout.Revalidate();
             }
-            if (!HoldingVisible) PreviousAutoHide = Native.Get(Panel, "AutoHide") is true;
+            if (!HoldingVisible)
+                PreviousAutoHide = Native.Get(Panel, "AutoHide") is true;
             if (!HoldingVisible || PanelShown)
             {
                 HoldingVisible = true;
@@ -273,17 +334,29 @@ internal static class EffectStatusHud
             trace.Phase("HUD anchor and visibility");
             if (Rows.Count < statuses.Count)
             {
-                do { Rows.Add(CreateRow()); } while (Rows.Count < statuses.Count);
+                do
+                {
+                    Rows.Add(CreateRow());
+                } while (Rows.Count < statuses.Count);
                 trace.Phase("HUD row creation");
             }
             var frame = Time.frameCount;
             for (var i = 0; i < statuses.Count; i++)
             {
-                var row = Rows[i]; var status = statuses[i];
-                if (!row.Root.activeSelf) { row.Root.SetActive(true); row.TextLayout.Revalidate(); }
+                var row = Rows[i];
+                var status = statuses[i];
+                if (!row.Root.activeSelf)
+                {
+                    row.Root.SetActive(true);
+                    row.TextLayout.Revalidate();
+                }
                 var color = status.Active ? new Color(.4f, .851f, .937f, 1f) : new Color(.68f, .68f, .68f, 1f);
                 if (row.LastColor != color)
-                { row.LastColor = color; Native.Set(row.Icon, "color", color); Native.Set(row.Label, "color", color); }
+                {
+                    row.LastColor = color;
+                    Native.Set(row.Icon, "color", color);
+                    Native.Set(row.Label, "color", color);
+                }
                 if (row.LastLabel is null || !status.SameLabel(in row.LastStatus))
                 {
                     row.LastStatus = status;
@@ -291,7 +364,14 @@ internal static class EffectStatusHud
                 }
                 var laidOut = row.TextLayout.Update(textAssets, row.LastLabel, frame);
                 trace.Phase("HUD row text and height measurement");
-                if (!laidOut) { HeadwearDiagnostics.Hud("render", "text layout unavailable"); LaidOutRows = -1; Hide(); NextUpdate = Time.time + .25f; return; }
+                if (!laidOut)
+                {
+                    HeadwearDiagnostics.Hud("render", "text layout unavailable");
+                    LaidOutRows = -1;
+                    Hide();
+                    NextUpdate = Time.time + .25f;
+                    return;
+                }
                 var height = row.TextLayout.Height;
                 if (height != row.Height)
                 {
@@ -311,7 +391,8 @@ internal static class EffectStatusHud
                 }
                 layout.sizeDelta = new Vector2(EffectStatusLayout.Width, offset);
                 for (var i = statuses.Count; i < Rows.Count; i++)
-                    if (Rows[i].Root.activeSelf) Rows[i].Root.SetActive(false);
+                    if (Rows[i].Root.activeSelf)
+                        Rows[i].Root.SetActive(false);
                 LaidOutRows = statuses.Count;
             }
             HeadwearDiagnostics.Hud("render", "visible rows updated");
@@ -328,75 +409,101 @@ internal static class EffectStatusHud
         }
         finally
         {
-            Gathered.Clear(); Visible.Clear(); StatusIndex.Clear();
+            Gathered.Clear();
+            Visible.Clear();
+            StatusIndex.Clear();
             trace.Finish("combined effect HUD");
         }
     }
 
     private static void ReportFailure(string stage, Exception error)
     {
-        if (Time.unscaledTime < NextFailureReport) return;
+        if (Time.unscaledTime < NextFailureReport)
+            return;
         NextFailureReport = Time.unscaledTime + 30f;
         Plugin.LogSource?.LogWarning($"EFB effect-status HUD will retry after a {stage} error: {error}");
     }
     internal static bool KeepVisible(CharacterHealthPanel panel) => HoldingVisible && ReferenceEquals(Panel, panel);
     private static bool CanReuseRows(RectTransform parent)
     {
-        if (Root == null) return Rows.Count == 0;
-        if (Root.transform.parent != parent || Root.layer != parent.gameObject.layer) return false;
+        if (Root == null)
+            return Rows.Count == 0;
+        if (Root.transform.parent != parent || Root.layer != parent.gameObject.layer)
+            return false;
         foreach (var row in Rows)
-            if (row.Root == null || row.Icon == null || row.Label == null) return false;
+            if (row.Root == null || row.Icon == null || row.Label == null)
+                return false;
         return true;
     }
     private static bool TryTextSource(out EffectStatusText.Assets assets)
     {
         var template = HudTextSource.Read(Panel, "_effectIconTemplate");
         var candidate = HudTextSource.Read(template, "_stackCount") as Component;
-        if (EffectStatusText.TryAssets(candidate, out assets)) { TextTemplate = candidate; return true; }
-        if (EffectStatusText.TryAssets(TextTemplate, out assets)) return true;
+        if (EffectStatusText.TryAssets(candidate, out assets))
+        {
+            TextTemplate = candidate;
+            return true;
+        }
+        if (EffectStatusText.TryAssets(TextTemplate, out assets))
+            return true;
         var type = AccessTools.TypeByName("TMPro.TMP_Text");
         if (type is not null && (UnityEngine.Object?)(object?)Panel != null)
             foreach (var text in ((Component)(object)Panel!).GetComponentsInChildren(type, true))
                 if ((Root == null || !text.transform.IsChildOf(Root.transform)) && EffectStatusText.TryAssets(text, out assets))
-                { TextTemplate = text; return true; }
+                {
+                    TextTemplate = text;
+                    return true;
+                }
         assets = default;
         return false;
     }
     private static void Create(RectTransform parent, bool startHidden = false)
     {
-        if (TextTemplate == null) throw new InvalidOperationException("Native health-effect text template was not found.");
+        if (TextTemplate == null)
+            throw new InvalidOperationException("Native health-effect text template was not found.");
         Root = new GameObject("EFB Effect Status", typeof(RectTransform));
-        if (startHidden) Root.SetActive(false);
+        if (startHidden)
+            Root.SetActive(false);
         Root.layer = parent.gameObject.layer;
-        var rect = (RectTransform)Root.transform; rect.SetParent(parent, false);
+        var rect = (RectTransform)Root.transform;
+        rect.SetParent(parent, false);
         // Keep the whole stack outside the native horizontal effect-row layout.
         // Follow that row's lower edge without becoming one of its columns.
-        rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f); rect.pivot = new Vector2(0f, 1f);
-        rect.anchoredPosition = new Vector2(0f, -8f); rect.sizeDelta = new Vector2(EffectStatusLayout.Width, 25f);
+        rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 1f);
+        rect.anchoredPosition = new Vector2(0f, -8f);
+        rect.sizeDelta = new Vector2(EffectStatusLayout.Width, 25f);
         rect.SetAsLastSibling();
         // Ignore the native row's layout, which belongs to real health effects.
         var layoutElement = AccessTools.TypeByName("UnityEngine.UI.LayoutElement");
         if (layoutElement is not null)
         {
             var element = Root.AddComponent(layoutElement);
-            Native.Set(element, "ignoreLayout", true); Native.Set(element, "layoutPriority", 10);
+            Native.Set(element, "ignoreLayout", true);
+            Native.Set(element, "layoutPriority", 10);
         }
         RootsCreated++;
     }
     private static void CreateClock()
     {
-        if (ClockSprite != null) UnityEngine.Object.Destroy(ClockSprite);
-        if (ClockTexture != null) UnityEngine.Object.Destroy(ClockTexture);
+        if (ClockSprite != null)
+            UnityEngine.Object.Destroy(ClockSprite);
+        if (ClockTexture != null)
+            UnityEngine.Object.Destroy(ClockTexture);
         ClockTexture = new Texture2D(28, 28);
         var pixels = new Color[28 * 28];
-        for (var y = 0; y < 28; y++) for (var x = 0; x < 28; x++)
-        {
-            var dx = x - 13.5f; var dy = y - 13.5f; var radius = Math.Sqrt(dx * dx + dy * dy);
-            var ring = radius >= 10.3 && radius <= 12;
-            var hands = Math.Abs(dx) <= .8 && dy >= -.5 && dy <= 7 || Math.Abs(dy) <= .8 && dx >= -.5 && dx <= 5;
-            pixels[y * 28 + x] = ring || hands ? Color.white : Color.clear;
-        }
-        ClockTexture.SetPixels(pixels); ClockTexture.Apply();
+        for (var y = 0; y < 28; y++)
+            for (var x = 0; x < 28; x++)
+            {
+                var dx = x - 13.5f;
+                var dy = y - 13.5f;
+                var radius = Math.Sqrt(dx * dx + dy * dy);
+                var ring = radius >= 10.3 && radius <= 12;
+                var hands = Math.Abs(dx) <= .8 && dy >= -.5 && dy <= 7 || Math.Abs(dy) <= .8 && dx >= -.5 && dx <= 5;
+                pixels[y * 28 + x] = ring || hands ? Color.white : Color.clear;
+            }
+        ClockTexture.SetPixels(pixels);
+        ClockTexture.Apply();
         ClockSprite = Sprite.Create(ClockTexture, new Rect(0, 0, 28, 28), new Vector2(.5f, .5f));
         ClocksCreated++;
     }
@@ -405,24 +512,36 @@ internal static class EffectStatusHud
         var row = new Row { Root = new GameObject("EFB timer", typeof(RectTransform)) };
         row.Root.SetActive(false);
         row.Root.layer = Root!.layer;
-        var rect = (RectTransform)row.Root.transform; rect.SetParent(Root!.transform, false);
-        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f); rect.sizeDelta = new Vector2(EffectStatusLayout.Width, 25f);
-        var icon = new GameObject("Clock", typeof(RectTransform)); icon.layer = Root!.layer; var iconRect = (RectTransform)icon.transform;
-        iconRect.SetParent(rect, false); iconRect.anchorMin = iconRect.anchorMax = iconRect.pivot = new Vector2(0f, 1f); iconRect.sizeDelta = new Vector2(22f, 22f);
+        var rect = (RectTransform)row.Root.transform;
+        rect.SetParent(Root!.transform, false);
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0f, 1f);
+        rect.sizeDelta = new Vector2(EffectStatusLayout.Width, 25f);
+        var icon = new GameObject("Clock", typeof(RectTransform));
+        icon.layer = Root!.layer;
+        var iconRect = (RectTransform)icon.transform;
+        iconRect.SetParent(rect, false);
+        iconRect.anchorMin = iconRect.anchorMax = iconRect.pivot = new Vector2(0f, 1f);
+        iconRect.sizeDelta = new Vector2(22f, 22f);
         row.Icon = icon.AddComponent(AccessTools.TypeByName("UnityEngine.UI.Image"));
-        Native.Set(row.Icon, "sprite", ClockSprite); Native.Set(row.Icon, "raycastTarget", false);
+        Native.Set(row.Icon, "sprite", ClockSprite);
+        Native.Set(row.Icon, "raycastTarget", false);
         var labelObject = UnityEngine.Object.Instantiate(TextTemplate!.gameObject, rect, false);
-        labelObject.name = "Effect name and timer"; labelObject.SetActive(true);
+        labelObject.name = "Effect name and timer";
+        labelObject.SetActive(true);
         row.Label = labelObject.GetComponent(TextTemplate.GetType());
         row.TextLayout = new EffectStatusText.Layout(row.Label, Time.frameCount);
         var labelRect = (RectTransform)labelObject.transform;
         labelRect.anchorMin = labelRect.anchorMax = labelRect.pivot = new Vector2(0f, 1f);
-        labelRect.anchoredPosition = new Vector2(28f, 0f); labelRect.sizeDelta = new Vector2(EffectStatusLayout.TextWidth, 25f);
+        labelRect.anchoredPosition = new Vector2(28f, 0f);
+        labelRect.sizeDelta = new Vector2(EffectStatusLayout.TextWidth, 25f);
         labelRect.localScale = Vector3.one;
         foreach (var behaviour in labelObject.GetComponents<Behaviour>())
-            if (behaviour.GetType().Name.Contains("LayoutGroup") || behaviour.GetType().Name is "ContentSizeFitter" or "LayoutElement") behaviour.enabled = false;
-        Native.Set(row.Label, "fontSize", 14f); Native.Set(row.Label, "enableAutoSizing", false);
-        Native.Set(row.Label, "enableWordWrapping", true); Native.Set(row.Label, "raycastTarget", false);
+            if (behaviour.GetType().Name.Contains("LayoutGroup") || behaviour.GetType().Name is "ContentSizeFitter" or "LayoutElement")
+                behaviour.enabled = false;
+        Native.Set(row.Label, "fontSize", 14f);
+        Native.Set(row.Label, "enableAutoSizing", false);
+        Native.Set(row.Label, "enableWordWrapping", true);
+        Native.Set(row.Label, "raycastTarget", false);
         var alignment = AccessTools.Property(row.Label.GetType(), "alignment");
         alignment?.SetValue(row.Label, Enum.Parse(alignment.PropertyType, "Left"));
         RowsCreated++;
@@ -445,5 +564,8 @@ internal static class EffectStatusKeepVisiblePatch
 internal static class EffectStatusPreserveVisibilityPatch
 {
     private static void Prefix(CharacterHealthPanel __instance, ref bool autohide)
-    { if (EffectStatusHud.KeepVisible(__instance)) autohide = false; }
+    {
+        if (EffectStatusHud.KeepVisible(__instance))
+            autohide = false;
+    }
 }

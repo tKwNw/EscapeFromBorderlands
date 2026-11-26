@@ -35,39 +35,42 @@ internal static class BackpackStorageVariants
             // Keep v1 templates available to saved inventories. Their smaller
             // pockets may contain items in the added cells; never shrink them.
             for (var version = 1; version <= CurrentLayoutVersion; version++)
-            for (var rows = 0; rows <= 2; rows++)
-            for (var columns = 0; columns <= 2; columns++)
-            {
-                var id = version == 1 ? Id(original.TemplateId, rows, columns) : CurrentId(original.TemplateId, rows, columns);
-                if (ids.Contains(id)) continue;
-                var copy = original.Copy();
-                copy.TemplateId = id;
-                copy.PresetId = Id(id, 0, 0);
-                copy.SpawnEnabled = version == CurrentLayoutVersion && columns <= MaximumColumnRoll(original);
-                copy.StorageRollVersion = version;
-                copy.StorageFamilyId = original.TemplateId;
-                copy.StorageRows = rows;
-                copy.StorageColumns = columns;
-                // C(8,4), C(8,3)/2 and C(8,2)/4, divided by seven:
-                // exactly the layout marginal of choosing four of ten boons.
-                copy.SpawnWeight = LayoutWeight(rows, columns);
-                if (version == CurrentLayoutVersion)
-                {
-                    var maximum = MaximumColumnRoll(original);
-                    if (columns > maximum) copy.SpawnWeight = 0d;
-                    else if (columns == maximum)
-                        for (var overflow = maximum + 1; overflow <= 2; overflow++) copy.SpawnWeight += LayoutWeight(rows, overflow);
-                }
-                copy.BackpackEffect = new BackpackEffectDefinition
-                {
-                    Key = original.BackpackEffect!.Key,
-                    ExtraRows = original.BackpackEffect.ExtraRows + rows,
-                    ExtraColumns = original.BackpackEffect.ExtraColumns + columns,
-                    ExtraGrids = original.BackpackEffect.ExtraGrids,
-                };
-                variants.Add(copy);
-                ids.Add(id);
-            }
+                for (var rows = 0; rows <= 2; rows++)
+                    for (var columns = 0; columns <= 2; columns++)
+                    {
+                        var id = version == 1 ? Id(original.TemplateId, rows, columns) : CurrentId(original.TemplateId, rows, columns);
+                        if (ids.Contains(id))
+                            continue;
+                        var copy = original.Copy();
+                        copy.TemplateId = id;
+                        copy.PresetId = Id(id, 0, 0);
+                        copy.SpawnEnabled = version == CurrentLayoutVersion && columns <= MaximumColumnRoll(original);
+                        copy.StorageRollVersion = version;
+                        copy.StorageFamilyId = original.TemplateId;
+                        copy.StorageRows = rows;
+                        copy.StorageColumns = columns;
+                        // C(8,4), C(8,3)/2 and C(8,2)/4, divided by seven:
+                        // exactly the layout marginal of choosing four of ten boons.
+                        copy.SpawnWeight = LayoutWeight(rows, columns);
+                        if (version == CurrentLayoutVersion)
+                        {
+                            var maximum = MaximumColumnRoll(original);
+                            if (columns > maximum)
+                                copy.SpawnWeight = 0d;
+                            else if (columns == maximum)
+                                for (var overflow = maximum + 1; overflow <= 2; overflow++)
+                                    copy.SpawnWeight += LayoutWeight(rows, overflow);
+                        }
+                        copy.BackpackEffect = new BackpackEffectDefinition
+                        {
+                            Key = original.BackpackEffect!.Key,
+                            ExtraRows = original.BackpackEffect.ExtraRows + rows,
+                            ExtraColumns = original.BackpackEffect.ExtraColumns + columns,
+                            ExtraGrids = original.BackpackEffect.ExtraGrids,
+                        };
+                        variants.Add(copy);
+                        ids.Add(id);
+                    }
         }
     }
 

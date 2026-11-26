@@ -22,10 +22,15 @@ internal static class EyewearRules
         elapsed >= 0 && elapsed <= 1 && length <= Math.Max(2, elapsed * 18);
     internal static int VictoryMeters(ref float distance, ref int rewarded, float length)
     {
-        if (length < 0 || float.IsNaN(length) || float.IsInfinity(length) || rewarded >= 50) return 0;
+        if (length < 0 || float.IsNaN(length) || float.IsInfinity(length) || rewarded >= 50)
+            return 0;
         distance += length;
         var meters = Math.Min(50 - rewarded, (int)distance);
-        if (meters > 0) { distance -= meters; rewarded += meters; }
+        if (meters > 0)
+        {
+            distance -= meters;
+            rewarded += meters;
+        }
         return meters;
     }
     internal static float HealShare(float budget, float missing, float partMissing) => missing > 0 && partMissing > 0 ?

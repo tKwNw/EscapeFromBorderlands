@@ -8,29 +8,49 @@ namespace EscapeFromBorderlands.Client;
 internal static class EarpieceMedicalAnimation
 {
     private sealed class Entry
-    { internal Player Player = null!; internal float Native, Factor; }
+    {
+        internal Player Player = null!; internal float Native, Factor;
+    }
     private static readonly Dictionary<FirearmsAnimator, Entry> Entries = new();
     private static readonly List<KeyValuePair<FirearmsAnimator, Entry>> Snapshot = new();
-    internal static void Reset() { Entries.Clear(); Snapshot.Clear(); }
+    internal static void Reset()
+    {
+        Entries.Clear();
+        Snapshot.Clear();
+    }
     internal static void Record(FirearmsAnimator animator, Player p, float native) =>
         Entries[animator] = new Entry { Player = p, Native = native, Factor = Factor(p, animator) };
     private static float Factor(Player p, FirearmsAnimator animator) => EarpieceRuntime.MedicalSpeed(p, ServiceWindow.MedicalController(p, animator)?.Item);
     internal static void Maintain()
     {
-        if (Entries.Count == 0) return;
+        if (Entries.Count == 0)
+            return;
         Snapshot.AddRange(Entries);
-        try { foreach (var pair in Snapshot)
+        try
         {
-            var e = pair.Value;
-            if (!PlayerRefresh.CanObserve(e.Player) || pair.Key == null || !ReferenceEquals(e.Player.HandsAnimator, pair.Key))
-            { Entries.Remove(pair.Key!); continue; }
-            if (ServiceWindow.MedicalController(e.Player, pair.Key) is null) { Entries.Remove(pair.Key); continue; }
-            var factor = Factor(e.Player, pair.Key);
-            if (e.Factor == factor) continue;
-            e.Factor = factor;
-            pair.Key.SetUseTimeMultiplier(e.Native);
+            foreach (var pair in Snapshot)
+            {
+                var e = pair.Value;
+                if (!PlayerRefresh.CanObserve(e.Player) || pair.Key == null || !ReferenceEquals(e.Player.HandsAnimator, pair.Key))
+                {
+                    Entries.Remove(pair.Key!);
+                    continue;
+                }
+                if (ServiceWindow.MedicalController(e.Player, pair.Key) is null)
+                {
+                    Entries.Remove(pair.Key);
+                    continue;
+                }
+                var factor = Factor(e.Player, pair.Key);
+                if (e.Factor == factor)
+                    continue;
+                e.Factor = factor;
+                pair.Key.SetUseTimeMultiplier(e.Native);
+            }
         }
+        finally
+        {
+            Snapshot.Clear();
         }
-        finally { Snapshot.Clear(); }
     }
 }

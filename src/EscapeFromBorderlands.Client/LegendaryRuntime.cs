@@ -35,7 +35,8 @@ internal static partial class LegendaryRuntime
 
     public static ShotScope? BeginShot(Weapon weapon, Ammo ammo, string profileId, int? remainingBeforeShot = null)
     {
-        if (!RarityResolver.TryGetDefinition(weapon, out var definition)) return null;
+        if (!RarityResolver.TryGetDefinition(weapon, out var definition))
+            return null;
         var previous = _shotScope;
         _shotScope = null;
         // Commit after cartridge consumption but before EFT reads combat stats.
@@ -45,14 +46,17 @@ internal static partial class LegendaryRuntime
 
     public static void EndShot(ShotScope? scope)
     {
-        if (scope is not null && ReferenceEquals(_shotScope, scope)) _shotScope = scope.Previous;
+        if (scope is not null && ReferenceEquals(_shotScope, scope))
+            _shotScope = scope.Previous;
     }
 
     internal static RarityResolver.ShotRoll? ResolveShotRoll(Item weapon)
     {
         var scope = _shotScope;
-        if (scope is null || !ReferenceEquals(scope.Weapon, weapon)) return RarityResolver.Resolve(weapon);
-        if (scope.Roll is { } roll && scope.RollItemId == weapon.Id && roll.Definition.TemplateId == weapon.StringTemplateId) return roll;
+        if (scope is null || !ReferenceEquals(scope.Weapon, weapon))
+            return RarityResolver.Resolve(weapon);
+        if (scope.Roll is { } roll && scope.RollItemId == weapon.Id && roll.Definition.TemplateId == weapon.StringTemplateId)
+            return roll;
         scope.RollItemId = weapon.Id;
         return scope.Roll = RarityResolver.Resolve(weapon);
     }
@@ -62,32 +66,49 @@ internal static partial class LegendaryRuntime
 
     public static void SetShotCenter(Weapon weapon, Vector3 direction)
     {
-        if (_shotScope?.Weapon == weapon) _shotScope.Application.ShellCenterDirection = direction.normalized;
+        if (_shotScope?.Weapon == weapon)
+            _shotScope.Application.ShellCenterDirection = direction.normalized;
     }
 
     public static int RemainingAmmo(Weapon weapon) => (weapon.GetCurrentMagazine()?.Count ?? 0) + weapon.ChamberAmmoCount;
     public static int Capacity(Weapon weapon) => Math.Max(1,
         (weapon.GetCurrentMagazine()?.MaxCount ?? weapon.GetMaxMagazineCount()) + weapon.Chambers.Length);
-    public static int ShotCount(Weapon weapon) { lock (Sync) return States.TryGetValue(weapon.Id, out var state) ? state.TotalShots : 0; }
-    public static int ReloadGeneration(Weapon weapon) { lock (Sync) return GetState(weapon.Id).ReloadGeneration; }
+    public static int ShotCount(Weapon weapon)
+    {
+        lock (Sync)
+            return States.TryGetValue(weapon.Id, out var state) ? state.TotalShots : 0;
+    }
+    public static int ReloadGeneration(Weapon weapon)
+    {
+        lock (Sync)
+            return GetState(weapon.Id).ReloadGeneration;
+    }
 
     public static void ResetSession()
     {
         lock (Sync)
         {
             ElephantGunRules.Reset();
-            States.Clear(); ActiveVolleyStates.Clear(); ShotApplications.Clear(); ShotApplicationsByKey.Clear(); HeldWeaponsByPlayer.Clear();
-            _shotScope = null; _scopeIndex = 0;
+            States.Clear();
+            ActiveVolleyStates.Clear();
+            ShotApplications.Clear();
+            ShotApplicationsByKey.Clear();
+            HeldWeaponsByPlayer.Clear();
+            _shotScope = null;
+            _scopeIndex = 0;
         }
     }
 
     public static void NotifyTriggerReleased(Weapon? weapon)
     {
-        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out _)) return;
+        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out _))
+            return;
         lock (Sync)
         {
             var state = GetState(weapon.Id);
-            state.TriggerHeldShots = 0; state.UninterruptedShots = 0; state.FullSendStacks = 0;
+            state.TriggerHeldShots = 0;
+            state.UninterruptedShots = 0;
+            state.FullSendStacks = 0;
         }
     }
 
@@ -132,7 +153,8 @@ internal static partial class LegendaryRuntime
             state.UninterruptedShots++;
             state.TotalShots++;
             state.ShotsInMagazine++;
-            if (state.MagazineCheckActive) state.ShotsSinceMagazineCheck++;
+            if (state.MagazineCheckActive)
+                state.ShotsSinceMagazineCheck++;
             if (state.LastTriggerPressed)
             {
                 state.TriggerHeldShots++;
@@ -203,7 +225,8 @@ internal static partial class LegendaryRuntime
             state.LastFireIndex = fireIndex;
             state.LastShotTime = now;
             state.LastRemainingAmmo = remainingAfterShot;
-            if (fireIndex >= 0) BeginVolleyOutcome(state, fireIndex);
+            if (fireIndex >= 0)
+                BeginVolleyOutcome(state, fireIndex);
             state.PreviousMiss = false;
             state.PreviousArmorImpact = false;
             state.PreviousLimbHit = false;
@@ -232,7 +255,9 @@ internal static partial class LegendaryRuntime
             {
                 var state = GetState(trackedWeapon.Id);
                 var volley = BeginVolleyOutcome(state, shot.FireIndex);
-                volley.Pending.Add(shot); volley.Finalized = false; volley.CompletedTime = -1f;
+                volley.Pending.Add(shot);
+                volley.Finalized = false;
+                volley.CompletedTime = -1f;
                 state.PendingVolleys[shot.FireIndex] = volley;
                 ActiveVolleyStates.Add(state);
             }
@@ -258,19 +283,22 @@ internal static partial class LegendaryRuntime
             ShotApplications.Remove(shot);
             if (shot.Weapon is Weapon weapon && States.TryGetValue(weapon.Id, out var state) && state.Volleys.TryGetValue(shot.FireIndex, out var volley))
             {
-                if (volley.Pending.Remove(shot) && volley.Pending.Count == 0 && !volley.Finalized) volley.CompletedTime = Time.time;
+                if (volley.Pending.Remove(shot) && volley.Pending.Count == 0 && !volley.Finalized)
+                    volley.CompletedTime = Time.time;
             }
         }
     }
 
     public static void RecordImpact(Shot shot)
     {
-        if (shot.Weapon is not Weapon weapon || !RarityResolver.TryGetDefinition(weapon, out _)) return;
+        if (shot.Weapon is not Weapon weapon || !RarityResolver.TryGetDefinition(weapon, out _))
+            return;
         lock (Sync)
         {
             var state = GetState(weapon.Id);
             var volley = BeginVolleyOutcome(state, shot.FireIndex);
-            if (volley.Generation != state.ReloadGeneration) return;
+            if (volley.Generation != state.ReloadGeneration)
+                return;
             if (shot.HittedBallisticCollider is BodyPartCollider body)
             {
                 var changed = !volley.AnyBodyHit || volley.ResolvedMiss;
@@ -296,13 +324,19 @@ internal static partial class LegendaryRuntime
                 // state-only streak calculations instead of two nested locks.
                 ShotApplications.TryGetValue(shot, out var application);
                 if (application?.SpecialId == "compound_interest")
-                { changed |= !volley.CompoundHit; volley.CompoundHit = true; }
+                {
+                    changed |= !volley.CompoundHit;
+                    volley.CompoundHit = true;
+                }
                 // Sibling pellets often repeat the same outcome. Preserve all
                 // per-impact flags/damage, but do not rescan unchanged history.
-                if (changed || !state.StreaksCurrent) RecalculateStreaks(state);
-                if (application?.SpecialId == "wave015_debt_collector" && state.SameTargetHits >= 4) state.DebtCollectorActive = true;
+                if (changed || !state.StreaksCurrent)
+                    RecalculateStreaks(state);
+                if (application?.SpecialId == "wave015_debt_collector" && state.SameTargetHits >= 4)
+                    state.DebtCollectorActive = true;
             }
-            else volley.AnySurfaceImpact |= shot.HittedBallisticCollider is not null;
+            else
+                volley.AnySurfaceImpact |= shot.HittedBallisticCollider is not null;
             state.PreviousRicochet |= shot.BulletState == Shot.EBulletState.RicochetHit;
             state.PreviousFragmentation |= shot.BulletState == Shot.EBulletState.FragmentationHit || shot.Fragments.Count > 1;
         }
@@ -310,11 +344,13 @@ internal static partial class LegendaryRuntime
 
     public static void RecordMiss(Shot shot)
     {
-        if (shot.Weapon is not Weapon weapon || !RarityResolver.TryGetDefinition(weapon, out _)) return;
+        if (shot.Weapon is not Weapon weapon || !RarityResolver.TryGetDefinition(weapon, out _))
+            return;
         lock (Sync)
         {
             var volley = BeginVolleyOutcome(GetState(weapon.Id), shot.FireIndex);
-            if (volley.Pending.Count == 0 && volley.CompletedTime < 0f) volley.CompletedTime = Time.time;
+            if (volley.Pending.Count == 0 && volley.CompletedTime < 0f)
+                volley.CompletedTime = Time.time;
             // Pending siblings must finish before a cartridge can be a miss.
             AdvancedLegendaryActions.DeferMissResolution(weapon.Id, shot.FireIndex);
         }
@@ -325,7 +361,8 @@ internal static partial class LegendaryRuntime
         lock (Sync)
         {
             if (!States.TryGetValue(weaponId, out var state) || !state.Volleys.TryGetValue(fireIndex, out var volley) ||
-                volley.Generation != state.ReloadGeneration || volley.AnyBodyHit || volley.Pending.Count > 0) return;
+                volley.Generation != state.ReloadGeneration || volley.AnyBodyHit || volley.Pending.Count > 0)
+                return;
             volley.ResolvedMiss = true;
             state.PreviousMiss = true;
             state.PreviousBodyHit = false;
@@ -340,7 +377,8 @@ internal static partial class LegendaryRuntime
     {
         lock (Sync)
         {
-            if (ActiveVolleyStates.Count == 0) return;
+            if (ActiveVolleyStates.Count == 0)
+                return;
             var now = Time.time;
             try
             {
@@ -355,7 +393,8 @@ internal static partial class LegendaryRuntime
                         var volley = pair.Value;
                         if (now - volley.CreatedTime > 60f)
                         {
-                            foreach (var projectile in volley.Pending) ShotApplications.Remove(projectile);
+                            foreach (var projectile in volley.Pending)
+                                ShotApplications.Remove(projectile);
                             volley.Pending.Clear();
                             volley.CompletedTime = now - 1f;
                         }
@@ -368,13 +407,18 @@ internal static partial class LegendaryRuntime
                         }
                     }
                     PendingVolleyBuffer.Clear();
-                    if (state.PendingVolleys.Count == 0) ActiveVolleyStates.Remove(state);
+                    if (state.PendingVolleys.Count == 0)
+                        ActiveVolleyStates.Remove(state);
                     // Keep a bounded outcome history, not references to finished bullets.
                     if (HistoryPruner.Prune(state.Volleys, 1024, static v => v.Finalized, static v => v.Sequence) != 0)
                         state.StreaksCurrent = false;
                 }
             }
-            finally { PendingVolleyBuffer.Clear(); VolleyStateBuffer.Clear(); }
+            finally
+            {
+                PendingVolleyBuffer.Clear();
+                VolleyStateBuffer.Clear();
+            }
         }
     }
 
@@ -409,7 +453,8 @@ internal static partial class LegendaryRuntime
             }
             var state = GetState(weapon.Id);
             var volley = BeginVolleyOutcome(state, fireIndex);
-            if (volley.FleshCounted || volley.Generation != state.ReloadGeneration) return;
+            if (volley.FleshCounted || volley.Generation != state.ReloadGeneration)
+                return;
             volley.FleshCounted = true;
             if (application.SpecialId == "wave015_dont_stop")
             {
@@ -452,19 +497,24 @@ internal static partial class LegendaryRuntime
         var profileId = player.ProfileId;
         var weapon = player.HandsController?.Item as Weapon;
         RarityResolver.TryGetDefinition(weapon, out var definition);
-        if (definition is null && !HeldWeaponsByPlayer.ContainsKey(profileId)) return;
-        lock (Sync) ObserveHeldWeaponLocked(profileId, weapon, definition, true);
+        if (definition is null && !HeldWeaponsByPlayer.ContainsKey(profileId))
+            return;
+        lock (Sync)
+            ObserveHeldWeaponLocked(profileId, weapon, definition, true);
     }
 
     private static void ObserveHeldWeaponLocked(string profileId, Weapon? weapon, VariantDefinition? definition, bool resolved)
     {
         var weaponId = weapon?.Id ?? string.Empty;
         var hadLegendary = HeldWeaponsByPlayer.TryGetValue(profileId, out var previous);
-        if (hadLegendary && string.Equals(previous, weaponId, StringComparison.Ordinal)) return;
-        if (!resolved) RarityResolver.TryGetDefinition(weapon, out definition!);
+        if (hadLegendary && string.Equals(previous, weaponId, StringComparison.Ordinal))
+            return;
+        if (!resolved)
+            RarityResolver.TryGetDefinition(weapon, out definition!);
         if (weapon is null || definition is null)
         {
-            if (hadLegendary) HeldWeaponsByPlayer.TryRemove(profileId, out _);
+            if (hadLegendary)
+                HeldWeaponsByPlayer.TryRemove(profileId, out _);
             return;
         }
         HeldWeaponsByPlayer[profileId] = weaponId;
@@ -472,12 +522,14 @@ internal static partial class LegendaryRuntime
         state.PlayerProfileId = profileId;
         state.ShotsSinceDraw = 0;
         if (definition.CustomEffect?.Trigger == "draw_next_shot" ||
-            definition.SpecialId is "zantetsuken" or "wave015_one_and_done") state.DrawEffectArmed = true;
+            definition.SpecialId is "zantetsuken" or "wave015_one_and_done")
+            state.DrawEffectArmed = true;
     }
 
     public static void NotifyChamberCheck(Weapon? weapon)
     {
-        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out _)) return;
+        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out _))
+            return;
         lock (Sync)
         {
             var state = GetState(weapon.Id);
@@ -490,7 +542,8 @@ internal static partial class LegendaryRuntime
 
     public static void NotifyMagazineCheck(Weapon? weapon)
     {
-        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out _)) return;
+        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out _))
+            return;
         lock (Sync)
         {
             var state = GetState(weapon.Id);
@@ -502,7 +555,8 @@ internal static partial class LegendaryRuntime
 
     public static void NotifyReloadCompleted(Weapon? weapon, bool emergency)
     {
-        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out _)) return;
+        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out _))
+            return;
         lock (Sync)
         {
             var state = GetState(weapon.Id);
@@ -512,34 +566,41 @@ internal static partial class LegendaryRuntime
 
     public static void NotifyInspection(Weapon? weapon)
     {
-        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out var definition)) return;
+        if (weapon is null || !RarityResolver.TryGetDefinition(weapon, out var definition))
+            return;
         lock (Sync)
         {
             var state = GetState(weapon.Id);
             ObserveReloadBoundary(state, weapon);
             state.InspectionBuffActive = true;
-            if (definition.SpecialId == "warranty_void") state.WarrantyFactoryTune = !state.WarrantyFactoryTune;
+            if (definition.SpecialId == "warranty_void")
+                state.WarrantyFactoryTune = !state.WarrantyFactoryTune;
         }
     }
 
     public static void UpdateLiveState(Player? player, Weapon? weapon)
     {
-        if (!ActorCapabilities.IsHuman(player)) return;
+        if (!ActorCapabilities.IsHuman(player))
+            return;
         RarityResolver.TryGetDefinition(weapon, out var definition);
         UpdateLiveState(player, weapon, definition);
     }
     internal static void UpdateLiveState(Player? player, Weapon? weapon, VariantDefinition? definition)
     {
-        if (!ActorCapabilities.IsHuman(player)) return;
+        if (!ActorCapabilities.IsHuman(player))
+            return;
         var held = player.HandsController?.Item as Weapon;
         var profileId = player.ProfileId;
         var heldDefinition = definition;
-        if (!ReferenceEquals(held, weapon)) RarityResolver.TryGetDefinition(held, out heldDefinition!);
-        if (heldDefinition is null && definition is null && !HeldWeaponsByPlayer.ContainsKey(profileId)) return;
+        if (!ReferenceEquals(held, weapon))
+            RarityResolver.TryGetDefinition(held, out heldDefinition!);
+        if (heldDefinition is null && definition is null && !HeldWeaponsByPlayer.ContainsKey(profileId))
+            return;
         lock (Sync)
         {
             ObserveHeldWeaponLocked(profileId, held, heldDefinition, true);
-            if (weapon is null || definition is null) return;
+            if (weapon is null || definition is null)
+                return;
             var state = GetState(weapon.Id);
             state.PlayerProfileId = profileId;
             ObserveReloadBoundary(state, weapon);
@@ -562,7 +623,8 @@ internal static partial class LegendaryRuntime
         // must never substitute a preview for that cartridge.
         if (_shotScope is not null || !WeaponStatReadBatch.IsReading(weapon))
             return new WeaponLiveStats(EvaluateLiveData(weapon, statsOnly: true));
-        if (WeaponStatReadBatch.Preview is { } preview) return preview;
+        if (WeaponStatReadBatch.Preview is { } preview)
+            return preview;
         var stats = new WeaponLiveStats(EvaluateLiveData(weapon, statsOnly: true));
         WeaponStatReadBatch.RememberPreview(weapon, stats);
         return stats;
@@ -578,7 +640,8 @@ internal static partial class LegendaryRuntime
 
         // Damage-only previews cannot affect these getters. Live human polling
         // and real cartridges still maintain their own state at their boundaries.
-        if (_shotScope?.Weapon != weapon && statsOnly && !MayChangeLiveStats(definition)) return new EffectApplicationData();
+        if (_shotScope?.Weapon != weapon && statsOnly && !MayChangeLiveStats(definition))
+            return new EffectApplicationData();
 
         // Bots keep rolled stats and the committed cartridge application. They
         // do not build live conditional previews between shots.
@@ -591,13 +654,15 @@ internal static partial class LegendaryRuntime
             var magazine = weapon.GetCurrentMagazine();
             var remaining = (magazine?.Count ?? 0) + weapon.ChamberAmmoCount;
             ObserveReloadBoundary(state, magazine?.Id ?? "internal", remaining);
-            if (_shotScope?.Weapon == weapon) return _shotScope.Application.Data;
+            if (_shotScope?.Weapon == weapon)
+                return _shotScope.Application.Data;
             var now = Time.time;
             var player = GetPlayer(state.PlayerProfileId);
             UpdateContinuousState(state, player, weapon, definition, now);
             // Preview-only optimization. Tracking still observes reload/draw,
             // HUD evaluation still sees procs, and real cartridges build the full effect.
-            if (statsOnly && !MayChangeLiveStats(definition)) return new EffectApplicationData();
+            if (statsOnly && !MayChangeLiveStats(definition))
+                return new EffectApplicationData();
             var capacity = Math.Max(1, (magazine?.MaxCount ?? weapon.GetMaxMagazineCount()) + weapon.Chambers.Length);
             var secondsSinceLastShot = state.LastShotTime < 0f ? float.MaxValue : now - state.LastShotTime;
             var preview = state.Data;
@@ -608,10 +673,15 @@ internal static partial class LegendaryRuntime
             preview.ShotsSinceDraw++;
             var mode = LegendaryFireModePatch.LogicalMode(weapon);
             if (!string.Equals(preview.LastShotFireMode, mode, StringComparison.OrdinalIgnoreCase))
-            { preview.LastShotFireMode = mode; preview.ShotsInCurrentFireMode = 0; }
+            {
+                preview.LastShotFireMode = mode;
+                preview.ShotsInCurrentFireMode = 0;
+            }
             preview.ShotsInCurrentFireMode++;
-            if (preview.MagazineCheckActive) preview.ShotsSinceMagazineCheck++;
-            if (state.LastMovingInput) preview.MovingShotsInMagazine++;
+            if (preview.MagazineCheckActive)
+                preview.ShotsSinceMagazineCheck++;
+            if (state.LastMovingInput)
+                preview.MovingShotsInMagazine++;
             var currentAmmo = weapon.CurrentAmmoTemplate;
             var currentAmmoSpeed = currentAmmo?.InitialSpeed ?? float.MaxValue;
             var context = new ShotContext(
@@ -643,7 +713,8 @@ internal static partial class LegendaryRuntime
     // Unknown or special definitions take the unchanged path.
     internal static bool MayChangeLiveStats(VariantDefinition definition)
     {
-        if (definition.CustomEffect is not null || !string.IsNullOrEmpty(definition.SpecialId)) return true;
+        if (definition.CustomEffect is not null || !string.IsNullOrEmpty(definition.SpecialId))
+            return true;
         static bool Ordinary(int index) => index is not
             (0 or 5 or 8 or 9 or 10 or 14 or 15 or 16 or 17 or 18 or 23 or 26 or 27 or 28 or 29 or 30 or 31 or 37 or 39 or 40);
         return definition.EffectKind switch
@@ -769,7 +840,11 @@ internal static partial class LegendaryRuntime
             recoilDelta -= Math.Min(custom.RecoilReductionMax, custom.RecoilReductionPerShot * Math.Max(1, rampShots));
         }
         var doubleSeal = triggerActive && Headwear.Seal(definition.TemplateId) && Headwear.Is(context.Owner, "HW030-1");
-        if (doubleSeal) { fireRateMultiplier = 1f + 2f * (fireRateMultiplier - 1f); recoilDelta = Math.Max(-.90f, 2f * recoilDelta); }
+        if (doubleSeal)
+        {
+            fireRateMultiplier = 1f + 2f * (fireRateMultiplier - 1f);
+            recoilDelta = Math.Max(-.90f, 2f * recoilDelta);
+        }
         return new EffectApplicationData()
         {
             Active = true,
@@ -933,8 +1008,10 @@ internal static partial class LegendaryRuntime
                 application.ExplosionRadius = 2f;
                 break;
             case "ak102_tenth_ammo_savant" when state.TotalShots % 10 == 0:
-                if (ammoPenetration < 40) application.DamageMultiplier = 1.45f;
-                else application.StatModifiers = new StatModifiers(recoilDelta: -0.40f);
+                if (ammoPenetration < 40)
+                    application.DamageMultiplier = 1.45f;
+                else
+                    application.StatModifiers = new StatModifiers(recoilDelta: -0.40f);
                 break;
             case "ak102_tenth_control" when state.TotalShots % 10 == 0:
                 application.StatModifiers = new StatModifiers(recoilDelta: -0.40f);
@@ -959,8 +1036,10 @@ internal static partial class LegendaryRuntime
                 application.DamageMultiplier = 1.30f;
                 break;
             case "ak105_ammo_savant":
-                if (ammoPenetration < 40) application.DamageMultiplier = 1.50f;
-                else application.StatModifiers = new StatModifiers(recoilDelta: -0.30f);
+                if (ammoPenetration < 40)
+                    application.DamageMultiplier = 1.50f;
+                else
+                    application.StatModifiers = new StatModifiers(recoilDelta: -0.30f);
                 break;
             case "ak105_ads_recoil" when context.IsAiming && context.AimSeconds >= 7f:
                 application.StatModifiers = new StatModifiers(recoilDelta: -0.45f);
@@ -1055,7 +1134,8 @@ internal static partial class LegendaryRuntime
                 break;
             case "wave015_hammer_pair" when IsFireMode(context, "burst"):
                 application.StatModifiers = new StatModifiers(fireRateMultiplier: 2f);
-                if (state.ShotsInCurrentFireMode % 2 == 0) application.DamageMultiplier = 1.50f;
+                if (state.ShotsInCurrentFireMode % 2 == 0)
+                    application.DamageMultiplier = 1.50f;
                 break;
             case "wave015_short_notice" when state.ShotsSinceDraw is >= 1 and <= 3:
                 application.DamageMultiplier = 1.75f;
@@ -1197,54 +1277,94 @@ internal static partial class LegendaryRuntime
         var key = definition.RuntimeKey;
         switch (definition.TriggerIndex)
         {
-            case 0: return state.ReloadMomentumAvailable && state.ShotsInMagazine <= definition.Number(key, 2, 5);
-            case 1: return state.MagazineCheckActive && state.ShotsSinceMagazineCheck <= definition.Number(key, 2, 4);
-            case 2: return context.SecondsSinceLastShot >= definition.Number(key, 2, 4);
-            case 3: return state.HasReloadHistory && state.ShotsInMagazine <= definition.Number(key, 2, 6);
-            case 4: return context.RemainingAmmo > 0 && context.RemainingAmmo <= 4;
-            case 5: return context.RemainingAmmo <= 1;
-            case 6: return state.TotalShots % definition.Number(key, 4, 9) == 0;
-            case 7: return definition.Automatic ? state.UninterruptedShots >= 5 : state.ShotsInMagazine >= 5;
-            case 8: return state.ConsecutiveHits >= definition.Number(key, 3, 6);
-            case 9: return state.PreviousMiss;
-            case 10: return state.PreviousArmorImpact;
-            case 11: return true;
-            case 12: return state.ShotsInMagazine % definition.Number(key, 3, 5) == 0;
-            case 13: return context.IsAiming;
-            case 14: return context.IsAiming && context.AimSeconds >= definition.Number(key, 3, 7);
-            case 15: return !context.IsAiming && context.SecondsSinceAimEnded <= 1f;
-            case 16: return !context.IsAiming;
-            case 17: return context.IsCrouched && context.Speed <= 2f;
-            case 18: return context.IsProne;
-            case 19: return context.StationarySeconds >= definition.Number(key, 3, 10);
-            case 20: return context.Speed > 0.1f && context.Speed <= 3f;
-            case 21: return context.Stamina >= 0.75f;
-            case 22: return context.Stamina <= 0.35f;
-            case 23: return state.StanceChanged;
-            case 24: return state.UninterruptedShots % definition.Number(key, 7, 10) == 0;
+            case 0:
+                return state.ReloadMomentumAvailable && state.ShotsInMagazine <= definition.Number(key, 2, 5);
+            case 1:
+                return state.MagazineCheckActive && state.ShotsSinceMagazineCheck <= definition.Number(key, 2, 4);
+            case 2:
+                return context.SecondsSinceLastShot >= definition.Number(key, 2, 4);
+            case 3:
+                return state.HasReloadHistory && state.ShotsInMagazine <= definition.Number(key, 2, 6);
+            case 4:
+                return context.RemainingAmmo > 0 && context.RemainingAmmo <= 4;
+            case 5:
+                return context.RemainingAmmo <= 1;
+            case 6:
+                return state.TotalShots % definition.Number(key, 4, 9) == 0;
+            case 7:
+                return definition.Automatic ? state.UninterruptedShots >= 5 : state.ShotsInMagazine >= 5;
+            case 8:
+                return state.ConsecutiveHits >= definition.Number(key, 3, 6);
+            case 9:
+                return state.PreviousMiss;
+            case 10:
+                return state.PreviousArmorImpact;
+            case 11:
+                return true;
+            case 12:
+                return state.ShotsInMagazine % definition.Number(key, 3, 5) == 0;
+            case 13:
+                return context.IsAiming;
+            case 14:
+                return context.IsAiming && context.AimSeconds >= definition.Number(key, 3, 7);
+            case 15:
+                return !context.IsAiming && context.SecondsSinceAimEnded <= 1f;
+            case 16:
+                return !context.IsAiming;
+            case 17:
+                return context.IsCrouched && context.Speed <= 2f;
+            case 18:
+                return context.IsProne;
+            case 19:
+                return context.StationarySeconds >= definition.Number(key, 3, 10);
+            case 20:
+                return context.Speed > 0.1f && context.Speed <= 3f;
+            case 21:
+                return context.Stamina >= 0.75f;
+            case 22:
+                return context.Stamina <= 0.35f;
+            case 23:
+                return state.StanceChanged;
+            case 24:
+                return state.UninterruptedShots % definition.Number(key, 7, 10) == 0;
             case 25:
                 var armorTarget = definition.Number(key, 2, 5);
-                if (state.ArmorHits < armorTarget) return false;
+                if (state.ArmorHits < armorTarget)
+                    return false;
                 state.ArmorHits = 0;
                 return true;
-            case 26: return state.PreviousBodyHit;
-            case 27: return state.PreviousLimbHit;
-            case 28: return context.Suppressed;
-            case 29: return !context.Suppressed;
-            case 30: return context.Subsonic;
-            case 31: return context.AboveCaliberAverageVelocity;
-            case 32: return state.PreviousRicochet;
-            case 33: return state.PreviousFragmentation;
+            case 26:
+                return state.PreviousBodyHit;
+            case 27:
+                return state.PreviousLimbHit;
+            case 28:
+                return context.Suppressed;
+            case 29:
+                return !context.Suppressed;
+            case 30:
+                return context.Subsonic;
+            case 31:
+                return context.AboveCaliberAverageVelocity;
+            case 32:
+                return state.PreviousRicochet;
+            case 33:
+                return state.PreviousFragmentation;
             case 34:
                 return context.IsAiming && (definition.Automatic ? state.TriggerHeldShots : state.UninterruptedShots) >= definition.Number(key, 5, 10);
-            case 35: return state.UninterruptedShots >= 2 && context.SecondsSinceLastShot <= 0.35f;
+            case 35:
+                return state.UninterruptedShots >= 2 && context.SecondsSinceLastShot <= 0.35f;
             case 36:
                 return context.SecondsSinceLastShot >= definition.Number(key, 1, 2);
-            case 37: return state.ReadyWallPassActive;
-            case 38: return state.ChamberBuffActive;
-            case 39: return context.RemainingAmmo >= context.Capacity * 0.75f;
-            case 40: return context.RemainingAmmo <= context.Capacity * 0.25f;
-            default: return false;
+            case 37:
+                return state.ReadyWallPassActive;
+            case 38:
+                return state.ChamberBuffActive;
+            case 39:
+                return context.RemainingAmmo >= context.Capacity * 0.75f;
+            case 40:
+                return context.RemainingAmmo <= context.Capacity * 0.25f;
+            default:
+                return false;
         }
     }
 
@@ -1281,45 +1401,144 @@ internal static partial class LegendaryRuntime
         float Percent(string key, int min, int max) => d.StepNumber(key, min, max) / 100f;
         switch (payoffIndex)
         {
-            case 0: a.DamageMultiplier = 1f + Percent(k, 40, 65); a.PenetrationMultiplier = 1f + Percent(k + "p", 12, 20); break;
-            case 1: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k, 28, 45)); break;
-            case 2: a.StatModifiers = new StatModifiers(ergonomicsDelta: d.Number(k, 25, 40) / 100f); break;
-            case 3: a.StatModifiers = new StatModifiers(accuracyDelta: -Percent(k, 35, 55)); break;
-            case 4: a.VelocityMultiplier = 1f + Percent(k, 25, 40); a.PenetrationMultiplier = 1f + Percent(k + "p", 12, 20); break;
-            case 5: a.DamageMultiplier = 1f + Percent(k, 40, 65); a.FragmentationChanceBonus = Percent(k + "f", 20, 35); break;
-            case 6: a.StatModifiers = new StatModifiers(fireRateMultiplier: 1f + Percent(k, 20, 35)); break;
-            case 7: a.DamageMultiplier = 1f + Percent(k, 40, 65); a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 20, 35)); break;
-            case 8: a.PenetrationMultiplier = 1f + Percent(k, 22, 38); a.ArmorDamageMultiplier = 1f + Percent(k + "a", 35, 60); break;
-            case 9: a.FragmentationChanceBonus = Percent(k, 25, 40); a.DamageMultiplier = 1f + Percent(k + "d", 40, 65); break;
-            case 10: a.RicochetChanceBonus = Percent(k, 45, 70); a.RicochetRetention = Percent(k + "d", 70, 90); break;
-            case 11: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 22, 35)); a.DamageMultiplier = 1.10f; break;
-            case 12: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 22, 35)); a.PenetrationMultiplier = 1.10f; break;
-            case 13: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "f", 20, 35)); a.FragmentationChanceBonus = 0.15f; break;
-            case 14: a.ExplosionDamageFactor = Math.Max(.10f, Percent(k, 65, 100) - .60f); a.ExplosionRadius = d.Decimal(k + "r", 15, 23); break;
-            case 15: a.ProjectileCount = 3; a.ProjectileDamageMultiplier = 0.70f; a.ProjectileSpreadDegrees = 1.25f; break;
-            case 16: a.ProjectileCount = 5; a.ProjectileDamageMultiplier = 0.70f; a.ProjectileSpreadDegrees = 2.25f; a.ProjectilePattern = "random_cone"; break;
-            case 17: a.ProjectileCount = 3; a.ProjectileDamageMultiplier = 0.70f; a.ProjectileSpreadDegrees = 0.75f; break;
-            case 18: a.ProjectileCount = 2; a.ProjectileDamageMultiplier = 1f; a.ProjectileSpreadDegrees = d.Decimal(k, 6, 12); break;
-            case 19:
-                if (state.TotalShots % 2 == 1) a.VelocityMultiplier = 1f + Percent(k, 30, 45);
-                else a.DamageMultiplier = 1f + Percent(k + "d", 45, 65);
+            case 0:
+                a.DamageMultiplier = 1f + Percent(k, 40, 65);
+                a.PenetrationMultiplier = 1f + Percent(k + "p", 12, 20);
                 break;
-            case 20: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 20, 35), accuracyDelta: -Percent(k, 40, 60)); a.VelocityMultiplier = 1.10f; break;
-            case 21: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 20, 35), accuracyDelta: -Percent(k, 40, 60)); a.DamageMultiplier = 1.10f; break;
-            case 22: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 30, 48)); a.ArmorDamageMultiplier = 1.20f; break;
-            case 23: a.ProjectileCount = 2; a.ProjectileDamageMultiplier = 1f; a.ProjectileSpreadDegrees = 0.25f; break;
-            case 24: a.VelocityMultiplier = 1f + Percent(k, 30, 45); a.PenetrationMultiplier = 1f + Percent(k + "p", 15, 20); a.ArmorDamageMultiplier = 1.10f; break;
-            case 25: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 30, 48)); a.VelocityMultiplier = 1.20f; break;
-            case 26: a.ProjectileCount = 3; a.ProjectileDamageMultiplier = 0.70f; a.ProjectileSpreadDegrees = 1.5f; break;
+            case 1:
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k, 28, 45));
+                break;
+            case 2:
+                a.StatModifiers = new StatModifiers(ergonomicsDelta: d.Number(k, 25, 40) / 100f);
+                break;
+            case 3:
+                a.StatModifiers = new StatModifiers(accuracyDelta: -Percent(k, 35, 55));
+                break;
+            case 4:
+                a.VelocityMultiplier = 1f + Percent(k, 25, 40);
+                a.PenetrationMultiplier = 1f + Percent(k + "p", 12, 20);
+                break;
+            case 5:
+                a.DamageMultiplier = 1f + Percent(k, 40, 65);
+                a.FragmentationChanceBonus = Percent(k + "f", 20, 35);
+                break;
+            case 6:
+                a.StatModifiers = new StatModifiers(fireRateMultiplier: 1f + Percent(k, 20, 35));
+                break;
+            case 7:
+                a.DamageMultiplier = 1f + Percent(k, 40, 65);
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 20, 35));
+                break;
+            case 8:
+                a.PenetrationMultiplier = 1f + Percent(k, 22, 38);
+                a.ArmorDamageMultiplier = 1f + Percent(k + "a", 35, 60);
+                break;
+            case 9:
+                a.FragmentationChanceBonus = Percent(k, 25, 40);
+                a.DamageMultiplier = 1f + Percent(k + "d", 40, 65);
+                break;
+            case 10:
+                a.RicochetChanceBonus = Percent(k, 45, 70);
+                a.RicochetRetention = Percent(k + "d", 70, 90);
+                break;
+            case 11:
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 22, 35));
+                a.DamageMultiplier = 1.10f;
+                break;
+            case 12:
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 22, 35));
+                a.PenetrationMultiplier = 1.10f;
+                break;
+            case 13:
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "f", 20, 35));
+                a.FragmentationChanceBonus = 0.15f;
+                break;
+            case 14:
+                a.ExplosionDamageFactor = Math.Max(.10f, Percent(k, 65, 100) - .60f);
+                a.ExplosionRadius = d.Decimal(k + "r", 15, 23);
+                break;
+            case 15:
+                a.ProjectileCount = 3;
+                a.ProjectileDamageMultiplier = 0.70f;
+                a.ProjectileSpreadDegrees = 1.25f;
+                break;
+            case 16:
+                a.ProjectileCount = 5;
+                a.ProjectileDamageMultiplier = 0.70f;
+                a.ProjectileSpreadDegrees = 2.25f;
+                a.ProjectilePattern = "random_cone";
+                break;
+            case 17:
+                a.ProjectileCount = 3;
+                a.ProjectileDamageMultiplier = 0.70f;
+                a.ProjectileSpreadDegrees = 0.75f;
+                break;
+            case 18:
+                a.ProjectileCount = 2;
+                a.ProjectileDamageMultiplier = 1f;
+                a.ProjectileSpreadDegrees = d.Decimal(k, 6, 12);
+                break;
+            case 19:
+                if (state.TotalShots % 2 == 1)
+                    a.VelocityMultiplier = 1f + Percent(k, 30, 45);
+                else
+                    a.DamageMultiplier = 1f + Percent(k + "d", 45, 65);
+                break;
+            case 20:
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 20, 35), accuracyDelta: -Percent(k, 40, 60));
+                a.VelocityMultiplier = 1.10f;
+                break;
+            case 21:
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 20, 35), accuracyDelta: -Percent(k, 40, 60));
+                a.DamageMultiplier = 1.10f;
+                break;
+            case 22:
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 30, 48));
+                a.ArmorDamageMultiplier = 1.20f;
+                break;
+            case 23:
+                a.ProjectileCount = 2;
+                a.ProjectileDamageMultiplier = 1f;
+                a.ProjectileSpreadDegrees = 0.25f;
+                break;
+            case 24:
+                a.VelocityMultiplier = 1f + Percent(k, 30, 45);
+                a.PenetrationMultiplier = 1f + Percent(k + "p", 15, 20);
+                a.ArmorDamageMultiplier = 1.10f;
+                break;
+            case 25:
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 30, 48));
+                a.VelocityMultiplier = 1.20f;
+                break;
+            case 26:
+                a.ProjectileCount = 3;
+                a.ProjectileDamageMultiplier = 0.70f;
+                a.ProjectileSpreadDegrees = 1.5f;
+                break;
             case 27:
                 var emptyFactor = 1f - Mathf.Clamp01(c.RemainingAmmo / (float)c.Capacity);
                 a.PenetrationMultiplier = 1f + Percent(k, 45, 70) * emptyFactor;
                 break;
-            case 28: a.DamageMultiplier = 1f + Percent(k, 40, 60); a.ArmorDamageMultiplier = 1f + Percent(k + "a", 35, 55); break;
-            case 29: a.ArmorDamageMultiplier = 1f + Percent(k, 50, 80); a.PenetrationMultiplier = 1f + Percent(k + "p", 15, 25); break;
-            case 30: a.DamageMultiplier = 1f + Percent(k, 50, 80); a.FragmentationChanceBonus = Percent(k + "f", 20, 35); a.ArmorDamageMultiplier = 1.20f; break;
-            case 31: a.LimbDamageMultiplier = 1.35f + Percent(k, 0, 20); break;
-            case 32: a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 20, 35)); a.PenetrationMultiplier = 1.15f; break;
+            case 28:
+                a.DamageMultiplier = 1f + Percent(k, 40, 60);
+                a.ArmorDamageMultiplier = 1f + Percent(k + "a", 35, 55);
+                break;
+            case 29:
+                a.ArmorDamageMultiplier = 1f + Percent(k, 50, 80);
+                a.PenetrationMultiplier = 1f + Percent(k + "p", 15, 25);
+                break;
+            case 30:
+                a.DamageMultiplier = 1f + Percent(k, 50, 80);
+                a.FragmentationChanceBonus = Percent(k + "f", 20, 35);
+                a.ArmorDamageMultiplier = 1.20f;
+                break;
+            case 31:
+                a.LimbDamageMultiplier = 1.35f + Percent(k, 0, 20);
+                break;
+            case 32:
+                a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 20, 35));
+                a.PenetrationMultiplier = 1.15f;
+                break;
             case 33:
                 var fireStacks = state.PayoffRampStacks;
                 var firePerShot = Percent(k, 5, 10);
@@ -1333,17 +1552,35 @@ internal static partial class LegendaryRuntime
                 a.StatModifiers = new StatModifiers(recoilDelta: -Math.Min(recoilCap, recoilPerShot * recoilStacks));
                 break;
             case 35:
-                if (ammoPenetration < 40) a.DamageMultiplier = 1f + Percent(k, 45, 65);
-                else a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 30, 45));
+                if (ammoPenetration < 40)
+                    a.DamageMultiplier = 1f + Percent(k, 45, 65);
+                else
+                    a.StatModifiers = new StatModifiers(recoilDelta: -Percent(k + "r", 30, 45));
                 break;
-            case 36: a.DamageMultiplier = 1f + Percent(k, 35, 50); a.VelocityMultiplier = 1f + Percent(k + "v", 15, 25); break;
-            case 37: a.PenetrationMultiplier = 1f + Percent(k, 20, 30); a.ArmorDamageMultiplier = 1f + Percent(k + "a", 40, 55); break;
-            case 38: a.VelocityMultiplier = 1f + Percent(k, 25, 40); a.FragmentationChanceBonus = Percent(k + "f", 20, 30); break;
-            case 39: a.DamageMultiplier = 1f + Percent(k, 45, 60); a.ArmorDamageMultiplier = 1f + Percent(k + "a", 30, 45); break;
-            case 40: a.LimbDamageMultiplier = 1f + Percent(k, 30, 45); a.PenetrationMultiplier = 1f + Percent(k + "p", 15, 25); break;
+            case 36:
+                a.DamageMultiplier = 1f + Percent(k, 35, 50);
+                a.VelocityMultiplier = 1f + Percent(k + "v", 15, 25);
+                break;
+            case 37:
+                a.PenetrationMultiplier = 1f + Percent(k, 20, 30);
+                a.ArmorDamageMultiplier = 1f + Percent(k + "a", 40, 55);
+                break;
+            case 38:
+                a.VelocityMultiplier = 1f + Percent(k, 25, 40);
+                a.FragmentationChanceBonus = Percent(k + "f", 20, 30);
+                break;
+            case 39:
+                a.DamageMultiplier = 1f + Percent(k, 45, 60);
+                a.ArmorDamageMultiplier = 1f + Percent(k + "a", 30, 45);
+                break;
+            case 40:
+                a.LimbDamageMultiplier = 1f + Percent(k, 30, 45);
+                a.PenetrationMultiplier = 1f + Percent(k + "p", 15, 25);
+                break;
         }
 
-        if (d.TriggerIndex == 4) a.DamageMultiplier *= 2f;
+        if (d.TriggerIndex == 4)
+            a.DamageMultiplier *= 2f;
         if (d.WeaponClass == "machinegun" && d.TriggerIndex == 5)
         {
             a.DamageMultiplier *= 2.5f;
@@ -1357,19 +1594,53 @@ internal static partial class LegendaryRuntime
         var a = new EffectApplicationData() { Active = true };
         switch (d.PayoffIndex)
         {
-            case 0: a.DamageMultiplier = 1.70f; break;
-            case 1: a.VelocityMultiplier = 1.50f; break;
-            case 2: a.PenetrationMultiplier = 1.45f; break;
-            case 3: a.DamageMultiplier = 1.80f; break;
-            case 4: a.StatModifiers = new StatModifiers(fireRateMultiplier: 1.40f); a.VelocityMultiplier = 1.45f; break;
-            case 5: a.StatModifiers = new StatModifiers(recoilDelta: -0.60f); break;
-            case 6: a.PenetrationMultiplier = 1.50f; a.ArmorDamageMultiplier = 1.85f; break;
-            case 7: a.VelocityMultiplier = 1.50f; a.PenetrationMultiplier = 1.30f; break;
-            case 8: a.VelocityMultiplier = 1.50f; a.PenetrationMultiplier = 1.30f; a.ArmorDamageMultiplier = 1.20f; break;
-            case 9: a.DamageMultiplier = 1.70f; a.FragmentationChanceBonus = 0.45f; break;
-            case 10: a.ArmorDamageMultiplier = 1.90f; a.PenetrationMultiplier = 1.30f; break;
-            case 11: a.PenetrationMultiplier = 1.50f; a.DamageMultiplier = 1.75f; break;
-            case 12: a.ArmorDamageMultiplier = 1.50f; break;
+            case 0:
+                a.DamageMultiplier = 1.70f;
+                break;
+            case 1:
+                a.VelocityMultiplier = 1.50f;
+                break;
+            case 2:
+                a.PenetrationMultiplier = 1.45f;
+                break;
+            case 3:
+                a.DamageMultiplier = 1.80f;
+                break;
+            case 4:
+                a.StatModifiers = new StatModifiers(fireRateMultiplier: 1.40f);
+                a.VelocityMultiplier = 1.45f;
+                break;
+            case 5:
+                a.StatModifiers = new StatModifiers(recoilDelta: -0.60f);
+                break;
+            case 6:
+                a.PenetrationMultiplier = 1.50f;
+                a.ArmorDamageMultiplier = 1.85f;
+                break;
+            case 7:
+                a.VelocityMultiplier = 1.50f;
+                a.PenetrationMultiplier = 1.30f;
+                break;
+            case 8:
+                a.VelocityMultiplier = 1.50f;
+                a.PenetrationMultiplier = 1.30f;
+                a.ArmorDamageMultiplier = 1.20f;
+                break;
+            case 9:
+                a.DamageMultiplier = 1.70f;
+                a.FragmentationChanceBonus = 0.45f;
+                break;
+            case 10:
+                a.ArmorDamageMultiplier = 1.90f;
+                a.PenetrationMultiplier = 1.30f;
+                break;
+            case 11:
+                a.PenetrationMultiplier = 1.50f;
+                a.DamageMultiplier = 1.75f;
+                break;
+            case 12:
+                a.ArmorDamageMultiplier = 1.50f;
+                break;
         }
         return a;
     }
@@ -1377,20 +1648,41 @@ internal static partial class LegendaryRuntime
     private static EffectApplicationData BuildLauncherApplication(VariantDefinition d, ref WeaponStateData state, ShotContext context)
     {
         var active = d.EffectKind == "launcher_meme" || EvaluateLauncherTrigger(d, ref state, context);
-        if (!active) return new EffectApplicationData();
+        if (!active)
+            return new EffectApplicationData();
         var a = new EffectApplicationData() { Active = true };
         var payoff = d.PayoffIndex;
         switch (payoff)
         {
-            case 0: a.VelocityMultiplier = 1.35f; break;
-            case 1: a.DamageMultiplier = 1.65f; break;
-            case 2: a.FragmentationChanceBonus = 0.50f; break;
-            case 3: a.VelocityMultiplier = 1.25f; a.PenetrationMultiplier = 1.20f; break;
-            case 4: a.StatModifiers = new StatModifiers(accuracyDelta: -0.45f); break;
-            case 5: a.DamageMultiplier = 1.65f; a.PenetrationMultiplier = 1.25f; break;
-            case 6: a.StatModifiers = new StatModifiers(recoilDelta: -0.45f); break;
-            case 7: a.StatModifiers = new StatModifiers(accuracyDelta: -0.60f); break;
-            case 8: a.ArmorDamageMultiplier = 1.70f; break;
+            case 0:
+                a.VelocityMultiplier = 1.35f;
+                break;
+            case 1:
+                a.DamageMultiplier = 1.65f;
+                break;
+            case 2:
+                a.FragmentationChanceBonus = 0.50f;
+                break;
+            case 3:
+                a.VelocityMultiplier = 1.25f;
+                a.PenetrationMultiplier = 1.20f;
+                break;
+            case 4:
+                a.StatModifiers = new StatModifiers(accuracyDelta: -0.45f);
+                break;
+            case 5:
+                a.DamageMultiplier = 1.65f;
+                a.PenetrationMultiplier = 1.25f;
+                break;
+            case 6:
+                a.StatModifiers = new StatModifiers(recoilDelta: -0.45f);
+                break;
+            case 7:
+                a.StatModifiers = new StatModifiers(accuracyDelta: -0.60f);
+                break;
+            case 8:
+                a.ArmorDamageMultiplier = 1.70f;
+                break;
         }
         return a;
     }
@@ -1436,23 +1728,47 @@ internal static partial class LegendaryRuntime
         var a = new EffectApplicationData() { Active = true };
         switch (d.PayoffIndex)
         {
-            case 0: a.DamageMultiplier = 1.65f; break;
-            case 1: a.DamageMultiplier = 1.35f; break;
-            case 2: a.VelocityMultiplier = 1.45f; break;
-            case 3: a.PenetrationMultiplier = 1.40f; break;
-            case 4: a.FragmentationChanceBonus = 0.60f; break;
-            case 5: a.VelocityMultiplier = 1.25f; break;
-            case 6: a.StatModifiers = new StatModifiers(accuracyDelta: -0.50f); break;
-            case 7: a.VelocityMultiplier = 1.45f; a.PenetrationMultiplier = 1.30f; break;
-            case 8: a.ArmorDamageMultiplier = 1.55f; a.PenetrationMultiplier = 1.25f; break;
-            default: a.VelocityMultiplier = 1.40f; a.DamageMultiplier = 1.30f; break;
+            case 0:
+                a.DamageMultiplier = 1.65f;
+                break;
+            case 1:
+                a.DamageMultiplier = 1.35f;
+                break;
+            case 2:
+                a.VelocityMultiplier = 1.45f;
+                break;
+            case 3:
+                a.PenetrationMultiplier = 1.40f;
+                break;
+            case 4:
+                a.FragmentationChanceBonus = 0.60f;
+                break;
+            case 5:
+                a.VelocityMultiplier = 1.25f;
+                break;
+            case 6:
+                a.StatModifiers = new StatModifiers(accuracyDelta: -0.50f);
+                break;
+            case 7:
+                a.VelocityMultiplier = 1.45f;
+                a.PenetrationMultiplier = 1.30f;
+                break;
+            case 8:
+                a.ArmorDamageMultiplier = 1.55f;
+                a.PenetrationMultiplier = 1.25f;
+                break;
+            default:
+                a.VelocityMultiplier = 1.40f;
+                a.DamageMultiplier = 1.30f;
+                break;
         }
         return a;
     }
 
     private static void UpdateContinuousState(WeaponState state, Player? player, Weapon weapon, VariantDefinition definition, float now)
     {
-        if (player?.IsAI == true) return;
+        if (player?.IsAI == true)
+            return;
         var hands = player?.HandsController;
         var ordinary = definition.EffectKind == "ordinary";
         var meme = definition.EffectKind == "meme";
@@ -1463,58 +1779,62 @@ internal static partial class LegendaryRuntime
         var aiming = trackAim && (hands?.IsAiming ?? false);
         if (trackAim)
         {
-        if (aiming && !state.LastAiming) state.AimStartTime = now;
-        if (!aiming && state.LastAiming)
-        {
-            state.LastAimEndTime = now;
-            state.AdsEffectConsumed = false;
-        }
-        state.LastAiming = aiming;
+            if (aiming && !state.LastAiming)
+                state.AimStartTime = now;
+            if (!aiming && state.LastAiming)
+            {
+                state.LastAimEndTime = now;
+                state.AdsEffectConsumed = false;
+            }
+            state.LastAiming = aiming;
         }
 
         if (trackStill)
         {
-        var speed = player?.Velocity.magnitude ?? 0f;
-        if (speed <= 0.1f)
-        {
-            if (state.StationaryStartTime < 0f) state.StationaryStartTime = now;
-        }
-        else
-        {
-            state.StationaryStartTime = -1f;
-            state.StationaryEffectConsumed = false;
-            state.AdsEffectConsumed = false;
-            if (aiming) state.AimStartTime = now;
-        }
+            var speed = player?.Velocity.magnitude ?? 0f;
+            if (speed <= 0.1f)
+            {
+                if (state.StationaryStartTime < 0f)
+                    state.StationaryStartTime = now;
+            }
+            else
+            {
+                state.StationaryStartTime = -1f;
+                state.StationaryEffectConsumed = false;
+                state.AdsEffectConsumed = false;
+                if (aiming)
+                    state.AimStartTime = now;
+            }
         }
 
         if (full)
         {
-        var moving = (player?.InputDirection.sqrMagnitude ?? 0f) > 0.0001f;
-        if (!moving && state.LastMovingInput && definition.SpecialId is "wave015_running_start" or "wave015_walking_fire")
-            state.TriggerHeldShots = 0;
-        state.LastMovingInput = moving;
+            var moving = (player?.InputDirection.sqrMagnitude ?? 0f) > 0.0001f;
+            if (!moving && state.LastMovingInput && definition.SpecialId is "wave015_running_start" or "wave015_walking_fire")
+                state.TriggerHeldShots = 0;
+            state.LastMovingInput = moving;
         }
 
         if (full || ordinary && trigger == 23)
         {
-        var pose = player?.Pose;
-        if (state.LastPose.HasValue && state.LastPose != pose)
-        {
-            state.StanceChanged = true;
-        }
-        state.LastPose = pose;
+            var pose = player?.Pose;
+            if (state.LastPose.HasValue && state.LastPose != pose)
+            {
+                state.StanceChanged = true;
+            }
+            state.LastPose = pose;
         }
 
         if (full || meme && trigger == 6)
         {
-        var fireMode = LegendaryFireModePatch.LogicalFireMode(weapon);
-        if (state.LastFireMode.HasValue && state.LastFireMode.Value != fireMode)
-        {
-            state.SelectorChanges++;
-            if (state.SelectorChanges >= 2) state.SelectorBuffActive = true;
-        }
-        state.LastFireMode = fireMode;
+            var fireMode = LegendaryFireModePatch.LogicalFireMode(weapon);
+            if (state.LastFireMode.HasValue && state.LastFireMode.Value != fireMode)
+            {
+                state.SelectorChanges++;
+                if (state.SelectorChanges >= 2)
+                    state.SelectorBuffActive = true;
+            }
+            state.LastFireMode = fireMode;
         }
 
         var triggerPressed = hands is Player.FirearmController controller && LegendaryFireModePatch.IsHeld(controller);
@@ -1594,12 +1914,14 @@ internal static partial class LegendaryRuntime
         {
             foreach (var entry in state.Volleys.Values)
             {
-                if (entry.Generation != state.ReloadGeneration) continue;
+                if (entry.Generation != state.ReloadGeneration)
+                    continue;
                 needsSort |= entry.Sequence < last;
                 last = entry.Sequence;
                 OrderedOutcomes.Add((entry, OrderedOutcomes.Count));
             }
-            if (needsSort) OrderedOutcomes.Sort(CompareOutcomes);
+            if (needsSort)
+                OrderedOutcomes.Sort(CompareOutcomes);
             foreach (var entry in OrderedOutcomes)
             {
                 var volley = entry.Volley;
@@ -1612,7 +1934,8 @@ internal static partial class LegendaryRuntime
                 else if (volley.AnyBodyHit)
                 {
                     state.ConsecutiveHits++;
-                    if (volley.CompoundHit) state.CompoundInterestStacks = Math.Min(15, state.CompoundInterestStacks + 1);
+                    if (volley.CompoundHit)
+                        state.CompoundInterestStacks = Math.Min(15, state.CompoundInterestStacks + 1);
                     state.SameTargetHits = volley.TargetId == state.LastTargetProfileId && volley.TargetId.Length > 0 ? state.SameTargetHits + 1 : 1;
                     state.LastTargetProfileId = volley.TargetId;
                     state.SameBodyPartHits = volley.TargetId == state.LastBodyPartTargetProfileId && volley.BodyPart == state.LastBodyPart && volley.TargetId.Length > 0 ? state.SameBodyPartHits + 1 : 1;
@@ -1621,7 +1944,10 @@ internal static partial class LegendaryRuntime
                 }
             }
         }
-        finally { OrderedOutcomes.Clear(); }
+        finally
+        {
+            OrderedOutcomes.Clear();
+        }
         state.StreaksCurrent = true;
     }
 
@@ -1639,7 +1965,8 @@ internal static partial class LegendaryRuntime
         var magazine = weapon.GetCurrentMagazine();
         var magazineId = magazine?.Id ?? "internal";
         if (state.LastRemainingAmmo >= 0 && state.MagazineId.Length != 0 &&
-            string.Equals(state.MagazineId, magazineId, StringComparison.Ordinal)) return false;
+            string.Equals(state.MagazineId, magazineId, StringComparison.Ordinal))
+            return false;
         return ObserveReloadBoundary(state, magazineId, (magazine?.Count ?? 0) + weapon.ChamberAmmoCount);
     }
 
@@ -1741,152 +2068,526 @@ internal static partial class LegendaryRuntime
         public WeaponStateData Data = new();
         public Dictionary<int, VolleyOutcome> Volleys { get; } = new();
         public Dictionary<int, VolleyOutcome> PendingVolleys { get; } = new();
-        public string WeaponId { get => Data.WeaponId; set => Data.WeaponId = value; }
-        public string MagazineId { get => Data.MagazineId; set => Data.MagazineId = value; }
-        public int LastFireIndex { get => Data.LastFireIndex; set => Data.LastFireIndex = value; }
-        public int LastShotFrame { get => Data.LastShotFrame; set => Data.LastShotFrame = value; }
-        public EffectApplication? LastApplication { get => Data.LastApplication; set => Data.LastApplication = value; }
-        public int TotalShots { get => Data.TotalShots; set => Data.TotalShots = value; }
-        public int ShotsInMagazine { get => Data.ShotsInMagazine; set => Data.ShotsInMagazine = value; }
-        public int UninterruptedShots { get => Data.UninterruptedShots; set => Data.UninterruptedShots = value; }
-        public int LastRemainingAmmo { get => Data.LastRemainingAmmo; set => Data.LastRemainingAmmo = value; }
-        public float LastShotTime { get => Data.LastShotTime; set => Data.LastShotTime = value; }
-        public bool HasReloadHistory { get => Data.HasReloadHistory; set => Data.HasReloadHistory = value; }
-        public bool EmergencyReloadActive { get => Data.EmergencyReloadActive; set => Data.EmergencyReloadActive = value; }
-        public bool MagazineCheckActive { get => Data.MagazineCheckActive; set => Data.MagazineCheckActive = value; }
-        public int ShotsSinceMagazineCheck { get => Data.ShotsSinceMagazineCheck; set => Data.ShotsSinceMagazineCheck = value; }
-        public bool InspectionBuffActive { get => Data.InspectionBuffActive; set => Data.InspectionBuffActive = value; }
-        public bool ChamberBuffActive { get => Data.ChamberBuffActive; set => Data.ChamberBuffActive = value; }
-        public bool SelectorBuffActive { get => Data.SelectorBuffActive; set => Data.SelectorBuffActive = value; }
-        public bool ReadyWallPassActive { get => Data.ReadyWallPassActive; set => Data.ReadyWallPassActive = value; }
-        public bool ReloadMomentumAvailable { get => Data.ReloadMomentumAvailable; set => Data.ReloadMomentumAvailable = value; }
-        public int ConsecutiveHits { get => Data.ConsecutiveHits; set => Data.ConsecutiveHits = value; }
-        public int ArmorHits { get => Data.ArmorHits; set => Data.ArmorHits = value; }
-        public int CompoundInterestStacks { get => Data.CompoundInterestStacks; set => Data.CompoundInterestStacks = value; }
-        public int FullSendStacks { get => Data.FullSendStacks; set => Data.FullSendStacks = value; }
-        public bool PreviousMiss { get => Data.PreviousMiss; set => Data.PreviousMiss = value; }
-        public bool PreviousArmorImpact { get => Data.PreviousArmorImpact; set => Data.PreviousArmorImpact = value; }
-        public bool PreviousLimbHit { get => Data.PreviousLimbHit; set => Data.PreviousLimbHit = value; }
-        public bool PreviousSurfaceImpact { get => Data.PreviousSurfaceImpact; set => Data.PreviousSurfaceImpact = value; }
-        public bool PreviousBodyHit { get => Data.PreviousBodyHit; set => Data.PreviousBodyHit = value; }
-        public bool PreviousRicochet { get => Data.PreviousRicochet; set => Data.PreviousRicochet = value; }
-        public bool PreviousFragmentation { get => Data.PreviousFragmentation; set => Data.PreviousFragmentation = value; }
-        public bool ChamberChecked { get => Data.ChamberChecked; set => Data.ChamberChecked = value; }
-        public int PayoffRampStacks { get => Data.PayoffRampStacks; set => Data.PayoffRampStacks = value; }
-        public bool WarrantyFactoryTune { get => Data.WarrantyFactoryTune; set => Data.WarrantyFactoryTune = value; }
-        public bool LastAiming { get => Data.LastAiming; set => Data.LastAiming = value; }
-        public bool AdsEffectConsumed { get => Data.AdsEffectConsumed; set => Data.AdsEffectConsumed = value; }
-        public float AimStartTime { get => Data.AimStartTime; set => Data.AimStartTime = value; }
-        public float LastAimEndTime { get => Data.LastAimEndTime; set => Data.LastAimEndTime = value; }
-        public float StationaryStartTime { get => Data.StationaryStartTime; set => Data.StationaryStartTime = value; }
-        public bool StationaryEffectConsumed { get => Data.StationaryEffectConsumed; set => Data.StationaryEffectConsumed = value; }
-        public EPlayerPose? LastPose { get; set; }
-        public bool StanceChanged { get => Data.StanceChanged; set => Data.StanceChanged = value; }
-        public Weapon.EFireMode? LastFireMode { get; set; }
-        public int SelectorChanges { get => Data.SelectorChanges; set => Data.SelectorChanges = value; }
-        public bool LastTriggerPressed { get => Data.LastTriggerPressed; set => Data.LastTriggerPressed = value; }
-        public bool LastMovingInput { get => Data.LastMovingInput; set => Data.LastMovingInput = value; }
-        public int ReloadGeneration { get => Data.ReloadGeneration; set => Data.ReloadGeneration = value; }
-        public int TriggerHeldShots { get => Data.TriggerHeldShots; set => Data.TriggerHeldShots = value; }
-        public int MovingShotsInMagazine { get => Data.MovingShotsInMagazine; set => Data.MovingShotsInMagazine = value; }
-        public int FleshHitsInMagazine { get => Data.FleshHitsInMagazine; set => Data.FleshHitsInMagazine = value; }
-        public int AmmoTransferFleshHits { get => Data.AmmoTransferFleshHits; set => Data.AmmoTransferFleshHits = value; }
-        public bool DrawEffectArmed { get => Data.DrawEffectArmed; set => Data.DrawEffectArmed = value; }
-        public int ShotsSinceDraw { get => Data.ShotsSinceDraw; set => Data.ShotsSinceDraw = value; }
-        public string LastShotFireMode { get => Data.LastShotFireMode; set => Data.LastShotFireMode = value; }
-        public int ShotsInCurrentFireMode { get => Data.ShotsInCurrentFireMode; set => Data.ShotsInCurrentFireMode = value; }
-        public bool SmokeDeployedThisMagazine { get => Data.SmokeDeployedThisMagazine; set => Data.SmokeDeployedThisMagazine = value; }
-        public string LastTargetProfileId { get => Data.LastTargetProfileId; set => Data.LastTargetProfileId = value; }
-        public int SameTargetHits { get => Data.SameTargetHits; set => Data.SameTargetHits = value; }
-        public string LastBodyPartTargetProfileId { get => Data.LastBodyPartTargetProfileId; set => Data.LastBodyPartTargetProfileId = value; }
-        public string LastBodyPart { get => Data.LastBodyPart; set => Data.LastBodyPart = value; }
-        public int SameBodyPartHits { get => Data.SameBodyPartHits; set => Data.SameBodyPartHits = value; }
-        public bool DebtCollectorActive { get => Data.DebtCollectorActive; set => Data.DebtCollectorActive = value; }
-        public int VolleyFireIndex { get => Data.VolleyFireIndex; set => Data.VolleyFireIndex = value; }
-        public bool VolleyAnyBodyHit { get => Data.VolleyAnyBodyHit; set => Data.VolleyAnyBodyHit = value; }
-        public bool VolleyAnySurfaceImpact { get => Data.VolleyAnySurfaceImpact; set => Data.VolleyAnySurfaceImpact = value; }
-        public bool VolleyHitCounted { get => Data.VolleyHitCounted; set => Data.VolleyHitCounted = value; }
-        public bool VolleyArmorHitCounted { get => Data.VolleyArmorHitCounted; set => Data.VolleyArmorHitCounted = value; }
-        public bool VolleyCompoundInterestCounted { get => Data.VolleyCompoundInterestCounted; set => Data.VolleyCompoundInterestCounted = value; }
-        public bool VolleyTargetHitCounted { get => Data.VolleyTargetHitCounted; set => Data.VolleyTargetHitCounted = value; }
-        public int VolleyStartingConsecutiveHits { get => Data.VolleyStartingConsecutiveHits; set => Data.VolleyStartingConsecutiveHits = value; }
-        public int VolleyStartingCompoundInterestStacks { get => Data.VolleyStartingCompoundInterestStacks; set => Data.VolleyStartingCompoundInterestStacks = value; }
-        public string PlayerProfileId { get => Data.PlayerProfileId; set => Data.PlayerProfileId = value; }
+        public string WeaponId
+        {
+            get => Data.WeaponId; set => Data.WeaponId = value;
+        }
+        public string MagazineId
+        {
+            get => Data.MagazineId; set => Data.MagazineId = value;
+        }
+        public int LastFireIndex
+        {
+            get => Data.LastFireIndex; set => Data.LastFireIndex = value;
+        }
+        public int LastShotFrame
+        {
+            get => Data.LastShotFrame; set => Data.LastShotFrame = value;
+        }
+        public EffectApplication? LastApplication
+        {
+            get => Data.LastApplication; set => Data.LastApplication = value;
+        }
+        public int TotalShots
+        {
+            get => Data.TotalShots; set => Data.TotalShots = value;
+        }
+        public int ShotsInMagazine
+        {
+            get => Data.ShotsInMagazine; set => Data.ShotsInMagazine = value;
+        }
+        public int UninterruptedShots
+        {
+            get => Data.UninterruptedShots; set => Data.UninterruptedShots = value;
+        }
+        public int LastRemainingAmmo
+        {
+            get => Data.LastRemainingAmmo; set => Data.LastRemainingAmmo = value;
+        }
+        public float LastShotTime
+        {
+            get => Data.LastShotTime; set => Data.LastShotTime = value;
+        }
+        public bool HasReloadHistory
+        {
+            get => Data.HasReloadHistory; set => Data.HasReloadHistory = value;
+        }
+        public bool EmergencyReloadActive
+        {
+            get => Data.EmergencyReloadActive; set => Data.EmergencyReloadActive = value;
+        }
+        public bool MagazineCheckActive
+        {
+            get => Data.MagazineCheckActive; set => Data.MagazineCheckActive = value;
+        }
+        public int ShotsSinceMagazineCheck
+        {
+            get => Data.ShotsSinceMagazineCheck; set => Data.ShotsSinceMagazineCheck = value;
+        }
+        public bool InspectionBuffActive
+        {
+            get => Data.InspectionBuffActive; set => Data.InspectionBuffActive = value;
+        }
+        public bool ChamberBuffActive
+        {
+            get => Data.ChamberBuffActive; set => Data.ChamberBuffActive = value;
+        }
+        public bool SelectorBuffActive
+        {
+            get => Data.SelectorBuffActive; set => Data.SelectorBuffActive = value;
+        }
+        public bool ReadyWallPassActive
+        {
+            get => Data.ReadyWallPassActive; set => Data.ReadyWallPassActive = value;
+        }
+        public bool ReloadMomentumAvailable
+        {
+            get => Data.ReloadMomentumAvailable; set => Data.ReloadMomentumAvailable = value;
+        }
+        public int ConsecutiveHits
+        {
+            get => Data.ConsecutiveHits; set => Data.ConsecutiveHits = value;
+        }
+        public int ArmorHits
+        {
+            get => Data.ArmorHits; set => Data.ArmorHits = value;
+        }
+        public int CompoundInterestStacks
+        {
+            get => Data.CompoundInterestStacks; set => Data.CompoundInterestStacks = value;
+        }
+        public int FullSendStacks
+        {
+            get => Data.FullSendStacks; set => Data.FullSendStacks = value;
+        }
+        public bool PreviousMiss
+        {
+            get => Data.PreviousMiss; set => Data.PreviousMiss = value;
+        }
+        public bool PreviousArmorImpact
+        {
+            get => Data.PreviousArmorImpact; set => Data.PreviousArmorImpact = value;
+        }
+        public bool PreviousLimbHit
+        {
+            get => Data.PreviousLimbHit; set => Data.PreviousLimbHit = value;
+        }
+        public bool PreviousSurfaceImpact
+        {
+            get => Data.PreviousSurfaceImpact; set => Data.PreviousSurfaceImpact = value;
+        }
+        public bool PreviousBodyHit
+        {
+            get => Data.PreviousBodyHit; set => Data.PreviousBodyHit = value;
+        }
+        public bool PreviousRicochet
+        {
+            get => Data.PreviousRicochet; set => Data.PreviousRicochet = value;
+        }
+        public bool PreviousFragmentation
+        {
+            get => Data.PreviousFragmentation; set => Data.PreviousFragmentation = value;
+        }
+        public bool ChamberChecked
+        {
+            get => Data.ChamberChecked; set => Data.ChamberChecked = value;
+        }
+        public int PayoffRampStacks
+        {
+            get => Data.PayoffRampStacks; set => Data.PayoffRampStacks = value;
+        }
+        public bool WarrantyFactoryTune
+        {
+            get => Data.WarrantyFactoryTune; set => Data.WarrantyFactoryTune = value;
+        }
+        public bool LastAiming
+        {
+            get => Data.LastAiming; set => Data.LastAiming = value;
+        }
+        public bool AdsEffectConsumed
+        {
+            get => Data.AdsEffectConsumed; set => Data.AdsEffectConsumed = value;
+        }
+        public float AimStartTime
+        {
+            get => Data.AimStartTime; set => Data.AimStartTime = value;
+        }
+        public float LastAimEndTime
+        {
+            get => Data.LastAimEndTime; set => Data.LastAimEndTime = value;
+        }
+        public float StationaryStartTime
+        {
+            get => Data.StationaryStartTime; set => Data.StationaryStartTime = value;
+        }
+        public bool StationaryEffectConsumed
+        {
+            get => Data.StationaryEffectConsumed; set => Data.StationaryEffectConsumed = value;
+        }
+        public EPlayerPose? LastPose
+        {
+            get; set;
+        }
+        public bool StanceChanged
+        {
+            get => Data.StanceChanged; set => Data.StanceChanged = value;
+        }
+        public Weapon.EFireMode? LastFireMode
+        {
+            get; set;
+        }
+        public int SelectorChanges
+        {
+            get => Data.SelectorChanges; set => Data.SelectorChanges = value;
+        }
+        public bool LastTriggerPressed
+        {
+            get => Data.LastTriggerPressed; set => Data.LastTriggerPressed = value;
+        }
+        public bool LastMovingInput
+        {
+            get => Data.LastMovingInput; set => Data.LastMovingInput = value;
+        }
+        public int ReloadGeneration
+        {
+            get => Data.ReloadGeneration; set => Data.ReloadGeneration = value;
+        }
+        public int TriggerHeldShots
+        {
+            get => Data.TriggerHeldShots; set => Data.TriggerHeldShots = value;
+        }
+        public int MovingShotsInMagazine
+        {
+            get => Data.MovingShotsInMagazine; set => Data.MovingShotsInMagazine = value;
+        }
+        public int FleshHitsInMagazine
+        {
+            get => Data.FleshHitsInMagazine; set => Data.FleshHitsInMagazine = value;
+        }
+        public int AmmoTransferFleshHits
+        {
+            get => Data.AmmoTransferFleshHits; set => Data.AmmoTransferFleshHits = value;
+        }
+        public bool DrawEffectArmed
+        {
+            get => Data.DrawEffectArmed; set => Data.DrawEffectArmed = value;
+        }
+        public int ShotsSinceDraw
+        {
+            get => Data.ShotsSinceDraw; set => Data.ShotsSinceDraw = value;
+        }
+        public string LastShotFireMode
+        {
+            get => Data.LastShotFireMode; set => Data.LastShotFireMode = value;
+        }
+        public int ShotsInCurrentFireMode
+        {
+            get => Data.ShotsInCurrentFireMode; set => Data.ShotsInCurrentFireMode = value;
+        }
+        public bool SmokeDeployedThisMagazine
+        {
+            get => Data.SmokeDeployedThisMagazine; set => Data.SmokeDeployedThisMagazine = value;
+        }
+        public string LastTargetProfileId
+        {
+            get => Data.LastTargetProfileId; set => Data.LastTargetProfileId = value;
+        }
+        public int SameTargetHits
+        {
+            get => Data.SameTargetHits; set => Data.SameTargetHits = value;
+        }
+        public string LastBodyPartTargetProfileId
+        {
+            get => Data.LastBodyPartTargetProfileId; set => Data.LastBodyPartTargetProfileId = value;
+        }
+        public string LastBodyPart
+        {
+            get => Data.LastBodyPart; set => Data.LastBodyPart = value;
+        }
+        public int SameBodyPartHits
+        {
+            get => Data.SameBodyPartHits; set => Data.SameBodyPartHits = value;
+        }
+        public bool DebtCollectorActive
+        {
+            get => Data.DebtCollectorActive; set => Data.DebtCollectorActive = value;
+        }
+        public int VolleyFireIndex
+        {
+            get => Data.VolleyFireIndex; set => Data.VolleyFireIndex = value;
+        }
+        public bool VolleyAnyBodyHit
+        {
+            get => Data.VolleyAnyBodyHit; set => Data.VolleyAnyBodyHit = value;
+        }
+        public bool VolleyAnySurfaceImpact
+        {
+            get => Data.VolleyAnySurfaceImpact; set => Data.VolleyAnySurfaceImpact = value;
+        }
+        public bool VolleyHitCounted
+        {
+            get => Data.VolleyHitCounted; set => Data.VolleyHitCounted = value;
+        }
+        public bool VolleyArmorHitCounted
+        {
+            get => Data.VolleyArmorHitCounted; set => Data.VolleyArmorHitCounted = value;
+        }
+        public bool VolleyCompoundInterestCounted
+        {
+            get => Data.VolleyCompoundInterestCounted; set => Data.VolleyCompoundInterestCounted = value;
+        }
+        public bool VolleyTargetHitCounted
+        {
+            get => Data.VolleyTargetHitCounted; set => Data.VolleyTargetHitCounted = value;
+        }
+        public int VolleyStartingConsecutiveHits
+        {
+            get => Data.VolleyStartingConsecutiveHits; set => Data.VolleyStartingConsecutiveHits = value;
+        }
+        public int VolleyStartingCompoundInterestStacks
+        {
+            get => Data.VolleyStartingCompoundInterestStacks; set => Data.VolleyStartingCompoundInterestStacks = value;
+        }
+        public string PlayerProfileId
+        {
+            get => Data.PlayerProfileId; set => Data.PlayerProfileId = value;
+        }
     }
 
     // Copy only the rule inputs when previewing. Volley dictionaries and
     // controller/shot bookkeeping remain in the live WeaponState.
     private struct WeaponStateData
     {
-        public WeaponStateData() { }
+        public WeaponStateData()
+        {
+        }
         public string WeaponId { get; set; } = string.Empty;
         public string MagazineId { get; set; } = string.Empty;
         public int LastFireIndex { get; set; } = int.MinValue;
         public int LastShotFrame { get; set; } = int.MinValue;
-        public EffectApplication? LastApplication { get; set; }
-        public int TotalShots { get; set; }
-        public int ShotsInMagazine { get; set; }
-        public int UninterruptedShots { get; set; }
+        public EffectApplication? LastApplication
+        {
+            get; set;
+        }
+        public int TotalShots
+        {
+            get; set;
+        }
+        public int ShotsInMagazine
+        {
+            get; set;
+        }
+        public int UninterruptedShots
+        {
+            get; set;
+        }
         public int LastRemainingAmmo { get; set; } = -1;
         public float LastShotTime { get; set; } = -1f;
-        public bool HasReloadHistory { get; set; }
-        public bool EmergencyReloadActive { get; set; }
-        public bool MagazineCheckActive { get; set; }
-        public int ShotsSinceMagazineCheck { get; set; }
-        public bool InspectionBuffActive { get; set; }
-        public bool ChamberBuffActive { get; set; }
-        public bool SelectorBuffActive { get; set; }
-        public bool ReadyWallPassActive { get; set; }
-        public bool ReloadMomentumAvailable { get; set; }
-        public int ConsecutiveHits { get; set; }
-        public int ArmorHits { get; set; }
-        public int CompoundInterestStacks { get; set; }
-        public int FullSendStacks { get; set; }
-        public bool PreviousMiss { get; set; }
-        public bool PreviousArmorImpact { get; set; }
-        public bool PreviousLimbHit { get; set; }
-        public bool PreviousSurfaceImpact { get; set; }
-        public bool PreviousBodyHit { get; set; }
-        public bool PreviousRicochet { get; set; }
-        public bool PreviousFragmentation { get; set; }
-        public bool ChamberChecked { get; set; }
-        public int PayoffRampStacks { get; set; }
+        public bool HasReloadHistory
+        {
+            get; set;
+        }
+        public bool EmergencyReloadActive
+        {
+            get; set;
+        }
+        public bool MagazineCheckActive
+        {
+            get; set;
+        }
+        public int ShotsSinceMagazineCheck
+        {
+            get; set;
+        }
+        public bool InspectionBuffActive
+        {
+            get; set;
+        }
+        public bool ChamberBuffActive
+        {
+            get; set;
+        }
+        public bool SelectorBuffActive
+        {
+            get; set;
+        }
+        public bool ReadyWallPassActive
+        {
+            get; set;
+        }
+        public bool ReloadMomentumAvailable
+        {
+            get; set;
+        }
+        public int ConsecutiveHits
+        {
+            get; set;
+        }
+        public int ArmorHits
+        {
+            get; set;
+        }
+        public int CompoundInterestStacks
+        {
+            get; set;
+        }
+        public int FullSendStacks
+        {
+            get; set;
+        }
+        public bool PreviousMiss
+        {
+            get; set;
+        }
+        public bool PreviousArmorImpact
+        {
+            get; set;
+        }
+        public bool PreviousLimbHit
+        {
+            get; set;
+        }
+        public bool PreviousSurfaceImpact
+        {
+            get; set;
+        }
+        public bool PreviousBodyHit
+        {
+            get; set;
+        }
+        public bool PreviousRicochet
+        {
+            get; set;
+        }
+        public bool PreviousFragmentation
+        {
+            get; set;
+        }
+        public bool ChamberChecked
+        {
+            get; set;
+        }
+        public int PayoffRampStacks
+        {
+            get; set;
+        }
         public bool WarrantyFactoryTune { get; set; } = true;
-        public bool LastAiming { get; set; }
-        public bool AdsEffectConsumed { get; set; }
+        public bool LastAiming
+        {
+            get; set;
+        }
+        public bool AdsEffectConsumed
+        {
+            get; set;
+        }
         public float AimStartTime { get; set; } = -1f;
         public float LastAimEndTime { get; set; } = -10f;
         public float StationaryStartTime { get; set; } = -1f;
-        public bool StationaryEffectConsumed { get; set; }
-        public bool StanceChanged { get; set; }
-        public int SelectorChanges { get; set; }
-        public bool LastTriggerPressed { get; set; }
-        public bool LastMovingInput { get; set; }
-        public int ReloadGeneration { get; set; }
-        public int TriggerHeldShots { get; set; }
-        public int MovingShotsInMagazine { get; set; }
-        public int FleshHitsInMagazine { get; set; }
-        public int AmmoTransferFleshHits { get; set; }
-        public bool DrawEffectArmed { get; set; }
-        public int ShotsSinceDraw { get; set; }
+        public bool StationaryEffectConsumed
+        {
+            get; set;
+        }
+        public bool StanceChanged
+        {
+            get; set;
+        }
+        public int SelectorChanges
+        {
+            get; set;
+        }
+        public bool LastTriggerPressed
+        {
+            get; set;
+        }
+        public bool LastMovingInput
+        {
+            get; set;
+        }
+        public int ReloadGeneration
+        {
+            get; set;
+        }
+        public int TriggerHeldShots
+        {
+            get; set;
+        }
+        public int MovingShotsInMagazine
+        {
+            get; set;
+        }
+        public int FleshHitsInMagazine
+        {
+            get; set;
+        }
+        public int AmmoTransferFleshHits
+        {
+            get; set;
+        }
+        public bool DrawEffectArmed
+        {
+            get; set;
+        }
+        public int ShotsSinceDraw
+        {
+            get; set;
+        }
         public string LastShotFireMode { get; set; } = string.Empty;
-        public int ShotsInCurrentFireMode { get; set; }
-        public bool SmokeDeployedThisMagazine { get; set; }
+        public int ShotsInCurrentFireMode
+        {
+            get; set;
+        }
+        public bool SmokeDeployedThisMagazine
+        {
+            get; set;
+        }
         public string LastTargetProfileId { get; set; } = string.Empty;
-        public int SameTargetHits { get; set; }
+        public int SameTargetHits
+        {
+            get; set;
+        }
         public string LastBodyPartTargetProfileId { get; set; } = string.Empty;
         public string LastBodyPart { get; set; } = string.Empty;
-        public int SameBodyPartHits { get; set; }
-        public bool DebtCollectorActive { get; set; }
+        public int SameBodyPartHits
+        {
+            get; set;
+        }
+        public bool DebtCollectorActive
+        {
+            get; set;
+        }
         public int VolleyFireIndex { get; set; } = int.MinValue;
-        public bool VolleyAnyBodyHit { get; set; }
-        public bool VolleyAnySurfaceImpact { get; set; }
-        public bool VolleyHitCounted { get; set; }
-        public bool VolleyArmorHitCounted { get; set; }
-        public bool VolleyCompoundInterestCounted { get; set; }
-        public bool VolleyTargetHitCounted { get; set; }
-        public int VolleyStartingConsecutiveHits { get; set; }
-        public int VolleyStartingCompoundInterestStacks { get; set; }
+        public bool VolleyAnyBodyHit
+        {
+            get; set;
+        }
+        public bool VolleyAnySurfaceImpact
+        {
+            get; set;
+        }
+        public bool VolleyHitCounted
+        {
+            get; set;
+        }
+        public bool VolleyArmorHitCounted
+        {
+            get; set;
+        }
+        public bool VolleyCompoundInterestCounted
+        {
+            get; set;
+        }
+        public bool VolleyTargetHitCounted
+        {
+            get; set;
+        }
+        public int VolleyStartingConsecutiveHits
+        {
+            get; set;
+        }
+        public int VolleyStartingCompoundInterestStacks
+        {
+            get; set;
+        }
         public string PlayerProfileId { get; set; } = string.Empty;
     }
 
@@ -1924,34 +2625,102 @@ internal static partial class LegendaryRuntime
             StationarySeconds = state.StationaryStartTime >= 0f ? now - state.StationaryStartTime : 0f;
         }
 
-        public Player? Owner { get; }
-        public float SecondsSinceLastShot { get; }
-        public int RemainingAmmo { get; }
-        public int Capacity { get; }
-        public bool IsAiming { get; }
-        public bool IsProne { get; }
-        public bool IsCrouched { get; }
-        public float Speed { get; }
-        public bool IsMovingInput { get; }
-        public float Stamina { get; }
-        public bool IsTriggerPressed { get; }
-        public bool IsFolded { get; }
-        public bool Suppressed { get; }
-        public bool Subsonic { get; }
-        public bool AboveCaliberAverageVelocity { get; }
-        public string FireMode { get; }
-        public bool Reloaded { get; }
-        public float AimSeconds { get; }
-        public float SecondsSinceAimEnded { get; }
-        public float StationarySeconds { get; }
+        public Player? Owner
+        {
+            get;
+        }
+        public float SecondsSinceLastShot
+        {
+            get;
+        }
+        public int RemainingAmmo
+        {
+            get;
+        }
+        public int Capacity
+        {
+            get;
+        }
+        public bool IsAiming
+        {
+            get;
+        }
+        public bool IsProne
+        {
+            get;
+        }
+        public bool IsCrouched
+        {
+            get;
+        }
+        public float Speed
+        {
+            get;
+        }
+        public bool IsMovingInput
+        {
+            get;
+        }
+        public float Stamina
+        {
+            get;
+        }
+        public bool IsTriggerPressed
+        {
+            get;
+        }
+        public bool IsFolded
+        {
+            get;
+        }
+        public bool Suppressed
+        {
+            get;
+        }
+        public bool Subsonic
+        {
+            get;
+        }
+        public bool AboveCaliberAverageVelocity
+        {
+            get;
+        }
+        public string FireMode
+        {
+            get;
+        }
+        public bool Reloaded
+        {
+            get;
+        }
+        public float AimSeconds
+        {
+            get;
+        }
+        public float SecondsSinceAimEnded
+        {
+            get;
+        }
+        public float StationarySeconds
+        {
+            get;
+        }
     }
 }
 
 internal struct EffectApplicationData
 {
-    public EffectApplicationData() { }
-    public bool Active { get; set; }
-    public bool? StatusActive { get; set; }
+    public EffectApplicationData()
+    {
+    }
+    public bool Active
+    {
+        get; set;
+    }
+    public bool? StatusActive
+    {
+        get; set;
+    }
     public string SpecialId { get; set; } = string.Empty;
     public float DamageMultiplier { get; set; } = 1f;
     public float HeadDamageMultiplier { get; set; } = 1f;
@@ -1959,32 +2728,71 @@ internal struct EffectApplicationData
     public float VelocityMultiplier { get; set; } = 1f;
     public float PenetrationMultiplier { get; set; } = 1f;
     public float ArmorDamageMultiplier { get; set; } = 1f;
-    public float RicochetChanceBonus { get; set; }
-    public float FragmentationChanceBonus { get; set; }
-    public float RicochetRetention { get; set; }
-    public float SurfaceRetentionBonus { get; set; }
+    public float RicochetChanceBonus
+    {
+        get; set;
+    }
+    public float FragmentationChanceBonus
+    {
+        get; set;
+    }
+    public float RicochetRetention
+    {
+        get; set;
+    }
+    public float SurfaceRetentionBonus
+    {
+        get; set;
+    }
     public float LimbDamageMultiplier { get; set; } = 1f;
-    public float ExplosionDamageFactor { get; set; }
-    public float ExplosionRadius { get; set; }
+    public float ExplosionDamageFactor
+    {
+        get; set;
+    }
+    public float ExplosionRadius
+    {
+        get; set;
+    }
     public float ExplosionRadiusMultiplier { get; set; } = 1f;
     public float ReloadSpeedMultiplier { get; set; } = 1f;
-    public int HeavyBleedEveryFleshHits { get; set; }
+    public int HeavyBleedEveryFleshHits
+    {
+        get; set;
+    }
     public int ProjectileCount { get; set; } = 1;
     public float ProjectileDamageMultiplier { get; set; } = 1f;
-    public float ProjectileSpreadDegrees { get; set; }
+    public float ProjectileSpreadDegrees
+    {
+        get; set;
+    }
     public string ProjectilePattern { get; set; } = "horizontal";
-    public bool ReplaceNaturalProjectiles { get; set; }
-    public bool CenterBonusOnShell { get; set; }
-    public Vector3 ShellCenterDirection { get; set; }
+    public bool ReplaceNaturalProjectiles
+    {
+        get; set;
+    }
+    public bool CenterBonusOnShell
+    {
+        get; set;
+    }
+    public Vector3 ShellCenterDirection
+    {
+        get; set;
+    }
     public float BonusProjectileDamageScale { get; set; } = 1f;
     public float BonusProjectilePenetrationScale { get; set; } = 1f;
     public float BonusProjectileVelocityScale { get; set; } = 1f;
-    public bool ForceHeavyBleedOnFleshHit { get; set; }
+    public bool ForceHeavyBleedOnFleshHit
+    {
+        get; set;
+    }
     public string AmmoTemplateId { get; set; } = string.Empty;
     public string ConditionalTargetProfileId { get; set; } = string.Empty;
     public string ConditionalBodyPart { get; set; } = string.Empty;
     public float ConditionalDamageMultiplier { get; set; } = 1f;
-    public StatModifiers StatModifiers { get; set; }
+    public StatModifiers StatModifiers
+    {
+        get; set;
+    }
     public bool HasMechanicalEffect => DamageMultiplier != 1f || HeadDamageMultiplier != 1f || BodyDamageMultiplier != 1f ||
         VelocityMultiplier != 1f || PenetrationMultiplier != 1f ||
         ArmorDamageMultiplier != 1f || RicochetChanceBonus != 0f || FragmentationChanceBonus != 0f ||
@@ -2005,43 +2813,154 @@ internal sealed class EffectApplication
         _data = data;
     }
     internal ref readonly EffectApplicationData Data => ref _data;
-    public VariantDefinition? Definition { get; }
-    public bool BonusProjectile { get; private set; }
-    public bool Active { get => _data.Active; set => _data.Active = value; }
-    public bool? StatusActive { get => _data.StatusActive; set => _data.StatusActive = value; }
-    public string SpecialId { get => _data.SpecialId; set => _data.SpecialId = value; }
-    public float DamageMultiplier { get => _data.DamageMultiplier; set => _data.DamageMultiplier = value; }
-    public float HeadDamageMultiplier { get => _data.HeadDamageMultiplier; set => _data.HeadDamageMultiplier = value; }
-    public float BodyDamageMultiplier { get => _data.BodyDamageMultiplier; set => _data.BodyDamageMultiplier = value; }
-    public float VelocityMultiplier { get => _data.VelocityMultiplier; set => _data.VelocityMultiplier = value; }
-    public float PenetrationMultiplier { get => _data.PenetrationMultiplier; set => _data.PenetrationMultiplier = value; }
-    public float ArmorDamageMultiplier { get => _data.ArmorDamageMultiplier; set => _data.ArmorDamageMultiplier = value; }
-    public float RicochetChanceBonus { get => _data.RicochetChanceBonus; set => _data.RicochetChanceBonus = value; }
-    public float FragmentationChanceBonus { get => _data.FragmentationChanceBonus; set => _data.FragmentationChanceBonus = value; }
-    public float RicochetRetention { get => _data.RicochetRetention; set => _data.RicochetRetention = value; }
-    public float SurfaceRetentionBonus { get => _data.SurfaceRetentionBonus; set => _data.SurfaceRetentionBonus = value; }
-    public float LimbDamageMultiplier { get => _data.LimbDamageMultiplier; set => _data.LimbDamageMultiplier = value; }
-    public float ExplosionDamageFactor { get => _data.ExplosionDamageFactor; set => _data.ExplosionDamageFactor = value; }
-    public float ExplosionRadius { get => _data.ExplosionRadius; set => _data.ExplosionRadius = value; }
-    public float ExplosionRadiusMultiplier { get => _data.ExplosionRadiusMultiplier; set => _data.ExplosionRadiusMultiplier = value; }
-    public float ReloadSpeedMultiplier { get => _data.ReloadSpeedMultiplier; set => _data.ReloadSpeedMultiplier = value; }
-    public int HeavyBleedEveryFleshHits { get => _data.HeavyBleedEveryFleshHits; set => _data.HeavyBleedEveryFleshHits = value; }
-    public int ProjectileCount { get => _data.ProjectileCount; set => _data.ProjectileCount = value; }
-    public float ProjectileDamageMultiplier { get => _data.ProjectileDamageMultiplier; set => _data.ProjectileDamageMultiplier = value; }
-    public float ProjectileSpreadDegrees { get => _data.ProjectileSpreadDegrees; set => _data.ProjectileSpreadDegrees = value; }
-    public string ProjectilePattern { get => _data.ProjectilePattern; set => _data.ProjectilePattern = value; }
-    public bool ReplaceNaturalProjectiles { get => _data.ReplaceNaturalProjectiles; set => _data.ReplaceNaturalProjectiles = value; }
-    public bool CenterBonusOnShell { get => _data.CenterBonusOnShell; set => _data.CenterBonusOnShell = value; }
-    public Vector3 ShellCenterDirection { get => _data.ShellCenterDirection; set => _data.ShellCenterDirection = value; }
-    public float BonusProjectileDamageScale { get => _data.BonusProjectileDamageScale; set => _data.BonusProjectileDamageScale = value; }
-    public float BonusProjectilePenetrationScale { get => _data.BonusProjectilePenetrationScale; set => _data.BonusProjectilePenetrationScale = value; }
-    public float BonusProjectileVelocityScale { get => _data.BonusProjectileVelocityScale; set => _data.BonusProjectileVelocityScale = value; }
-    public bool ForceHeavyBleedOnFleshHit { get => _data.ForceHeavyBleedOnFleshHit; set => _data.ForceHeavyBleedOnFleshHit = value; }
-    public string AmmoTemplateId { get => _data.AmmoTemplateId; set => _data.AmmoTemplateId = value; }
-    public string ConditionalTargetProfileId { get => _data.ConditionalTargetProfileId; set => _data.ConditionalTargetProfileId = value; }
-    public string ConditionalBodyPart { get => _data.ConditionalBodyPart; set => _data.ConditionalBodyPart = value; }
-    public float ConditionalDamageMultiplier { get => _data.ConditionalDamageMultiplier; set => _data.ConditionalDamageMultiplier = value; }
-    public StatModifiers StatModifiers { get => _data.StatModifiers; set => _data.StatModifiers = value; }
+    public VariantDefinition? Definition
+    {
+        get;
+    }
+    public bool BonusProjectile
+    {
+        get; private set;
+    }
+    public bool Active
+    {
+        get => _data.Active; set => _data.Active = value;
+    }
+    public bool? StatusActive
+    {
+        get => _data.StatusActive; set => _data.StatusActive = value;
+    }
+    public string SpecialId
+    {
+        get => _data.SpecialId; set => _data.SpecialId = value;
+    }
+    public float DamageMultiplier
+    {
+        get => _data.DamageMultiplier; set => _data.DamageMultiplier = value;
+    }
+    public float HeadDamageMultiplier
+    {
+        get => _data.HeadDamageMultiplier; set => _data.HeadDamageMultiplier = value;
+    }
+    public float BodyDamageMultiplier
+    {
+        get => _data.BodyDamageMultiplier; set => _data.BodyDamageMultiplier = value;
+    }
+    public float VelocityMultiplier
+    {
+        get => _data.VelocityMultiplier; set => _data.VelocityMultiplier = value;
+    }
+    public float PenetrationMultiplier
+    {
+        get => _data.PenetrationMultiplier; set => _data.PenetrationMultiplier = value;
+    }
+    public float ArmorDamageMultiplier
+    {
+        get => _data.ArmorDamageMultiplier; set => _data.ArmorDamageMultiplier = value;
+    }
+    public float RicochetChanceBonus
+    {
+        get => _data.RicochetChanceBonus; set => _data.RicochetChanceBonus = value;
+    }
+    public float FragmentationChanceBonus
+    {
+        get => _data.FragmentationChanceBonus; set => _data.FragmentationChanceBonus = value;
+    }
+    public float RicochetRetention
+    {
+        get => _data.RicochetRetention; set => _data.RicochetRetention = value;
+    }
+    public float SurfaceRetentionBonus
+    {
+        get => _data.SurfaceRetentionBonus; set => _data.SurfaceRetentionBonus = value;
+    }
+    public float LimbDamageMultiplier
+    {
+        get => _data.LimbDamageMultiplier; set => _data.LimbDamageMultiplier = value;
+    }
+    public float ExplosionDamageFactor
+    {
+        get => _data.ExplosionDamageFactor; set => _data.ExplosionDamageFactor = value;
+    }
+    public float ExplosionRadius
+    {
+        get => _data.ExplosionRadius; set => _data.ExplosionRadius = value;
+    }
+    public float ExplosionRadiusMultiplier
+    {
+        get => _data.ExplosionRadiusMultiplier; set => _data.ExplosionRadiusMultiplier = value;
+    }
+    public float ReloadSpeedMultiplier
+    {
+        get => _data.ReloadSpeedMultiplier; set => _data.ReloadSpeedMultiplier = value;
+    }
+    public int HeavyBleedEveryFleshHits
+    {
+        get => _data.HeavyBleedEveryFleshHits; set => _data.HeavyBleedEveryFleshHits = value;
+    }
+    public int ProjectileCount
+    {
+        get => _data.ProjectileCount; set => _data.ProjectileCount = value;
+    }
+    public float ProjectileDamageMultiplier
+    {
+        get => _data.ProjectileDamageMultiplier; set => _data.ProjectileDamageMultiplier = value;
+    }
+    public float ProjectileSpreadDegrees
+    {
+        get => _data.ProjectileSpreadDegrees; set => _data.ProjectileSpreadDegrees = value;
+    }
+    public string ProjectilePattern
+    {
+        get => _data.ProjectilePattern; set => _data.ProjectilePattern = value;
+    }
+    public bool ReplaceNaturalProjectiles
+    {
+        get => _data.ReplaceNaturalProjectiles; set => _data.ReplaceNaturalProjectiles = value;
+    }
+    public bool CenterBonusOnShell
+    {
+        get => _data.CenterBonusOnShell; set => _data.CenterBonusOnShell = value;
+    }
+    public Vector3 ShellCenterDirection
+    {
+        get => _data.ShellCenterDirection; set => _data.ShellCenterDirection = value;
+    }
+    public float BonusProjectileDamageScale
+    {
+        get => _data.BonusProjectileDamageScale; set => _data.BonusProjectileDamageScale = value;
+    }
+    public float BonusProjectilePenetrationScale
+    {
+        get => _data.BonusProjectilePenetrationScale; set => _data.BonusProjectilePenetrationScale = value;
+    }
+    public float BonusProjectileVelocityScale
+    {
+        get => _data.BonusProjectileVelocityScale; set => _data.BonusProjectileVelocityScale = value;
+    }
+    public bool ForceHeavyBleedOnFleshHit
+    {
+        get => _data.ForceHeavyBleedOnFleshHit; set => _data.ForceHeavyBleedOnFleshHit = value;
+    }
+    public string AmmoTemplateId
+    {
+        get => _data.AmmoTemplateId; set => _data.AmmoTemplateId = value;
+    }
+    public string ConditionalTargetProfileId
+    {
+        get => _data.ConditionalTargetProfileId; set => _data.ConditionalTargetProfileId = value;
+    }
+    public string ConditionalBodyPart
+    {
+        get => _data.ConditionalBodyPart; set => _data.ConditionalBodyPart = value;
+    }
+    public float ConditionalDamageMultiplier
+    {
+        get => _data.ConditionalDamageMultiplier; set => _data.ConditionalDamageMultiplier = value;
+    }
+    public StatModifiers StatModifiers
+    {
+        get => _data.StatModifiers; set => _data.StatModifiers = value;
+    }
     public bool HasAnyEffect => Active && (Definition is not null);
     public bool HasMechanicalEffect => _data.HasMechanicalEffect;
     public EffectApplication AsBonusProjectile()
@@ -2075,11 +2994,26 @@ internal readonly struct StatModifiers
         FireRateMultiplier = fireRateMultiplier;
         VelocityMultiplier = velocityMultiplier;
     }
-    public float RecoilDelta { get; }
-    public float ErgonomicsDelta { get; }
-    public float AccuracyDelta { get; }
-    public float FireRateMultiplier { get; }
-    public float VelocityMultiplier { get; }
+    public float RecoilDelta
+    {
+        get;
+    }
+    public float ErgonomicsDelta
+    {
+        get;
+    }
+    public float AccuracyDelta
+    {
+        get;
+    }
+    public float FireRateMultiplier
+    {
+        get;
+    }
+    public float VelocityMultiplier
+    {
+        get;
+    }
     public float EffectiveFireRateMultiplier => FireRateMultiplier == 0f ? 1f : FireRateMultiplier;
     public float EffectiveVelocityMultiplier => VelocityMultiplier == 0f ? 1f : VelocityMultiplier;
     public bool HasAny => RecoilDelta != 0f || ErgonomicsDelta != 0f || AccuracyDelta != 0f ||

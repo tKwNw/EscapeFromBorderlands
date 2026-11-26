@@ -18,7 +18,12 @@ internal static partial class Eyewear
         internal readonly bool Known;
         internal readonly int Generation;
         internal ProjectileDirectionScope(ShotScope shot)
-        { Shot = shot; Previous = shot.PelletRotation; Known = shot.PelletBasisKnown; Generation = CombatGeneration; }
+        {
+            Shot = shot;
+            Previous = shot.PelletRotation;
+            Known = shot.PelletBasisKnown;
+            Generation = CombatGeneration;
+        }
     }
     internal static Vector3 CaptureWeaponSpread(Vector3 centerTimes100, float coefficient)
     {
@@ -34,15 +39,18 @@ internal static partial class Eyewear
     }
     internal static void SetShotCenter(Weapon weapon, Vector3 direction)
     {
-        if (CurrentShot is not { Double: true } scope || !ReferenceEquals(scope.Weapon, weapon)) return;
+        if (CurrentShot is not { Double: true } scope || !ReferenceEquals(scope.Weapon, weapon))
+            return;
         scope.OriginalCenter = direction.normalized;
         // Native zero-dispersion firing skips the random branch. Its second
         // shell is also exact; never invent an artificial spread floor.
-        if (!scope.DoubleCenterKnown) scope.DoubleCenter = scope.OriginalCenter;
+        if (!scope.DoubleCenterKnown)
+            scope.DoubleCenter = scope.OriginalCenter;
     }
     internal static ProjectileDirectionScope BeginProjectileDirection(BallisticsCalculator calculator, Shot shot)
     {
-        if (CurrentShot is not { Double: true } scope || !ReferenceEquals(shot.Weapon, scope.Weapon)) return default;
+        if (CurrentShot is not { Double: true } scope || !ReferenceEquals(shot.Weapon, scope.Weapon))
+            return default;
         var previous = new ProjectileDirectionScope(scope);
         var direction = scope.DoubleCenter.sqrMagnitude > 0 ? scope.DoubleCenter : shot.Direction;
         if (shot.Ammo is Ammo ammo && ammo.ProjectileCount > 1)
@@ -58,8 +66,10 @@ internal static partial class Eyewear
         scope.PelletBasisKnown ? scope.PelletRotation * original : scope.DoubleCenter.sqrMagnitude > 0 ? scope.DoubleCenter : original;
     internal static void EndProjectileDirection(ProjectileDirectionScope previous)
     {
-        if (previous.Shot is not { } shot || previous.Generation != CombatGeneration) return;
-        shot.PelletRotation = previous.Previous; shot.PelletBasisKnown = previous.Known;
+        if (previous.Shot is not { } shot || previous.Generation != CombatGeneration)
+            return;
+        shot.PelletRotation = previous.Previous;
+        shot.PelletBasisKnown = previous.Known;
     }
 }
 
@@ -85,12 +95,16 @@ internal static class EyewearVolleySpread
                 if (HasLabels(code[i + 1]) || HasLabels(code[i + 2]) || code[i + 1].blocks.Count != 0 || code[i + 2].blocks.Count != 0)
                     throw new InvalidOperationException("Unsupported branched native weapon-spread expression.");
                 var instruction = new CodeInstruction(OpCodes.Call, replacement);
-                code[i].MoveLabelsTo(instruction); instruction.blocks.AddRange(code[i].blocks);
+                code[i].MoveLabelsTo(instruction);
+                instruction.blocks.AddRange(code[i].blocks);
                 yield return instruction;
-                i += 2; matches++;
+                i += 2;
+                matches++;
             }
-            else yield return code[i];
+            else
+                yield return code[i];
         }
-        if (matches != 1) throw new InvalidOperationException("Unsupported native weapon-spread expression for Grand Vizier.");
+        if (matches != 1)
+            throw new InvalidOperationException("Unsupported native weapon-spread expression for Grand Vizier.");
     }
 }

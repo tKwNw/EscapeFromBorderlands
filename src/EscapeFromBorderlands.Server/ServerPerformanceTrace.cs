@@ -24,7 +24,8 @@ internal static class ServerPerformanceTrace
 
         internal void Complete(int items, int changed)
         {
-            if (start == 0 || Log is not { } log) return;
+            if (start == 0 || Log is not { } log)
+                return;
             var elapsed = Stopwatch.GetTimestamp() - start;
             var t = Totals.GetOrAdd(stage, static _ => new());
             var count = Interlocked.Increment(ref t.Calls);
@@ -33,7 +34,8 @@ internal static class ServerPerformanceTrace
             var totalChanged = Interlocked.Add(ref t.Changed, changed);
             var ms = elapsed * (1000d / Stopwatch.Frequency);
             if (count != 1 && (count & (count - 1)) != 0 &&
-                (ms < 8d || Volatile.Read(ref t.Slow) >= 12 || Interlocked.Increment(ref t.Slow) > 12)) return;
+                (ms < 8d || Volatile.Read(ref t.Slow) >= 12 || Interlocked.Increment(ref t.Slow) > 12))
+                return;
             try
             {
                 log(FormattableString.Invariant($"[Escape From Borderlands] EFB server timing: {stage} | {ms:F2} ms | {count} calls, {ticks * (1000d / Stopwatch.Frequency):F2} ms total | {totalItems} inputs, {totalChanged} changes"));

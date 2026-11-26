@@ -15,24 +15,34 @@ internal static class ApbsImportRefresh
     {
         var method = importer.GetMethod("OnLoadAsync", new[] { typeof(CancellationToken) })
             ?? throw new MissingMethodException(importer.FullName, "OnLoadAsync(CancellationToken)");
-        if (method.ReturnType != typeof(Task)) throw new InvalidOperationException("Unsupported APBS importer task.");
+        if (method.ReturnType != typeof(Task))
+            throw new InvalidOperationException("Unsupported APBS importer task.");
         lock (InstallLock)
         {
-            if (Refresh.ContainsKey(method)) { Refresh[method] = reconcile; return; }
+            if (Refresh.ContainsKey(method))
+            {
+                Refresh[method] = reconcile;
+                return;
+            }
             Refresh[method] = reconcile;
             try
             {
                 new Harmony("com.tkw.escapefromborderlands.server.apbsreload").Patch(method,
                     postfix: new HarmonyMethod(typeof(ApbsImportRefresh), nameof(AfterImport)) { priority = Priority.Last });
             }
-            catch { Refresh.Remove(method); throw; }
+            catch
+            {
+                Refresh.Remove(method);
+                throw;
+            }
         }
     }
 
     private static void AfterImport(MethodBase __originalMethod, ref Task __result)
     {
         Func<Task> reconcile;
-        lock (InstallLock) reconcile = Refresh[__originalMethod];
+        lock (InstallLock)
+            reconcile = Refresh[__originalMethod];
         __result = AfterCompletion(__result, reconcile);
     }
 

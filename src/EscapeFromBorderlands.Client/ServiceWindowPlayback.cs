@@ -28,7 +28,8 @@ internal static class ServiceWindowPlayback
     private static PropertyInfo SpeedProperty(object target)
     {
         var type = target.GetType();
-        if (SpeedProperties.TryGetValue(type, out var property)) return property;
+        if (SpeedProperties.TryGetValue(type, out var property))
+            return property;
         // The native backend is IAnimator, which may implement speed explicitly.
         property = type.GetInterfaces().Select(t => t.GetProperty("speed"))
             .FirstOrDefault(p => p?.PropertyType == typeof(float) && p.CanRead && p.CanWrite)
@@ -46,22 +47,26 @@ internal static class ServiceWindowPlayback
         ServiceWindow.IsMedical(e.Controller.Item);
     private static void Restore(Entry e)
     {
-        if (Same(e.Factor, 1f)) return;
+        if (Same(e.Factor, 1f))
+            return;
         var actual = Read(e.Target);
         // A native reset has already removed our factor; do not divide it again.
-        if (!Same(actual, e.Native)) Write(e.Target, actual / e.Factor);
+        if (!Same(actual, e.Native))
+            Write(e.Target, actual / e.Factor);
         e.Factor = 1f;
     }
     private static void Apply(Entry e)
     {
         e.Factor = ServiceWindow.Speed(e.Player) * HatMedical.Speed(e.Player, e.Controller.Item);
         var desired = e.Native * e.Factor;
-        if (!Same(Read(e.Target), desired)) Write(e.Target, desired);
+        if (!Same(Read(e.Target), desired))
+            Write(e.Target, desired);
         e.Applied = desired;
     }
     private static void Report(Exception ex)
     {
-        if (_reported) return;
+        if (_reported)
+            return;
         _reported = true;
         Plugin.LogSource.LogWarning($"Service Window playback unavailable: {ex.Message}");
     }
@@ -74,15 +79,21 @@ internal static class ServiceWindowPlayback
             if (player is null || !ServiceWindow.IsMedical(controller.Item) ||
                 Native.Get(controller, "_firearmsAnimator") is not FirearmsAnimator animator ||
                 !ReferenceEquals(player.HandsAnimator, animator) ||
-                !ReferenceEquals(ServiceWindow.MedicalController(player, animator), controller)) return;
+                !ReferenceEquals(ServiceWindow.MedicalController(player, animator), controller))
+                return;
             var target = Native.Get(animator, "Animator");
-            if (target is null) return;
+            if (target is null)
+                return;
             var entry = new Entry { Player = player, Controller = controller, Animator = animator, Target = target, Native = nativeSpeed };
             if (Entries.TryGetValue(animator, out var previous))
             {
                 if (ReferenceEquals(previous.Controller, controller))
-                { entry.Native = previous.Native; entry.Logged = previous.Logged; }
-                if (!ReferenceEquals(previous.Target, target)) Restore(previous);
+                {
+                    entry.Native = previous.Native;
+                    entry.Logged = previous.Logged;
+                }
+                if (!ReferenceEquals(previous.Target, target))
+                    Restore(previous);
             }
             Entries[animator] = entry;
             Apply(entry);
@@ -92,12 +103,16 @@ internal static class ServiceWindowPlayback
                 Plugin.LogSource.LogInfo($"Service Window playback {Plugin.PluginVersion}: item={controller.Item.StringTemplateId}, inventory={player.IsInventoryOpened}, native={entry.Native:F2}, factor={entry.Factor:F2}, actual={Read(target):F2}.");
             }
         }
-        catch (Exception ex) { Report(ex); }
+        catch (Exception ex)
+        {
+            Report(ex);
+        }
     }
 
     internal static void NativeChanged(FirearmsAnimator animator, float speed)
     {
-        if (!Entries.TryGetValue(animator, out var e)) return;
+        if (!Entries.TryGetValue(animator, out var e))
+            return;
         try
         {
             var target = Native.Get(animator, "Animator");
@@ -105,20 +120,29 @@ internal static class ServiceWindowPlayback
             {
                 // SetAnimationSpeed already supplied a fresh value for this
                 // backend. Restore only an abandoned, different backend.
-                if (!ReferenceEquals(e.Target, target)) Restore(e);
+                if (!ReferenceEquals(e.Target, target))
+                    Restore(e);
                 Entries.Remove(animator);
                 return;
             }
-            if (!ReferenceEquals(e.Target, target)) { Restore(e); e.Target = target; }
+            if (!ReferenceEquals(e.Target, target))
+            {
+                Restore(e);
+                e.Target = target;
+            }
             e.Native = speed;
             Apply(e);
         }
-        catch (Exception ex) { Report(ex); }
+        catch (Exception ex)
+        {
+            Report(ex);
+        }
     }
 
     internal static void Maintain()
     {
-        if (Entries.Count == 0) return;
+        if (Entries.Count == 0)
+            return;
         ActiveSnapshot.AddRange(Entries);
         try
         {
@@ -127,9 +151,19 @@ internal static class ServiceWindowPlayback
                 var e = pair.Value;
                 try
                 {
-                    if (!Owned(e)) { Restore(e); Entries.Remove(pair.Key); continue; }
+                    if (!Owned(e))
+                    {
+                        Restore(e);
+                        Entries.Remove(pair.Key);
+                        continue;
+                    }
                     var target = Native.Get(e.Animator, "Animator");
-                    if (target is null) { Restore(e); Entries.Remove(pair.Key); continue; }
+                    if (target is null)
+                    {
+                        Restore(e);
+                        Entries.Remove(pair.Key);
+                        continue;
+                    }
                     if (!ReferenceEquals(target, e.Target))
                     {
                         Restore(e);
@@ -139,19 +173,33 @@ internal static class ServiceWindowPlayback
                         e.Applied = e.Native;
                     }
                     var actual = Read(e.Target);
-                    if (!Same(actual, e.Applied) && !Same(actual, e.Native)) e.Native = actual / e.Factor;
+                    if (!Same(actual, e.Applied) && !Same(actual, e.Native))
+                        e.Native = actual / e.Factor;
                     Apply(e);
                 }
-                catch (Exception ex) { Report(ex); }
+                catch (Exception ex)
+                {
+                    Report(ex);
+                }
             }
         }
-        finally { ActiveSnapshot.Clear(); }
+        finally
+        {
+            ActiveSnapshot.Clear();
+        }
     }
 
     internal static void Reset()
     {
         foreach (var e in Entries.Values)
-            try { Restore(e); } catch (Exception ex) { Report(ex); }
+            try
+            {
+                Restore(e);
+            }
+            catch (Exception ex)
+            {
+                Report(ex);
+            }
         Entries.Clear();
         _reported = false;
     }
@@ -169,5 +217,8 @@ internal static class ServiceWindowPlaybackSpeedPatch
 {
     [HarmonyPostfix, HarmonyPriority(Priority.Last)]
     private static void Postfix(ObjectInHandsAnimator __instance, float speed)
-    { if (__instance is FirearmsAnimator animator) ServiceWindowPlayback.NativeChanged(animator, speed); }
+    {
+        if (__instance is FirearmsAnimator animator)
+            ServiceWindowPlayback.NativeChanged(animator, speed);
+    }
 }

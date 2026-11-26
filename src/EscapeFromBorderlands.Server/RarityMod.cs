@@ -314,7 +314,9 @@ public sealed class RarityMod(
         foreach (var bot in botTable.Types.Values)
             if (bot?.BotInventory?.Equipment is { } equipment)
                 foreach (var pool in equipment.Values)
-                    foreach (var id in ids) if (pool.Remove(id)) removed++;
+                    foreach (var id in ids)
+                        if (pool.Remove(id))
+                            removed++;
         return removed;
     }
 
@@ -329,14 +331,17 @@ public sealed class RarityMod(
 
     private void ApplyRigSoftArmor(TemplateItem rig, VariantDefinition variant)
     {
-        if (variant.ChestRigEffect?.SoftArmorClass is not > 0) return;
+        if (variant.ChestRigEffect?.SoftArmorClass is not > 0)
+            return;
         foreach (var slot in rig.Properties?.Slots ?? [])
         {
-            if (slot.Name is not ("Soft_armor_front" or "Soft_armor_back" or "Groin")) continue;
+            if (slot.Name is not ("Soft_armor_front" or "Soft_armor_back" or "Groin"))
+                continue;
             foreach (var filter in slot.Properties?.Filters ?? [])
             {
                 var original = filter.Filter?.FirstOrDefault();
-                if (original is null || !templateTable.Items.TryGetValue(original.Value, out var panel)) continue;
+                if (original is null || !templateTable.Items.TryGetValue(original.Value, out var panel))
+                    continue;
                 var id = RigPanelId(variant, slot.Name!);
                 if (!templateTable.Items.ContainsKey(new MongoId(id)))
                 {
@@ -345,29 +350,33 @@ public sealed class RarityMod(
                     var property = typeof(TemplateItemProperties).GetProperty("ArmorClass") ?? throw new InvalidOperationException("Native soft armor class property was not found.");
                     property.SetValue(copy.Properties!, Convert.ChangeType(variant.ChestRigEffect.SoftArmorClass, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType));
                     templateTable.Items[copy.Id] = copy;
-                    foreach(var language in localeTable.Global.Keys)
+                    foreach (var language in localeTable.Global.Keys)
                     {
-                        var locale=localeService.GetLocaleDb(language);
-                        foreach(var suffix in new[]{" Name"," ShortName"," Description"})
-                            if(locale.TryGetValue(original+suffix,out var value))locale[id+suffix]=value;
+                        var locale = localeService.GetLocaleDb(language);
+                        foreach (var suffix in new[] { " Name", " ShortName", " Description" })
+                            if (locale.TryGetValue(original + suffix, out var value))
+                                locale[id + suffix] = value;
                     }
                 }
                 filter.Filter = [new MongoId(id)];
                 var plate = filter.GetType().GetProperty("Plate");
-                if (plate?.CanWrite == true) plate.SetValue(filter, plate.PropertyType == typeof(string) ? id : new MongoId(id));
+                if (plate?.CanWrite == true)
+                    plate.SetValue(filter, plate.PropertyType == typeof(string) ? id : new MongoId(id));
             }
         }
     }
 
-    private void RigPanelModPool(Dictionary<MongoId,Dictionary<string,HashSet<MongoId>>> pools,VariantDefinition variant)
+    private void RigPanelModPool(Dictionary<MongoId, Dictionary<string, HashSet<MongoId>>> pools, VariantDefinition variant)
     {
-        if(variant.ChestRigEffect?.SoftArmorClass is not >0)return;
-        var id=new MongoId(variant.TemplateId);
-        if(!pools.TryGetValue(id,out var mods))pools[id]=mods=new(StringComparer.Ordinal);
-        if(templateTable.Items.TryGetValue(id,out var rig))
-            foreach(var slot in rig.Properties?.Slots??[])
-                if(slot.Name is "Soft_armor_front" or "Soft_armor_back" or "Groin")
-                    mods[slot.Name]=[new MongoId(RigPanelId(variant,slot.Name))];
+        if (variant.ChestRigEffect?.SoftArmorClass is not > 0)
+            return;
+        var id = new MongoId(variant.TemplateId);
+        if (!pools.TryGetValue(id, out var mods))
+            pools[id] = mods = new(StringComparer.Ordinal);
+        if (templateTable.Items.TryGetValue(id, out var rig))
+            foreach (var slot in rig.Properties?.Slots ?? [])
+                if (slot.Name is "Soft_armor_front" or "Soft_armor_back" or "Groin")
+                    mods[slot.Name] = [new MongoId(RigPanelId(variant, slot.Name))];
     }
 
     private void CopySectionLocales(MongoId source, MongoId target)
@@ -376,13 +385,15 @@ public sealed class RarityMod(
         {
             var locale = localeService.GetLocaleDb(language);
             foreach (var suffix in new[] { " Name", " ShortName", " Description" })
-                if (locale.TryGetValue(source + suffix, out var value)) locale[target + suffix] = value;
+                if (locale.TryGetValue(source + suffix, out var value))
+                    locale[target + suffix] = value;
         }
     }
 
     private bool CreateDefaultPreset(Preset? sourcePreset, VariantDefinition variant)
     {
-        if (sourcePreset is null) return false;
+        if (sourcePreset is null)
+            return false;
         var preset = cloner.Clone(sourcePreset);
         if (preset is null || preset.Items.Count == 0)
         {
@@ -399,16 +410,19 @@ public sealed class RarityMod(
         if (variant.ChestRigEffect?.SoftArmorClass > 0)
             foreach (var child in preset.Items.Where(i => i.ParentId?.ToString() == sourceRoot.Id.ToString() && i.SlotId is "Soft_armor_front" or "Soft_armor_back" or "Groin"))
                 child.Template = new MongoId(RigPanelId(variant, child.SlotId!));
-        if (variant.IsHeadwear) HeadwearTemplates.Convert(root, new MongoId(variant.TemplateId), preset.Items);
+        if (variant.IsHeadwear)
+            HeadwearTemplates.Convert(root, new MongoId(variant.TemplateId), preset.Items);
         root.Id = new MongoId();
         root.Template = new MongoId(variant.TemplateId);
         root.ParentId = null;
         root.SlotId = null;
         // This private clone intentionally becomes a Legendary preset. Match
         // its root template before native ID remapping to avoid a mismatch warning.
-        if (ReferenceEquals(preset.Items[0], sourceRoot)) sourceRoot.Template = root.Template;
+        if (ReferenceEquals(preset.Items[0], sourceRoot))
+            sourceRoot.Template = root.Template;
         preset.Items = itemHelper.ReparentItemAndChildren(root, preset.Items);
-        if (variant.IsHeadwear) HeadwearTemplates.Complete(preset.Items);
+        if (variant.IsHeadwear)
+            HeadwearTemplates.Complete(preset.Items);
         preset.Id = new MongoId(variant.PresetId);
         preset.Parent = root.Id;
         preset.Encyclopedia = new MongoId(variant.TemplateId);
@@ -610,7 +624,8 @@ public sealed class RarityMod(
     private void EnableMeleeLooting(LegendaryCatalog catalog)
     {
         MeleeLootingPolicy.Apply(catalog, templateTable.Items, _enableMeleeLooting);
-        if (_enableMeleeLooting) releaseLog.Info("[Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.");
+        if (_enableMeleeLooting)
+            releaseLog.Info("[Escape From Borderlands] Corpse looting enabled for supported vanilla melee weapons and their Legendary variants. Chained Labrys and Superfors DB 2020 remain unlootable; zombie attacks remain unchanged.");
     }
 
     private int AddMeleeWeaponsToStandalonePools(RarityConfiguration config)
@@ -627,16 +642,20 @@ public sealed class RarityMod(
         {
             var isPmc = role is "bear" or "usec";
             var isBoss = IsStandaloneBossRole(role);
-            if (!isPmc && !isBoss || bot is null || !bot.BotInventory.Equipment.TryGetValue(EquipmentSlots.Scabbard, out var pool)) continue;
-            foreach (var id in activeIds) pool.Remove(id);
+            if (!isPmc && !isBoss || bot is null || !bot.BotInventory.Equipment.TryGetValue(EquipmentSlots.Scabbard, out var pool))
+                continue;
+            foreach (var id in activeIds)
+                pool.Remove(id);
             var fraction = isPmc
                 ? (config.AddToPmcWeapons ? SafeFraction(config.EffectiveStandalonePmcChancePercent, 1d) : 0d)
                 : (config.AddToBossWeapons ? SafeFraction(config.BossLegendaryChancePercent, 10d) : 0d);
-            if (fraction <= 0d) continue;
+            if (fraction <= 0d)
+                continue;
             var eligible = pool.Where(pair => pair.Value > 0d && variants.ContainsKey(pair.Key.ToString())).ToArray();
             var originalWeight = pool.Where(pair => pair.Value > 0d).Sum(pair => pair.Value);
             var eligibleWeight = eligible.Sum(pair => pair.Value);
-            if (originalWeight <= 0d || eligibleWeight <= 0d) continue;
+            if (originalWeight <= 0d || eligibleWeight <= 0d)
+                continue;
             var total = originalWeight * fraction / (1d - fraction);
             foreach (var source in eligible)
             {
@@ -660,10 +679,13 @@ public sealed class RarityMod(
         // Remove stale/imported retired melee registrations regardless of configured spawn chance.
         foreach (var bot in botTable.Types.Values)
         {
-            if (bot is null) continue;
+            if (bot is null)
+                continue;
             foreach (var pool in bot.BotInventory.Equipment.Values)
-                foreach (var id in retiredIds) pool.Remove(id);
-            foreach (var id in retiredIds) bot.BotInventory.Mods.Remove(id);
+                foreach (var id in retiredIds)
+                    pool.Remove(id);
+            foreach (var id in retiredIds)
+                bot.BotInventory.Mods.Remove(id);
         }
     }
 

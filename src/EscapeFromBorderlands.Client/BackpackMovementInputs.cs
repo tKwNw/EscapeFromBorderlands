@@ -10,11 +10,14 @@ internal static class BackpackMovementInputs
     {
         full = false;
         // Foreign layouts retain their reflective GetFreeSpace/FreeSpace contract.
-        if (bag is not CompoundItem compound || bag.GetType().Assembly != typeof(Item).Assembly) return false;
+        if (bag is not CompoundItem compound || bag.GetType().Assembly != typeof(Item).Assembly)
+            return false;
         var grids = compound.Grids;
-        if (grids is null || grids.Length == 0 || grids[0] is null) return true;
+        if (grids is null || grids.Length == 0 || grids[0] is null)
+            return true;
         var grid = grids[0];
-        if (grid.GetType() != typeof(Grid)) return false;
+        if (grid.GetType() != typeof(Grid))
+            return false;
         // Native grids in both supported versions have neither free-space API.
         // Preserve the original live size sum (including int overflow), without
         // reflective property boxing or Cast/OfType/Sum iterator allocations.
@@ -22,7 +25,8 @@ internal static class BackpackMovementInputs
         var cells = 0;
         foreach (var item in grid.Items)
         {
-            if (item is null) continue;
+            if (item is null)
+                continue;
             var size = item.CalculateCellSize();
             cells = checked(cells + unchecked(size.X * size.Y));
         }

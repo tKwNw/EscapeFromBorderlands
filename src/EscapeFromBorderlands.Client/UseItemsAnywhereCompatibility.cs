@@ -25,7 +25,8 @@ internal static class UseItemsAnywhereCompatibility
 
     private static bool CollectorSignature(MethodInfo method)
     {
-        if (!method.IsStatic || !method.IsGenericMethod || method.GetGenericArguments().Length != 1 || method.ReturnType != typeof(void)) return false;
+        if (!method.IsStatic || !method.IsGenericMethod || method.GetGenericArguments().Length != 1 || method.ReturnType != typeof(void))
+            return false;
         var item = method.GetGenericArguments()[0];
         return method.GetParameters().Select(p => p.ParameterType).SequenceEqual(new[] {
             typeof(InventoryController), typeof(IList<>).MakeGenericType(item), typeof(Predicate<>).MakeGenericType(item) });
@@ -47,8 +48,12 @@ internal static class UseItemsAnywhereCompatibility
     private static bool Invoke<T>(InventoryController inventory, IList<T> items, Predicate<T>? predicate,
         ref MethodInfo? collector, string name) where T : Item
     {
-        if (!Installed) return false;
-        try { collector ??= Resolve<T>(name); }
+        if (!Installed)
+            return false;
+        try
+        {
+            collector ??= Resolve<T>(name);
+        }
         catch (Exception e)
         {
             if (!_loggedFailure)
@@ -74,7 +79,8 @@ internal static class UseItemsAnywhereCompatibility
             var collected = new List<T>(items);
             collector.Invoke(null, new object?[] { inventory, collected, predicate });
             items.Clear();
-            foreach (var item in collected) items.Add(item);
+            foreach (var item in collected)
+                items.Add(item);
             return true;
         }
         catch (Exception e)
@@ -99,9 +105,11 @@ internal static class UseItemsAnywhereCompatibility
     {
         if (bot)
         {
-            if (Invoke(inventory, items, predicate, ref _botMagazines, "CollectNativeItems")) return;
+            if (Invoke(inventory, items, predicate, ref _botMagazines, "CollectNativeItems"))
+                return;
         }
-        else if (Invoke(inventory, items, predicate, ref _reloadMagazines, "CollectReloadItems")) return;
+        else if (Invoke(inventory, items, predicate, ref _reloadMagazines, "CollectReloadItems"))
+            return;
         inventory.GetReachableItemsOfTypeNonAlloc(items, predicate);
     }
 }
@@ -119,6 +127,7 @@ internal static class UseItemsAnywhereGrenadeWheelPatch
         AccessTools.TypeByName("UseItemsAnywhere.QuickUseWheel.QuickUseWheelInventory"), "HasResource", new[] { typeof(Item) });
     private static void Postfix(Item __0, ref bool __result)
     {
-        if (__result && __0 is ThrowWeap && !ReusableGrenadeRuntime.Usable(__0)) __result = false;
+        if (__result && __0 is ThrowWeap && !ReusableGrenadeRuntime.Usable(__0))
+            __result = false;
     }
 }

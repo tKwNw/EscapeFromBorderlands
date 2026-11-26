@@ -18,7 +18,8 @@ internal static partial class Eyewear
     internal static float Factor(Player? p, HatStat stat) => Relevant(stat) ? Factor(Get(p), stat) : 1;
     internal static float Factor(State? s, HatStat stat)
     {
-        if (s is null || !Relevant(stat) || !s.Human && stat is HatStat.Sway or HatStat.Hip or HatStat.Search or HatStat.Medical or HatStat.Draw) return 1;
+        if (s is null || !Relevant(stat) || !s.Human && stat is HatStat.Sway or HatStat.Hip or HatStat.Search or HatStat.Medical or HatStat.Draw)
+            return 1;
         var roll = s.Roll.Eyewear;
         var aim = stat is HatStat.Recoil or HatStat.Sway && s.Player.HandsController?.IsAiming == true;
         var value = stat switch
@@ -45,7 +46,8 @@ internal static partial class Eyewear
     internal static float LegStaminaFactor(Player? p) => ActorCapabilities.UsesStamina(p) && Get(p) is { Key: "EW030" } s && Time.time < s.Second ? 0 : 1;
     internal static IEnumerable<EffectStatusModel.Status> Status(Player? p)
     {
-        if (!ActorCapabilities.IsHuman(p) || Get(p) is not { } s) yield break;
+        if (!ActorCapabilities.IsHuman(p) || Get(p) is not { } s)
+            yield break;
         var now = Time.time;
         RefreshCharge(s);
         var seconds = Math.Max(0, Math.Max(s.Until, s.Second) - now);
@@ -54,13 +56,37 @@ internal static partial class Eyewear
         if (s.Key == "EW017")
         {
             UpdateAmmo(s);
-            if (s.StatusText.Length > 0) { detail = s.StatusText; active = true; }
+            if (s.StatusText.Length > 0)
+            {
+                detail = s.StatusText;
+                active = true;
+            }
         }
-        else if (s.Key == "EW013" && p!.HandsController?.Item is Weapon { WeapClass: "shotgun" }) { detail = "2x projectiles, -30% shotgun damage"; active = true; }
-        else if (s.Key == "EW016" && s.Counter > 0) { detail = s.StatusText; active = true; }
-        else if (s.Charges > 0 && (s.Key != "EW020" || s.InWindow)) { detail = "Ready"; active = true; }
-        else if (s.Key == "EW021" && s.AimSince > 0 && now - s.AimSince >= 1) { detail = "Ready"; active = true; }
-        else if (s.Key == "EW031" && now - s.LastShot >= 10) { detail = "Ready"; active = true; }
+        else if (s.Key == "EW013" && p!.HandsController?.Item is Weapon { WeapClass: "shotgun" })
+        {
+            detail = "2x projectiles, -30% shotgun damage";
+            active = true;
+        }
+        else if (s.Key == "EW016" && s.Counter > 0)
+        {
+            detail = s.StatusText;
+            active = true;
+        }
+        else if (s.Charges > 0 && (s.Key != "EW020" || s.InWindow))
+        {
+            detail = "Ready";
+            active = true;
+        }
+        else if (s.Key == "EW021" && s.AimSince > 0 && now - s.AimSince >= 1)
+        {
+            detail = "Ready";
+            active = true;
+        }
+        else if (s.Key == "EW031" && now - s.LastShot >= 10)
+        {
+            detail = "Ready";
+            active = true;
+        }
         var recharge = s.RechargePeriod > 0 && s.Charges == 0 ? Math.Max(0, s.ChargeAt - now) : 0;
         var ready = Math.Max(recharge, Math.Max(0, s.Cooldown - now));
         if (active || ready > 0)
@@ -68,21 +94,36 @@ internal static partial class Eyewear
     }
     private static void UpdateAmmo(State s)
     {
-        if (s.Player.HandsController?.Item is not Weapon weapon) { s.StatusText = ""; s.AmmoCount = -1; return; }
+        if (s.Player.HandsController?.Item is not Weapon weapon)
+        {
+            s.StatusText = "";
+            s.AmmoCount = -1;
+            return;
+        }
         var magazine = weapon.GetCurrentMagazine();
         Ammo? ammo = weapon is Revolver revolver && magazine is CylinderMagazine cylinder ?
             cylinder.GetFirstAmmo(!revolver.CylinderHammerClosed) : null;
         if (ammo is null)
             foreach (var chamber in weapon.Chambers)
-                if (chamber.ContainedItem is Ammo { IsUsed: false } round) { ammo = round; break; }
-        if (ammo is null && magazine?.Cartridges.Last is Ammo { IsUsed: false } next) ammo = next;
+                if (chamber.ContainedItem is Ammo { IsUsed: false } round)
+                {
+                    ammo = round;
+                    break;
+                }
+        if (ammo is null && magazine?.Cartridges.Last is Ammo { IsUsed: false } next)
+            ammo = next;
         var count = magazine?.Count ?? weapon.ChamberAmmoCount;
         var capacity = magazine?.MaxCount ?? weapon.Chambers.Length;
         var chamberCount = magazine is not null && magazine is not CylinderMagazine ? weapon.ChamberAmmoCount : 0;
         var id = ammo?.StringTemplateId ?? "";
-        if (s.AmmoCount == count && s.AmmoCapacity == capacity && s.AmmoId == id && s.AmmoChamber == chamberCount) return;
-        if (s.AmmoId != id || s.AmmoName.Length == 0) s.AmmoName = ammo is null ? "Empty" : (id + " ShortName").Localized();
-        s.AmmoCount = count; s.AmmoCapacity = capacity; s.AmmoId = id; s.AmmoChamber = chamberCount;
+        if (s.AmmoCount == count && s.AmmoCapacity == capacity && s.AmmoId == id && s.AmmoChamber == chamberCount)
+            return;
+        if (s.AmmoId != id || s.AmmoName.Length == 0)
+            s.AmmoName = ammo is null ? "Empty" : (id + " ShortName").Localized();
+        s.AmmoCount = count;
+        s.AmmoCapacity = capacity;
+        s.AmmoId = id;
+        s.AmmoChamber = chamberCount;
         s.StatusText = s.AmmoName + " " + count + "/" + capacity + (chamberCount > 0 ? " +" + chamberCount : "");
     }
 }

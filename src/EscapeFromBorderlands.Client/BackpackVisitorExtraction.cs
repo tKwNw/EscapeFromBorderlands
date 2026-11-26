@@ -34,10 +34,13 @@ internal static class BackpackVisitorExtraction
         var player = Singleton<GameWorld>.Instance?.MainPlayer;
         if (!BackpackRuntime.Is(player, Key) || player is null ||
             Native.Get(scenario, "_game") is not EndByExitTrigerScenario.IGame game ||
-            game.Status is not (GameStatus.Started or GameStatus.SoftStopping)) return;
+            game.Status is not (GameStatus.Started or GameStatus.SoftStopping))
+            return;
         if (PendingField.GetValue(scenario) is not List<(Player, string, IEnumerable<IExfiltrationRequirement>)> pending ||
-            SharedField.GetValue(scenario) is not List<ExfiltrationPoint> shared) return;
-        if (shared.Count == 0) return;
+            SharedField.GetValue(scenario) is not List<ExfiltrationPoint> shared)
+            return;
+        if (shared.Count == 0)
+            return;
         // Native requirement callbacks can mutate the monitored list; retain
         // the snapshot and fall back to a private one on a nested callback.
         var snapshot = SharedSnapshot.Count == 0 ? SharedSnapshot : new List<ExfiltrationPoint>();
@@ -50,18 +53,23 @@ internal static class BackpackVisitorExtraction
                 var normal = point.Settings.ExfiltrationTime;
                 if (point.Status != EExfiltrationStatus.Countdown || elapsed < Duration(normal, player) || elapsed > normal ||
                     !point.Entered.Contains(player) || player.HealthController?.IsAlive != true ||
-                    point.UnmetRequirements(player).Any() || pending.Any(p => p.Item1 == player)) continue;
+                    point.UnmetRequirements(player).Any() || pending.Any(p => p.Item1 == player))
+                    continue;
                 pending.Add((player, point.Settings.Name, point.Requirements));
             }
         }
-        finally { snapshot.Clear(); }
+        finally
+        {
+            snapshot.Clear();
+        }
     }
 
     internal static float UiDuration(float seconds, AbstractGame game, ExfiltrationPoint point)
     {
         var player = Singleton<GameWorld>.Instance?.MainPlayer;
         var wearing = BackpackRuntime.Is(player, Key);
-        if (!wearing && !(_usedPass && _point == point && _game == game)) return seconds;
+        if (!wearing && !(_usedPass && _point == point && _game == game))
+            return seconds;
         var duration = Duration(seconds, player);
         // Native UI already subtracts the shared timer's elapsed time. Its
         // ordinary timer expects a remaining duration when the UI is refreshed.
@@ -70,7 +78,8 @@ internal static class BackpackVisitorExtraction
             EntriesField.GetValue(scenario) is List<EndByExitTrigerScenario.LocationEscape> entries)
         {
             var entry = entries.FirstOrDefault(e => e.Player == player && e.Trigger == point);
-            if (entry is not null) duration = Math.Max(0f, duration - (game.PastTime - entry.StartTime));
+            if (entry is not null)
+                duration = Math.Max(0f, duration - (game.PastTime - entry.StartTime));
         }
         return duration;
     }
@@ -79,28 +88,44 @@ internal static class BackpackVisitorExtraction
     {
         if (!contains)
         {
-            if (_point == point) Reset();
+            if (_point == point)
+                Reset();
             return;
         }
-        if (_game != game || _point != point) _usedPass = false;
-        _game = game; _point = point;
+        if (_game != game || _point != point)
+            _usedPass = false;
+        _game = game;
+        _point = point;
         _wearing = BackpackRuntime.Is(Singleton<GameWorld>.Instance?.MainPlayer, Key);
         _usedPass |= _wearing;
     }
 
     internal static void Maintain(GameWorld? world)
     {
-        if (_game is null || _point is null) return;
+        if (_game is null || _point is null)
+            return;
         var player = world?.MainPlayer;
         if (player is null || player.HealthController?.IsAlive != true || player.ExfiltrationPoint != _point ||
-            _game.Status is not (GameStatus.Started or GameStatus.SoftStopping)) { Reset(); return; }
+            _game.Status is not (GameStatus.Started or GameStatus.SoftStopping))
+        {
+            Reset();
+            return;
+        }
         var wearing = BackpackRuntime.Is(player, Key);
-        if (wearing == _wearing) return;
-        _wearing = wearing; _usedPass = true;
+        if (wearing == _wearing)
+            return;
+        _wearing = wearing;
+        _usedPass = true;
         _game.UpdateExfiltrationUi(_point, true);
     }
 
-    internal static void Reset() { _game = null; _point = null; _wearing = false; _usedPass = false; }
+    internal static void Reset()
+    {
+        _game = null;
+        _point = null;
+        _wearing = false;
+        _usedPass = false;
+    }
 }
 
 [HarmonyPatch(typeof(EndByExitTrigerScenario), nameof(EndByExitTrigerScenario.Update))]
@@ -119,9 +144,11 @@ internal static class BackpackVisitorCountdownPatch
         {
             var instruction = codes[i];
             yield return instruction;
-            if (!instruction.LoadsField(time)) continue;
+            if (!instruction.LoadsField(time))
+                continue;
             reads++;
-            if (reads != 1) continue;
+            if (reads != 1)
+                continue;
             // The first time read belongs to this individual player's entry.
             // Leave the later shared deadline and its cleanup path intact.
             if (i < 3 || !codes[i - 2].LoadsField(trigger))
@@ -132,7 +159,8 @@ internal static class BackpackVisitorCountdownPatch
             yield return new CodeInstruction(OpCodes.Ldfld, player);
             yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BackpackVisitorExtraction), nameof(BackpackVisitorExtraction.Duration)));
         }
-        if (reads != 2) throw new InvalidOperationException($"Expected two native extraction-time reads, found {reads}.");
+        if (reads != 2)
+            throw new InvalidOperationException($"Expected two native extraction-time reads, found {reads}.");
     }
 }
 
@@ -149,13 +177,15 @@ internal static class BackpackVisitorCountdownUiPatch
         foreach (var instruction in instructions)
         {
             yield return instruction;
-            if (!instruction.LoadsField(time)) continue;
+            if (!instruction.LoadsField(time))
+                continue;
             reads++;
             yield return new CodeInstruction(OpCodes.Ldarg_0);
             yield return new CodeInstruction(OpCodes.Ldarg_1);
             yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(BackpackVisitorExtraction), nameof(BackpackVisitorExtraction.UiDuration)));
         }
-        if (reads != 2) throw new InvalidOperationException($"Expected two native extraction UI time reads, found {reads}.");
+        if (reads != 2)
+            throw new InvalidOperationException($"Expected two native extraction UI time reads, found {reads}.");
     }
 }
 
@@ -165,6 +195,7 @@ internal static class BackpackVisitorSurvivedPatch
     private static void Prefix(string profileId, ref ExitStatus exitStatus)
     {
         var player = Singleton<GameWorld>.Instance?.MainPlayer;
-        if (player?.ProfileId == profileId) exitStatus = BackpackVisitorExtraction.Outcome(exitStatus, player);
+        if (player?.ProfileId == profileId)
+            exitStatus = BackpackVisitorExtraction.Outcome(exitStatus, player);
     }
 }

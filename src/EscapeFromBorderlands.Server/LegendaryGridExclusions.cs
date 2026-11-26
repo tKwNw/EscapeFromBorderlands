@@ -28,13 +28,15 @@ internal static class LegendaryGridExclusions
         {
             var item = items[new MongoId(definition.TemplateId)];
             if (item.Properties?.Grids is not { } grids || !grids.Any(g => g.Properties?.Filters?.Any(f =>
-                f.ExcludedFilter?.Any(id => equivalents.TryGetValue(id, out var clones) && clones.Any(c => !f.ExcludedFilter.Contains(c))) == true) == true)) continue;
+                f.ExcludedFilter?.Any(id => equivalents.TryGetValue(id, out var clones) && clones.Any(c => !f.ExcludedFilter.Contains(c))) == true) == true))
+                continue;
             var copy = cloner.Clone(item.Properties)!;
             foreach (var grid in copy.Grids!)
                 foreach (var filter in grid.Properties?.Filters ?? [])
                     if (filter.ExcludedFilter is { } excluded)
                         foreach (var id in excluded.ToArray())
-                            if (equivalents.TryGetValue(id, out var clones)) excluded.UnionWith(clones);
+                            if (equivalents.TryGetValue(id, out var clones))
+                                excluded.UnionWith(clones);
             item.Properties = copy;
         }
     }
@@ -45,7 +47,8 @@ internal static class LegendaryGridExclusions
     // significant, so unrelated third-party restrictions still block conversion.
     internal static string FilterKey<T>(T filters)
     {
-        if (Sources.Count == 0) return JsonSerializer.Serialize(filters, Options);
+        if (Sources.Count == 0)
+            return JsonSerializer.Serialize(filters, Options);
         var node = JsonSerializer.SerializeToNode(filters, Options);
         if (node is JsonArray list)
             foreach (var filter in list)

@@ -16,7 +16,8 @@ internal static class MeleeLootingPolicy
         // Disabled leaves native protection intact, including on clones made from those templates.
         foreach (var id in enableMeleeLooting ? lootableIds : Enumerable.Empty<string>())
         {
-            if (!items.TryGetValue(new MongoId(id), out var item) || item.Properties is null) continue;
+            if (!items.TryGetValue(new MongoId(id), out var item) || item.Properties is null)
+                continue;
             // Native ItemFactory omits the Scabbard protection component when this flag is false.
             item.Properties.Unlootable = false;
             item.Properties.UnlootableFromSide = [];
@@ -26,7 +27,8 @@ internal static class MeleeLootingPolicy
             .Where(alias => protectedSources.Contains(alias.SourceTemplateId)).Select(alias => alias.TemplateId));
         foreach (var id in protectedIds)
         {
-            if (!items.TryGetValue(new MongoId(id), out var item) || item.Properties is null) continue;
+            if (!items.TryGetValue(new MongoId(id), out var item) || item.Properties is null)
+                continue;
             // Restore the exact vanilla protection for these two unsupported player weapon models.
             item.Properties.Unlootable = true;
             item.Properties.UnlootableFromSlot = "Scabbard";

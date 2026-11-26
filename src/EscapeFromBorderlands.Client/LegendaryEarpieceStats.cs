@@ -9,7 +9,9 @@ using HarmonyLib;
 namespace EscapeFromBorderlands.Client;
 
 internal enum LegendaryEarpieceStatId
-{ Hearing, Ambient, OwnStep, OwnEquipment, Contusion, AimCost, Draw, LegRecovery, Aim, Movement, Weather, GrenadeDraw }
+{
+    Hearing, Ambient, OwnStep, OwnEquipment, Contusion, AimCost, Draw, LegRecovery, Aim, Movement, Weather, GrenadeDraw
+}
 
 internal static class LegendaryEarpieceStats
 {
@@ -20,15 +22,24 @@ internal static class LegendaryEarpieceStats
     internal static float Ambient(Headphones item, RarityResolver.ShotRoll roll) => (float)Math.Pow(10d, item.Template.AmbientVolume / 20d) * roll.Earpiece.Ambient;
     internal static void Bind(Headphones item)
     {
-        if (RarityResolver.Resolve(item) is not { Definition.IsEarpiece: true } roll) return;
-        var key = roll.Definition.RuntimeKey; var b = roll.Earpiece;
+        if (RarityResolver.Resolve(item) is not { Definition.IsEarpiece: true } roll)
+            return;
+        var key = roll.Definition.RuntimeKey;
+        var b = roll.Earpiece;
         void Row(LegendaryEarpieceStatId id, string name, Func<float> value, Func<string> text, string tooltip, bool less = false)
         {
             var attribute = item.Attributes.FirstOrDefault(a => a.Id.Equals(id));
-            if (attribute is null) { attribute = new ItemAttribute(id); item.Attributes.Add(attribute); }
-            attribute.Name = name; attribute.Base = value; attribute.StringValue = text;
+            if (attribute is null)
+            {
+                attribute = new ItemAttribute(id);
+                item.Attributes.Add(attribute);
+            }
+            attribute.Name = name;
+            attribute.Base = value;
+            attribute.StringValue = text;
             attribute.DisplayType = () => EItemAttributeDisplayType.Compact;
-            attribute.Tooltip = () => tooltip; attribute.LessIsGood = less;
+            attribute.Tooltip = () => tooltip;
+            attribute.LessIsGood = less;
         }
         const string permanent = "This copy's permanent value, including its signature and random bonuses. Situational and triggered effects apply under their described conditions.";
         Row(LegendaryEarpieceStatId.Hearing, "Hearing range", () => item.Template.RolloffMultiplier * Hearing(roll),
@@ -42,9 +53,12 @@ internal static class LegendaryEarpieceStats
         Row(LegendaryEarpieceStatId.Draw, "Firearm draw speed", () => b.Draw, () => Percent(b.Draw), permanent);
         Row(LegendaryEarpieceStatId.LegRecovery, "Leg Stamina regeneration", () => b.LegRecovery, () => Percent(b.LegRecovery), permanent);
         Row(LegendaryEarpieceStatId.Aim, "Aiming speed", () => b.Aim, () => Percent(b.Aim), permanent);
-        if (key == "EP06-1") Row(LegendaryEarpieceStatId.Movement, "Movement speed", () => .8f, () => "80%", "Matamata Turtle's walking and sprinting speed relative to your normal movement while this headset is worn.");
-        if (key == "EP02-2") Row(LegendaryEarpieceStatId.Weather, "Rain and wind volume", () => .4f, () => "40%", "Rain Check's local weather-volume signature.", true);
-        if (key == "EP07-2") Row(LegendaryEarpieceStatId.GrenadeDraw, "Grenade draw/throw speed", () => 1.6f, () => "160%", "Fast Forward's grenade-animation signature; per-grenade bonuses multiply separately.");
+        if (key == "EP06-1")
+            Row(LegendaryEarpieceStatId.Movement, "Movement speed", () => .8f, () => "80%", "Matamata Turtle's walking and sprinting speed relative to your normal movement while this headset is worn.");
+        if (key == "EP02-2")
+            Row(LegendaryEarpieceStatId.Weather, "Rain and wind volume", () => .4f, () => "40%", "Rain Check's local weather-volume signature.", true);
+        if (key == "EP07-2")
+            Row(LegendaryEarpieceStatId.GrenadeDraw, "Grenade draw/throw speed", () => 1.6f, () => "160%", "Fast Forward's grenade-animation signature; per-grenade bonuses multiply separately.");
     }
     internal static Enum Icon(Enum id) => id is LegendaryEarpieceStatId stat ? stat switch
     {
@@ -66,13 +80,19 @@ internal static class LegendaryEarpieceInspectStatsPatch
 {
     private static readonly FieldInfo ItemField = AccessTools.Field(typeof(ItemSpecificationPanel), "_item");
     private static void Prefix(ItemSpecificationPanel __instance)
-    { if (ItemField.GetValue(__instance) is Headphones item) LegendaryEarpieceStats.Bind(item); }
+    {
+        if (ItemField.GetValue(__instance) is Headphones item)
+            LegendaryEarpieceStats.Bind(item);
+    }
 }
 [HarmonyPatch(typeof(ItemSpecificationPanel), "Compare")]
 internal static class LegendaryEarpieceCompareStatsPatch
 {
     private static void Prefix(Item compareItem)
-    { if (compareItem is Headphones item) LegendaryEarpieceStats.Bind(item); }
+    {
+        if (compareItem is Headphones item)
+            LegendaryEarpieceStats.Bind(item);
+    }
 }
 [HarmonyPatch(typeof(StaticIcons), nameof(StaticIcons.GetAttributeIcon))]
 internal static class LegendaryEarpieceStatIconPatch

@@ -13,9 +13,11 @@ internal static class EarpieceCompatibility
             .GroupBy(v => v.SourceTemplateId).ToDictionary(g => g.Key, g => g.Select(v => new MongoId(v.TemplateId)).ToArray());
         foreach (var item in items.Values)
         {
-            if (item.Properties?.ConflictingItems is not { } conflicts) continue;
+            if (item.Properties?.ConflictingItems is not { } conflicts)
+                continue;
             var extra = conflicts.SelectMany(id => clones.GetValueOrDefault(id.ToString()) ?? []).ToArray();
-            foreach (var id in extra) conflicts.Add(id);
+            foreach (var id in extra)
+                conflicts.Add(id);
         }
     }
 }

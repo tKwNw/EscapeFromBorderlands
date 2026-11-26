@@ -26,7 +26,12 @@ internal static class EarpieceAudio
         internal readonly Player? Owner;
         internal readonly string Kind;
         internal readonly float BaseRolloff;
-        internal Scope(Player? owner, string kind, float baseRolloff = 0f) { Owner = owner; Kind = kind; BaseRolloff = baseRolloff; }
+        internal Scope(Player? owner, string kind, float baseRolloff = 0f)
+        {
+            Owner = owner;
+            Kind = kind;
+            BaseRolloff = baseRolloff;
+        }
     }
     private static readonly Dictionary<BetterSource, Source> Sources = new();
     private static readonly Dictionary<SuperBetterAudioQueue, Player> Queues = new();
@@ -48,14 +53,21 @@ internal static class EarpieceAudio
     internal static float Ambient => EarpieceRuntime.Listener is { } s
         ? EarpieceEffectRules.Ambient(s.Key, s.Roll.Earpiece.Ambient, EarpieceRuntime.Moving(s.Player), s.Effect.StillSeconds) : 1f;
     internal static Player? Owner(BaseSoundPlayer sound) => Native.Get(Native.Get(sound, "playersBridge"), "iPlayer") as Player;
-    internal static Scope Begin(Player? owner, string kind, float baseRolloff = 0f) { var old = Current; Current = new Scope(owner, kind, baseRolloff); return old; }
+    internal static Scope Begin(Player? owner, string kind, float baseRolloff = 0f)
+    {
+        var old = Current;
+        Current = new Scope(owner, kind, baseRolloff);
+        return old;
+    }
     internal static Scope BeginQueue(SuperBetterAudioQueue queue)
     {
         var old = Current;
         // Native enqueue/fire/rolloff hooks register source membership changes.
         // Retain only ownership while neutral, allowing a mid-tail gear change.
-        if (!EquipmentPresence.AnyAudio && Sources.Count == 0) return old;
-        if (Queues.TryGetValue(queue, out var owner)) Current = new Scope(owner, "gun");
+        if (!EquipmentPresence.AnyAudio && Sources.Count == 0)
+            return old;
+        if (Queues.TryGetValue(queue, out var owner))
+            Current = new Scope(owner, "gun");
         return old;
     }
     internal static void Capture(BetterSource source)
@@ -63,7 +75,8 @@ internal static class EarpieceAudio
         // WeaponSoundPlayer can emit unrelated sounds inside its firing call.
         // Only RegisterQueue identifies gunshot sources; other actor scopes
         // still identify equipment, movement and speech independently.
-        if (Current.Owner is { } owner && Current.Kind != "gun") Register(source, owner, Current.Kind);
+        if (Current.Owner is { } owner && Current.Kind != "gun")
+            Register(source, owner, Current.Kind);
     }
     internal static float Filter(float volume, BetterSource source) => volume * SourceVolume(source);
     internal static void RefreshOutput(BetterSource source)
@@ -78,7 +91,8 @@ internal static class EarpieceAudio
     internal static void GunStarted(SuperSource source)
     {
         Capture(source);
-        if (Sources.TryGetValue(source, out var state) && Volume(state.Owner, state.Kind) != 1f) RefreshOutput(source);
+        if (Sources.TryGetValue(source, out var state) && Volume(state.Owner, state.Kind) != 1f)
+            RefreshOutput(source);
     }
     internal static void PrepareScheduledGun(BetterSource source)
     {
@@ -88,18 +102,27 @@ internal static class EarpieceAudio
     internal static float RawRange(BetterSource source) => Sources.TryGetValue(source, out var s) && s.HasRange ? s.RawRange : source.MaxDistance;
     internal static void Register(BetterSource? source, Player? owner, string kind)
     {
-        if (source == null || owner is null) return;
-        if (!Affects(owner)) { if (Sources.ContainsKey(source)) Forget(source, true); return; }
-        if (Sources.TryGetValue(source, out var known) && known.Owner == owner && known.Kind == kind) return;
+        if (source == null || owner is null)
+            return;
+        if (!Affects(owner))
+        {
+            if (Sources.ContainsKey(source))
+                Forget(source, true);
+            return;
+        }
+        if (Sources.TryGetValue(source, out var known) && known.Owner == owner && known.Kind == kind)
+            return;
         Forget(source, true);
         Sources[source] = new Source { Owner = owner, Kind = kind };
-        if (source.MaxDistance > 0f) source.SetRolloff(source.MaxDistance);
+        if (source.MaxDistance > 0f)
+            source.SetRolloff(source.MaxDistance);
     }
     private static GameWorld? MapWorld;
     private static string? MapName;
     private static string? Map(EarpieceRuntime.State? listener)
     {
-        if (listener?.Key != "EP02-1" || Singleton<GameWorld>.Instance is not { } world) return null;
+        if (listener?.Key != "EP02-1" || Singleton<GameWorld>.Instance is not { } world)
+            return null;
         if (!ReferenceEquals(MapWorld, world) || MapName is null)
         {
             MapWorld = world;
@@ -131,9 +154,11 @@ internal static class EarpieceAudio
     }
     internal static float SourceVolume(BetterSource source)
     {
-        if (Sources.Count == 0 && Current.Owner is null) return 1f;
+        if (Sources.Count == 0 && Current.Owner is null)
+            return 1f;
         Capture(source);
-        if (!Sources.TryGetValue(source, out var s)) return 1f;
+        if (!Sources.TryGetValue(source, out var s))
+            return 1f;
         var factor = s.VolumeFactor = TargetVolume(s);
         Report("volume", s, factor);
         return factor;
@@ -142,16 +167,20 @@ internal static class EarpieceAudio
     internal static float LocalVolume(Player owner, string kind)
     {
         var listener = EarpieceRuntime.Listener;
-        if (listener is null || owner != listener.Player || kind is not ("step" or "item")) return 1f;
+        if (listener is null || owner != listener.Player || kind is not ("step" or "item"))
+            return 1f;
         return listener.Roll.Earpiece.SelfNoise * (listener.Key == "EP01-2" ? .5f : 1f);
     }
     internal static void BakeLocal(BetterSource source, Player owner, string kind, ref float volume, bool oneShot = true)
     {
         var local = Singleton<GameWorld>.Instance?.MainPlayer;
-        if (owner != local) return;
-        if (!Affects(owner) && !Sources.ContainsKey(source)) return;
+        if (owner != local)
+            return;
+        if (!Affects(owner) && !Sources.ContainsKey(source))
+            return;
         Register(source, owner, kind);
-        if (!Sources.TryGetValue(source, out var state)) return;
+        if (!Sources.TryGetValue(source, out var state))
+            return;
         var factor = LocalVolume(owner, kind);
         state.BakedLocalVolume = factor;
         state.CachedLocalInput = source is not SimpleSource || !oneShot;
@@ -162,8 +191,10 @@ internal static class EarpieceAudio
     internal static void StepInput(BetterSource source, ref float volume, bool oneShot)
     {
         var player = Singleton<GameWorld>.Instance?.MainPlayer;
-        if (player is null) return;
-        if (!Affects(player) && Sources.Count == 0) return;
+        if (player is null)
+            return;
+        if (!Affects(player) && Sources.Count == 0)
+            return;
         var known = Sources.TryGetValue(source, out var s) && s.Owner == player && s.Kind == "step";
         var secondary = Native.Get(Native.Get(player, "_specificStepAudioController"), "_source");
         if (Current.Owner == player && Current.Kind == "step" || known ||
@@ -173,25 +204,33 @@ internal static class EarpieceAudio
     internal static void Rolloff(BetterSource source, ref float distance)
     {
         Capture(source);
-        if (!Sources.TryGetValue(source, out var s)) return;
-        if (Current.BaseRolloff > 0f) distance = Current.BaseRolloff;
+        if (!Sources.TryGetValue(source, out var s))
+            return;
+        if (Current.BaseRolloff > 0f)
+            distance = Current.BaseRolloff;
         // Native occlusion reapplies MaxDistance. Recover the original instead
         // of multiplying an already-expanded range on every occlusion update.
-        if (s.HasRange && Math.Abs(distance - s.AppliedRange) < .0001f) distance = s.RawRange;
-        s.RawRange = distance; s.HasRange = true; s.RangeFactor = Hearing(s.Owner, s.Kind);
-        distance *= s.RangeFactor; s.AppliedRange = distance;
+        if (s.HasRange && Math.Abs(distance - s.AppliedRange) < .0001f)
+            distance = s.RawRange;
+        s.RawRange = distance;
+        s.HasRange = true;
+        s.RangeFactor = Hearing(s.Owner, s.Kind);
+        distance *= s.RangeFactor;
+        s.AppliedRange = distance;
         Report("range", s, s.RangeFactor);
     }
     private static void Report(string stage, Source source, float factor)
     {
-        if (factor == 1f || EarpieceRuntime.Listener is not { } listener) return;
+        if (factor == 1f || EarpieceRuntime.Listener is not { } listener)
+            return;
         var own = source.Owner == listener.Player;
         if (FactorReports.Add((listener.Item.Id, stage, source.Kind, own)))
             Plugin.LogSource.LogInfo($"EFB headset audio {listener.Roll.Definition.ShortName}: {stage} {source.Kind}, {(own ? "own" : "other")} source, multiplier {factor:F2}.");
     }
     internal static void Forget(BetterSource source, bool restore)
     {
-        if (!Sources.TryGetValue(source, out var s)) return;
+        if (!Sources.TryGetValue(source, out var s))
+            return;
         // Drop the lease first, even if a native restoration fails. Reused pool
         // sources must not inherit ownership from a previous actor or raid.
         Sources.Remove(source!);
@@ -200,31 +239,48 @@ internal static class EarpieceAudio
             // A native looping/stereo source stores its input volume in these
             // caches. Remove only our baked factor before forgetting the lease.
             Cleanup("input volume", () => Native.Set(source, "PreOcclusionVolume", Native.Number(source, "PreOcclusionVolume") / s.BakedLocalVolume));
-            Cleanup("stereo volume", () => { if (Native.Get(source, "_secondPreEffectsVolume") is float second) Native.Set(source, "_secondPreEffectsVolume", second / s.BakedLocalVolume); });
+            Cleanup("stereo volume", () =>
+{
+    if (Native.Get(source, "_secondPreEffectsVolume") is float second)
+        Native.Set(source, "_secondPreEffectsVolume", second / s.BakedLocalVolume);
+});
         }
-        if (!restore || source == null) return;
-        var old = Current; Current = default;
+        if (!restore || source == null)
+            return;
+        var old = Current;
+        Current = default;
         try
         {
             Cleanup("output volume", () => RefreshOutput(source));
-            if (s.HasRange) Cleanup("source range", () => source.SetRolloff(s.RawRange));
+            if (s.HasRange)
+                Cleanup("source range", () => source.SetRolloff(s.RawRange));
         }
-        finally { Current = old; }
+        finally
+        {
+            Current = old;
+        }
     }
     private static void Cleanup(string stage, Action action)
     {
-        try { action(); }
+        try
+        {
+            action();
+        }
         catch (Exception error)
         {
-            if (Reports.Add("cleanup:" + stage)) Plugin.LogSource?.LogWarning($"EFB audio {stage} restoration failed; remaining cleanup continues. {error}");
+            if (Reports.Add("cleanup:" + stage))
+                Plugin.LogSource?.LogWarning($"EFB audio {stage} restoration failed; remaining cleanup continues. {error}");
         }
     }
     internal static void RegisterQueue(SuperBetterAudioQueue queue)
     {
-        if (Current.Owner is not { } owner) return;
+        if (Current.Owner is not { } owner)
+            return;
         Queues[queue] = owner;
-        if (!Affects(owner)) return;
-        foreach (var source in queue.AudioSources) Register(source, owner, "gun");
+        if (!Affects(owner))
+            return;
+        foreach (var source in queue.AudioSources)
+            Register(source, owner, "gun");
     }
     internal static void Maintain(RaidPlayerSnapshot live)
     {
@@ -232,11 +288,20 @@ internal static class EarpieceAudio
         {
             try
             {
-                foreach (var pair in Queues) if (!live.Contains(pair.Value)) StaleQueues.Add(pair.Key);
-                foreach (var queue in StaleQueues) Queues.Remove(queue);
-                if (Sources.Count != 0 || LastAmbient != 1f) RestoreSources();
+                foreach (var pair in Queues)
+                    if (!live.Contains(pair.Value))
+                        StaleQueues.Add(pair.Key);
+                foreach (var queue in StaleQueues)
+                    Queues.Remove(queue);
+                if (Sources.Count != 0 || LastAmbient != 1f)
+                    RestoreSources();
             }
-            finally { StaleQueues.Clear(); DiscoveryAt.Clear(); ObservedAudioRevision = -1; }
+            finally
+            {
+                StaleQueues.Clear();
+                DiscoveryAt.Clear();
+                ObservedAudioRevision = -1;
+            }
             return;
         }
         var mainPlayer = Singleton<GameWorld>.Instance?.MainPlayer;
@@ -245,7 +310,8 @@ internal static class EarpieceAudio
         {
             foreach (var pair in Queues)
                 if (live.Contains(pair.Value) && Affects(pair.Value))
-                    foreach (var source in pair.Key.AudioSources) Register(source, pair.Value, "gun");
+                    foreach (var source in pair.Key.AudioSources)
+                        Register(source, pair.Value, "gun");
             ObservedAudioRevision = EquipmentPresence.AudioRevision;
             ObservedListener = mainPlayer;
         }
@@ -255,11 +321,14 @@ internal static class EarpieceAudio
         if (listener is not null || EarpieceRuntime.States.Count != 0)
             foreach (var p in live.Humans)
             {
-                if (listener is null && (!EarpieceRuntime.States.TryGetValue(p, out var active) || active.Key != "EP08-2")) continue;
-                if (!PlayerRefresh.CanObserve(p)) continue;
+                if (listener is null && (!EarpieceRuntime.States.TryGetValue(p, out var active) || active.Key != "EP08-2"))
+                    continue;
+                if (!PlayerRefresh.CanObserve(p))
+                    continue;
                 // Bot playback is captured only when needed by the human listener.
                 // Do not poll bot source fields or bot-owned audio effects.
-                if (!audioChanged && DiscoveryAt.TryGetValue(p, out var next) && UnityEngine.Time.unscaledTime < next) continue;
+                if (!audioChanged && DiscoveryAt.TryGetValue(p, out var next) && UnityEngine.Time.unscaledTime < next)
+                    continue;
                 DiscoveryAt[p] = UnityEngine.Time.unscaledTime + .05f;
                 if (listener is not null)
                 {
@@ -271,11 +340,16 @@ internal static class EarpieceAudio
             }
         try
         {
-            foreach (var p in DiscoveryAt.Keys) if (!live.Contains(p)) StaleActors.Add(p);
-            foreach (var p in StaleActors) DiscoveryAt.Remove(p);
+            foreach (var p in DiscoveryAt.Keys)
+                if (!live.Contains(p))
+                    StaleActors.Add(p);
+            foreach (var p in StaleActors)
+                DiscoveryAt.Remove(p);
             foreach (var pair in Queues)
-                if (!live.Contains(pair.Value)) StaleQueues.Add(pair.Key);
-            foreach (var queue in StaleQueues) Queues.Remove(queue);
+                if (!live.Contains(pair.Value))
+                    StaleQueues.Add(pair.Key);
+            foreach (var queue in StaleQueues)
+                Queues.Remove(queue);
             SourceSnapshot.AddRange(Sources);
             var map = Map(listener);
             var hat = Headwear.Listener;
@@ -283,39 +357,72 @@ internal static class EarpieceAudio
             var now = UnityEngine.Time.unscaledTime;
             foreach (var pair in SourceSnapshot)
             {
-                if (pair.Key == null) { Sources.Remove(pair.Key!); continue; }
+                if (pair.Key == null)
+                {
+                    Sources.Remove(pair.Key!);
+                    continue;
+                }
                 var s = pair.Value;
                 // Keep playing death sounds, tails and corpse-looting audio.
-                if (s.Owner is not null && !live.Contains(s.Owner)) { s.Owner = null; s.Retired = true; }
+                if (s.Owner is not null && !live.Contains(s.Owner))
+                {
+                    s.Owner = null;
+                    s.Retired = true;
+                }
                 if (s.Retired && pair.Key.PlayBackState != BetterSource.EPlayBackState.Playing)
-                { Forget(pair.Key, true); continue; }
-                if (!Affects(s.Owner)) { Forget(pair.Key, true); continue; }
-                if (now < s.RetryAt) continue;
+                {
+                    Forget(pair.Key, true);
+                    continue;
+                }
+                if (!Affects(s.Owner))
+                {
+                    Forget(pair.Key, true);
+                    continue;
+                }
+                if (now < s.RetryAt)
+                    continue;
                 try
                 {
                     if (revision != EquipmentPresence.AudioRevision)
                     {
-                        MaintenanceFactors.Clear(); listener = EarpieceRuntime.Listener; hat = Headwear.Listener; map = Map(listener);
+                        MaintenanceFactors.Clear();
+                        listener = EarpieceRuntime.Listener;
+                        hat = Headwear.Listener;
+                        map = Map(listener);
                         revision = EquipmentPresence.AudioRevision;
                     }
                     var key = (s.Owner, s.Kind);
                     if (!MaintenanceFactors.TryGetValue(key, out var factors))
                         MaintenanceFactors[key] = factors = (Volume(s.Owner, s.Kind, listener, hat), Hearing(s.Owner, s.Kind, listener, map, hat));
-                    if (s.VolumeFactor != factors.Volume / s.BakedLocalVolume) RefreshOutput(pair.Key);
-                    if (s.HasRange && s.RangeFactor != factors.Range) pair.Key.SetRolloff(s.RawRange);
+                    if (s.VolumeFactor != factors.Volume / s.BakedLocalVolume)
+                        RefreshOutput(pair.Key);
+                    if (s.HasRange && s.RangeFactor != factors.Range)
+                        pair.Key.SetRolloff(s.RawRange);
                 }
                 catch (Exception error)
                 {
                     s.RetryAt = now + 5f;
                     if (now >= s.ReportAt)
-                    { s.ReportAt = now + 30f; Plugin.LogSource?.LogWarning($"EFB audio refresh failed; retrying with backoff. {error}"); }
+                    {
+                        s.ReportAt = now + 30f;
+                        Plugin.LogSource?.LogWarning($"EFB audio refresh failed; retrying with backoff. {error}");
+                    }
                 }
             }
         }
-        finally { StaleQueues.Clear(); SourceSnapshot.Clear(); MaintenanceFactors.Clear(); StaleActors.Clear(); }
+        finally
+        {
+            StaleQueues.Clear();
+            SourceSnapshot.Clear();
+            MaintenanceFactors.Clear();
+            StaleActors.Clear();
+        }
         var ambient = Ambient;
         if (ambient != LastAmbient && MonoBehaviourSingleton<BetterAudio>.Instantiated)
-        { RefreshHeadphones(); LastAmbient = ambient; }
+        {
+            RefreshHeadphones();
+            LastAmbient = ambient;
+        }
     }
     internal static void Reset()
     {
@@ -324,11 +431,27 @@ internal static class EarpieceAudio
         {
             RestoreSources();
         }
-        finally { Sources.Clear(); Queues.Clear(); DiscoveryAt.Clear(); StaleActors.Clear(); MaintenanceFactors.Clear(); Reports.Clear(); FactorReports.Clear(); MapWorld = null; MapName = null; ObservedListener = null; Current = default; LastAmbient = 1f; ObservedAudioRevision = -1; }
+        finally
+        {
+            Sources.Clear();
+            Queues.Clear();
+            DiscoveryAt.Clear();
+            StaleActors.Clear();
+            MaintenanceFactors.Clear();
+            Reports.Clear();
+            FactorReports.Clear();
+            MapWorld = null;
+            MapName = null;
+            ObservedListener = null;
+            Current = default;
+            LastAmbient = 1f;
+            ObservedAudioRevision = -1;
+        }
     }
     private static void RestoreSources()
     {
-        foreach (var source in Sources.Keys.ToArray()) Cleanup("source lease", () => Forget(source, true));
+        foreach (var source in Sources.Keys.ToArray())
+            Cleanup("source lease", () => Forget(source, true));
         if (LastAmbient != 1f && MonoBehaviourSingleton<BetterAudio>.Instantiated && MonoBehaviourSingleton<BetterAudio>.Instance != null)
             Cleanup("ambient volume", RefreshHeadphones);
         LastAmbient = 1f;
@@ -342,7 +465,8 @@ internal static class EarpieceAmbientPatch
     private static void Prefix(ref HeadphonesTemplate template)
     {
         var factor = EarpieceAudio.Ambient;
-        if (template is null || factor == 1f) return;
+        if (template is null || factor == 1f)
+            return;
         template = (HeadphonesTemplate)Clone.Invoke(template, null)!;
         template.AmbientVolume += 20f * (float)Math.Log10(Math.Max(.001f, factor));
     }
@@ -353,7 +477,11 @@ internal static class EarpieceStepScopePatch
     private static IEnumerable<MethodBase> TargetMethods() => new[] { AccessTools.Method(typeof(Player), "PlayStepSound"), AccessTools.Method(typeof(Player), "DefaultPlay"), AccessTools.Method(typeof(Player), "PlayGearSound", new[] { typeof(SoundBank), typeof(float) }) };
     private static void Prefix(Player __instance, MethodBase __originalMethod, out EarpieceAudio.Scope __state) =>
         __state = EarpieceAudio.Begin(__instance, __originalMethod.Name == "PlayGearSound" ? "item" : "step");
-    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception) { EarpieceAudio.Current = __state; return __exception; }
+    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception)
+    {
+        EarpieceAudio.Current = __state;
+        return __exception;
+    }
 }
 [HarmonyPatch]
 internal static class EarpieceGunScopePatch
@@ -362,11 +490,19 @@ internal static class EarpieceGunScopePatch
     private static void Prefix(WeaponSoundPlayer __instance, out EarpieceAudio.Scope __state)
     {
         __state = EarpieceAudio.Begin(EarpieceAudio.Owner(__instance), "gun");
-        if (Native.Get(__instance, "_queue") is SuperBetterAudioQueue queue) EarpieceAudio.RegisterQueue(queue);
+        if (Native.Get(__instance, "_queue") is SuperBetterAudioQueue queue)
+            EarpieceAudio.RegisterQueue(queue);
     }
     private static void Postfix(WeaponSoundPlayer __instance)
-    { if (Native.Get(__instance, "_queue") is SuperBetterAudioQueue queue) EarpieceAudio.RegisterQueue(queue); }
-    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception) { EarpieceAudio.Current = __state; return __exception; }
+    {
+        if (Native.Get(__instance, "_queue") is SuperBetterAudioQueue queue)
+            EarpieceAudio.RegisterQueue(queue);
+    }
+    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception)
+    {
+        EarpieceAudio.Current = __state;
+        return __exception;
+    }
 }
 [HarmonyPatch]
 internal static class EarpieceQueueSourcePatch
@@ -381,7 +517,11 @@ internal static class EarpieceQueueSourcePatch
 internal static class EarpieceQueuePlaybackPatch
 {
     private static void Prefix(SuperBetterAudioQueue __instance, out EarpieceAudio.Scope __state) => __state = EarpieceAudio.BeginQueue(__instance);
-    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception) { EarpieceAudio.Current = __state; return __exception; }
+    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception)
+    {
+        EarpieceAudio.Current = __state;
+        return __exception;
+    }
 }
 [HarmonyPatch(typeof(SuperAudioSample), nameof(SuperAudioSample.PlayOn))]
 internal static class EarpieceGunPlaybackOutputPatch
@@ -409,7 +549,8 @@ internal static class EarpieceScheduledGunSourcePatch
             }
             yield return instruction;
         }
-        if (count != 2) throw new InvalidOperationException($"Expected 2 physical gun-channel starts, found {count}.");
+        if (count != 2)
+            throw new InvalidOperationException($"Expected 2 physical gun-channel starts, found {count}.");
     }
 }
 [HarmonyPatch]
@@ -438,7 +579,10 @@ internal static class EarpieceClipDistancePatch
     // The native clip selection has its own distance blend/cutoff, independent
     // of AudioSource.maxDistance. Physical propagation delays remain unchanged.
     private static void Prefix(ref float distance)
-    { if (EarpieceAudio.Current.Owner is { } owner) distance /= EarpieceAudio.Hearing(owner, EarpieceAudio.Current.Kind); }
+    {
+        if (EarpieceAudio.Current.Owner is { } owner)
+            distance /= EarpieceAudio.Hearing(owner, EarpieceAudio.Current.Kind);
+    }
 }
 [HarmonyPatch(typeof(Player), "SetRolloff")]
 internal static class EarpieceActorSourcePatch
@@ -450,7 +594,11 @@ internal static class EarpieceActorSourcePatch
         __state = EarpieceAudio.Begin(__instance, kind);
         EarpieceAudio.Capture(source);
     }
-    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception) { EarpieceAudio.Current = __state; return __exception; }
+    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception)
+    {
+        EarpieceAudio.Current = __state;
+        return __exception;
+    }
 }
 [HarmonyPatch(typeof(Player), "UpdateStepSourceRolloff")]
 internal static class EarpieceSecondaryStepRangePatch
@@ -464,10 +612,16 @@ internal static class EarpieceSecondaryStepRangePatch
             // The secondary step controller receives the primary source's
             // ALREADY expanded range. Pass its raw range so its own sources
             // receive the listener multiplier exactly once.
-            if (instruction.Calls(getter)) { instruction.opcode = OpCodes.Call; instruction.operand = AccessTools.Method(typeof(EarpieceAudio), nameof(EarpieceAudio.RawRange)); count++; }
+            if (instruction.Calls(getter))
+            {
+                instruction.opcode = OpCodes.Call;
+                instruction.operand = AccessTools.Method(typeof(EarpieceAudio), nameof(EarpieceAudio.RawRange));
+                count++;
+            }
             yield return instruction;
         }
-        if (count != 1) throw new InvalidOperationException($"Expected 1 secondary-step range transfer, found {count}.");
+        if (count != 1)
+            throw new InvalidOperationException($"Expected 1 secondary-step range transfer, found {count}.");
     }
 }
 [HarmonyPatch(typeof(BaseSoundPlayer), "PlayClip")]
@@ -477,9 +631,14 @@ internal static class EarpieceItemAudioScopePatch
     {
         var owner = EarpieceAudio.Owner(__instance);
         __state = EarpieceAudio.Begin(owner, "item", rolloff);
-        if (owner is not null) rolloff = (int)Math.Ceiling(rolloff * EarpieceAudio.Hearing(owner, "item"));
+        if (owner is not null)
+            rolloff = (int)Math.Ceiling(rolloff * EarpieceAudio.Hearing(owner, "item"));
     }
-    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception) { EarpieceAudio.Current = __state; return __exception; }
+    private static Exception? Finalizer(EarpieceAudio.Scope __state, Exception? __exception)
+    {
+        EarpieceAudio.Current = __state;
+        return __exception;
+    }
 }
 // Scale the raw target at each native channel's load, before interpolation,
 // occlusion and fades. Do not mutate shared source caches or rely on a nested
@@ -497,12 +656,14 @@ internal static class EarpieceSourceVolumePatch
         foreach (var instruction in instructions)
         {
             yield return instruction;
-            if (!instruction.LoadsField(First) && !instruction.LoadsField(Second) && !instruction.LoadsField(Third)) continue;
+            if (!instruction.LoadsField(First) && !instruction.LoadsField(Second) && !instruction.LoadsField(Third))
+                continue;
             yield return new CodeInstruction(OpCodes.Ldarg_0);
             yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EarpieceAudio), nameof(EarpieceAudio.Filter)));
             count++;
         }
-        if (count != 1) throw new InvalidOperationException($"Expected 1 native channel volume load, found {count}.");
+        if (count != 1)
+            throw new InvalidOperationException($"Expected 1 native channel volume load, found {count}.");
     }
 }
 [HarmonyPatch]
@@ -511,8 +672,16 @@ internal static class EarpieceSourceRangePatch
     [ThreadStatic] private static int Depth;
     private static IEnumerable<MethodBase> TargetMethods() => new[] { AccessTools.Method(typeof(SimpleSource), "SetRolloff"), AccessTools.Method(typeof(SuperSource), "SetRolloff"), AccessTools.Method(typeof(SuperSourceDistant), "SetRolloff") };
     private static void Prefix(BetterSource __instance, ref float __0, out int __state)
-    { __state = Depth++; if (__state == 0) EarpieceAudio.Rolloff(__instance, ref __0); }
-    private static Exception? Finalizer(int __state, Exception? __exception) { Depth = __state; return __exception; }
+    {
+        __state = Depth++;
+        if (__state == 0)
+            EarpieceAudio.Rolloff(__instance, ref __0);
+    }
+    private static Exception? Finalizer(int __state, Exception? __exception)
+    {
+        Depth = __state;
+        return __exception;
+    }
 }
 [HarmonyPatch(typeof(BetterSource), "Release")]
 internal static class EarpieceSourceReleasePatch

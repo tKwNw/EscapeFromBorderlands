@@ -1,4 +1,5 @@
 namespace EscapeFromBorderlands.Client;
+
 internal sealed class ChestRigBoons
 {
     internal float Reload = 1f, Swap = 1f, Aim = 1f, Ergonomics = 1f, Recoil = 1f;

@@ -16,11 +16,13 @@ internal static class MeleeWeaponSwitch
     internal static void Queue(Player player, Item? next, float factor)
     {
         Pending.Remove(player);
-        if (next is Weapon && factor > 1f) Pending[player] = (next.Id, factor, Time.time + 10f);
+        if (next is Weapon && factor > 1f)
+            Pending[player] = (next.Id, factor, Time.time + 10f);
     }
     internal static float Consume(Player player, Item next)
     {
-        if (!Pending.TryGetValue(player, out var entry)) return 1f;
+        if (!Pending.TryGetValue(player, out var entry))
+            return 1f;
         Pending.Remove(player);
         return entry.Target == next.Id && Time.time < entry.Until ? entry.Factor : 1f;
     }
@@ -32,9 +34,11 @@ internal static class LegendaryMeleeFirearmDrawPatch
     private static void Prefix(Player.FirearmController __instance, ref float animationSpeed, ref Action callback)
     {
         var player = MeleeRuntime.Owner(__instance);
-        if (player is null) return;
+        if (player is null)
+            return;
         var factor = MeleeWeaponSwitch.Consume(player, __instance.Item);
-        if (factor == 1f) return;
+        if (factor == 1f)
+            return;
         var original = animationSpeed;
         var completed = callback;
         animationSpeed *= factor;

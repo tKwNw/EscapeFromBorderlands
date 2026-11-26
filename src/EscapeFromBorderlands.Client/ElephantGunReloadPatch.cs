@@ -15,15 +15,18 @@ internal static class ElephantGunReloadPatch
         ref Callback callback, out ElephantGunRules.Reload? __state)
     {
         __state = null;
-        if (__instance.Blindfire || ammoPack.AmmoCount <= 0 || !__instance.CanStartReload()) return;
+        if (__instance.Blindfire || ammoPack.AmmoCount <= 0 || !__instance.CanStartReload())
+            return;
         var weapon = __instance.Item;
         var reload = ElephantGunRules.BeginReload(weapon, ammoPack.GetAmmoToReload(0)?.AmmoTemplate);
         __state = reload;
-        if (reload is null) return;
+        if (reload is null)
+            return;
         var original = callback;
         callback = result =>
         {
-            if (ElephantGunRules.EndReload(weapon, reload)) __instance.SetAnimatorAndProceduralValues();
+            if (ElephantGunRules.EndReload(weapon, reload))
+                __instance.SetAnimatorAndProceduralValues();
             original?.Invoke(result);
         };
     }

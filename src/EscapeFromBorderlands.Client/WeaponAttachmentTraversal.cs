@@ -31,16 +31,19 @@ internal static class WeaponAttachmentTraversal
     private static Shape GetShape(Type type)
     {
         var shapes = Shapes ??= new Dictionary<Type, Shape>();
-        if (!shapes.TryGetValue(type, out var shape)) shapes.Add(type, shape = new Shape(type));
+        if (!shapes.TryGetValue(type, out var shape))
+            shapes.Add(type, shape = new Shape(type));
         return shape;
     }
     internal static bool NativeType(Type type)
     {
         // Type/assembly identity cannot change during a raid. Retain metadata
         // only, while all slot, item and numeric inputs remain live.
-        if (ReferenceEquals(type, LastNativeType)) return LastNativeResult;
+        if (ReferenceEquals(type, LastNativeType))
+            return LastNativeResult;
         var result = type.Assembly == typeof(Weapon).Assembly;
-        LastNativeResult = result; LastNativeType = type;
+        LastNativeResult = result;
+        LastNativeType = type;
         return result;
     }
     // One metadata lookup for the input walk, instead of testing native type,
@@ -59,14 +62,18 @@ internal static class WeaponAttachmentTraversal
         {
             var type = method.DeclaringType;
             // Include compiler-generated selectors and the recursive flattener.
-            while (type?.DeclaringType is { } parent) type = parent;
+            while (type?.DeclaringType is { } parent)
+                type = parent;
             var nativeContainerGetter = method.Name == "get_Containers" &&
                 method.DeclaringType is { } declaring && typeof(ContainerCollection).IsAssignableFrom(declaring);
             if (type != typeof(CompoundItem) && type != typeof(Slot) && type != typeof(Diz.Utils.LinqExtensions) &&
-                !(type == typeof(Weapon) && method.DeclaringType != type) && !nativeContainerGetter) continue;
-            if (Harmony.GetPatchInfo(method) is not { } patches) continue;
+                !(type == typeof(Weapon) && method.DeclaringType != type) && !nativeContainerGetter)
+                continue;
+            if (Harmony.GetPatchInfo(method) is not { } patches)
+                continue;
             foreach (var owner in patches.Owners)
-                if (owner != Plugin.PluginGuid) return false;
+                if (owner != Plugin.PluginGuid)
+                    return false;
         }
         return true;
     }
@@ -75,50 +82,71 @@ internal static class WeaponAttachmentTraversal
     {
         try
         {
-            if (!Walk(weapon.Slots, result, 0)) return false;
+            if (!Walk(weapon.Slots, result, 0))
+                return false;
             // Native Weapon.AllSlots appends chambers after the recursive slots.
             foreach (var chamber in weapon.Chambers)
-                if (!Add(chamber, result)) return false;
+                if (!Add(chamber, result))
+                    return false;
             return true;
         }
-        finally { ExtraSlots?.Clear(); }
+        finally
+        {
+            ExtraSlots?.Clear();
+        }
     }
 
     private static bool Add(Slot slot, List<Mod> result)
     {
-        if (!NativeType(slot.GetType())) return false;
-        if (slot.ContainedItem is not Mod mod) return true;
-        if (!NativeType(mod.GetType())) return false;
+        if (!NativeType(slot.GetType()))
+            return false;
+        if (slot.ContainedItem is not Mod mod)
+            return true;
+        if (!NativeType(mod.GetType()))
+            return false;
         result.Add(mod);
         return true;
     }
 
     private static bool Walk(IReadOnlyList<Slot> slots, List<Mod> result, int depth)
     {
-        if (depth > 64) return false;
+        if (depth > 64)
+            return false;
         var count = slots.Count;
         // Native order is all siblings, then each sibling's subtree in order.
-        for (var i = 0; i < count; i++) if (!Add(slots[i], result)) return false;
-        for (var i = 0; i < count; i++) if (!Children(slots[i].ContainedItem, result, depth + 1)) return false;
+        for (var i = 0; i < count; i++)
+            if (!Add(slots[i], result))
+                return false;
+        for (var i = 0; i < count; i++)
+            if (!Children(slots[i].ContainedItem, result, depth + 1))
+                return false;
         return true;
     }
 
     private static bool Children(Item? item, List<Mod> result, int depth)
     {
-        if (item is not ContainerCollection collection) return true;
+        if (item is not ContainerCollection collection)
+            return true;
         var shape = GetShape(collection.GetType());
-        if (!shape.Native || depth > 64) return false;
-        if (shape.DirectSlots && collection is CompoundItem compound) return Walk(compound.Slots, result, depth);
+        if (!shape.Native || depth > 64)
+            return false;
+        if (shape.DirectSlots && collection is CompoundItem compound)
+            return Walk(compound.Slots, result, depth);
 
         // Magazines, launchers and other native overrides may expose additional
         // slots. Keep their accessor, filtering exactly as the native selector.
         var extra = ExtraSlots ??= new List<Slot>(16);
         var start = extra.Count;
         foreach (var container in collection.Containers)
-            if (container is Slot slot) extra.Add(slot);
+            if (container is Slot slot)
+                extra.Add(slot);
         var end = extra.Count;
-        for (var i = start; i < end; i++) if (!Add(extra[i], result)) return false;
-        for (var i = start; i < end; i++) if (!Children(extra[i].ContainedItem, result, depth + 1)) return false;
+        for (var i = start; i < end; i++)
+            if (!Add(extra[i], result))
+                return false;
+        for (var i = start; i < end; i++)
+            if (!Children(extra[i].ContainedItem, result, depth + 1))
+                return false;
         extra.RemoveRange(start, end - start);
         return true;
     }

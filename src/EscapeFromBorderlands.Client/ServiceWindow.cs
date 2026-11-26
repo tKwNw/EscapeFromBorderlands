@@ -17,7 +17,8 @@ internal static class ServiceWindow
         // Prefer the registered owner when a pooled animator is being reused.
         if (Native.Get(animator, "_eventsConsumers") is IEnumerable consumers)
             foreach (var consumer in consumers)
-                if (consumer is Player.MedsController controller && Owns(controller, player, animator)) return controller;
+                if (consumer is Player.MedsController controller && Owns(controller, player, animator))
+                    return controller;
         return player.HandsController is Player.MedsController held && Owns(held, player, animator) ? held : null;
     }
     private static bool Owns(Player.MedsController controller, Player player, FirearmsAnimator animator) =>

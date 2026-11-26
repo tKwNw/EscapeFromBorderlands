@@ -26,30 +26,43 @@ internal sealed class RaidPlayerSnapshot
     internal bool ContainsProfile(string id) => _profiles.ContainsKey(id);
     internal void AddProfile(string id, Action<Player> add)
     {
-        if (!_duplicateProfiles) { if (_profiles.TryGetValue(id, out var player)) add(player); return; }
+        if (!_duplicateProfiles)
+        {
+            if (_profiles.TryGetValue(id, out var player))
+                add(player);
+            return;
+        }
         // Preserve the original roster semantics even during duplicate-profile transitions.
-        for (var i = 0; i < _players.Count; i++) if (_players[i].ProfileId == id) add(_players[i]);
+        for (var i = 0; i < _players.Count; i++)
+            if (_players[i].ProfileId == id)
+                add(_players[i]);
     }
     internal int Order(Player player) => _order[player];
     internal IReadOnlyList<Player> Humans => _humans;
 
     internal void Capture(GameWorld world)
     {
-        if (_captured && ReferenceEquals(_world, world)) return;
-        if (!ReferenceEquals(_world, world)) Clear();
+        if (_captured && ReferenceEquals(_world, world))
+            return;
+        if (!ReferenceEquals(_world, world))
+            Clear();
         try
         {
             var unchanged = ReferenceEquals(_world, world);
             var humanIndex = 0;
             foreach (var entry in world.RegisteredPlayers)
             {
-                if (entry is not Player player || !PlayerRefresh.CanObserve(player) || !_seen.Add(player)) continue;
-                var id = player.ProfileId; var human = !player.IsAI;
+                if (entry is not Player player || !PlayerRefresh.CanObserve(player) || !_seen.Add(player))
+                    continue;
+                var id = player.ProfileId;
+                var human = !player.IsAI;
                 var index = _candidates.Count;
-                if (index >= _players.Count || !ReferenceEquals(_players[index], player) || _profileIds[index] != id) unchanged = false;
+                if (index >= _players.Count || !ReferenceEquals(_players[index], player) || _profileIds[index] != id)
+                    unchanged = false;
                 if (human)
                 {
-                    if (humanIndex >= _humans.Count || !ReferenceEquals(_humans[humanIndex], player)) unchanged = false;
+                    if (humanIndex >= _humans.Count || !ReferenceEquals(_humans[humanIndex], player))
+                        unchanged = false;
                     humanIndex++;
                 }
                 _candidates.Add((player, id, human));
@@ -57,31 +70,54 @@ internal sealed class RaidPlayerSnapshot
             unchanged &= _candidates.Count == _players.Count && humanIndex == _humans.Count;
             if (!unchanged)
             {
-                _players.Clear(); _members.Clear(); _profiles.Clear(); _order.Clear(); _humans.Clear(); _profileIds.Clear();
+                _players.Clear();
+                _members.Clear();
+                _profiles.Clear();
+                _order.Clear();
+                _humans.Clear();
+                _profileIds.Clear();
                 _duplicateProfiles = false;
                 foreach (var candidate in _candidates)
                 {
-                    _order.Add(candidate.Player, _players.Count); _players.Add(candidate.Player); _members.Add(candidate.Player);
+                    _order.Add(candidate.Player, _players.Count);
+                    _players.Add(candidate.Player);
+                    _members.Add(candidate.Player);
                     _profileIds.Add(candidate.Profile);
-                    if (candidate.Human) _humans.Add(candidate.Player);
-                    if (!_profiles.TryAdd(candidate.Profile, candidate.Player)) _duplicateProfiles = true;
+                    if (candidate.Human)
+                        _humans.Add(candidate.Player);
+                    if (!_profiles.TryAdd(candidate.Profile, candidate.Player))
+                        _duplicateProfiles = true;
                 }
             }
-            _world = world; _captured = true;
+            _world = world;
+            _captured = true;
         }
-        catch { Clear(); throw; }
-        finally { _candidates.Clear(); _seen.Clear(); }
+        catch
+        {
+            Clear();
+            throw;
+        }
+        finally
+        {
+            _candidates.Clear();
+            _seen.Clear();
+        }
     }
 
     internal void EndPass() => _captured = false;
 
     internal void Clear()
     {
-        _world = null; _captured = false;
+        _world = null;
+        _captured = false;
         _players.Clear();
         _members.Clear();
         _profiles.Clear();
         _duplicateProfiles = false;
-        _order.Clear(); _humans.Clear(); _profileIds.Clear(); _candidates.Clear(); _seen.Clear();
+        _order.Clear();
+        _humans.Clear();
+        _profileIds.Clear();
+        _candidates.Clear();
+        _seen.Clear();
     }
 }

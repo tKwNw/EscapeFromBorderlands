@@ -16,7 +16,10 @@ internal sealed class AirdropLegendaryRolls
     private readonly Dictionary<string, WeightedSpawnChoices> Variants;
     private readonly MongoId[] EfbIds;
     private readonly ConditionalWeakTable<List<Item>, Attempt> Attempts = new();
-    private sealed class Attempt { internal bool Done; }
+    private sealed class Attempt
+    {
+        internal bool Done;
+    }
 
     internal AirdropLegendaryRolls(IEnumerable<VariantDefinition> definitions, IEnumerable<LegacyAliasDefinition> aliases,
         IReadOnlySet<string>? excludedSources = null)
@@ -40,7 +43,10 @@ internal sealed class AirdropLegendaryRolls
         // loot mappings and unrelated reward generators stay untouched.
         var blacklist = new HashSet<MongoId>(request.ItemBlacklist ?? []);
         blacklist.UnionWith(EfbIds);
-        var prepared = request with { ItemBlacklist = blacklist };
+        var prepared = request with
+        {
+            ItemBlacklist = blacklist
+        };
         if (request.ForcedLoot is not null)
         {
             var forced = new Dictionary<MongoId, MinMax<int>>();
@@ -48,9 +54,13 @@ internal sealed class AirdropLegendaryRolls
             {
                 var source = Sources.TryGetValue(id.ToString(), out var original) ? new MongoId(original) : id;
                 if (forced.TryGetValue(source, out var previous))
-                    forced[source] = new MinMax<int> { Min = (int)Math.Clamp((long)previous.Min + amount.Min, 0, int.MaxValue),
-                        Max = (int)Math.Clamp((long)previous.Max + amount.Max, 0, int.MaxValue) };
-                else forced[source] = amount;
+                    forced[source] = new MinMax<int>
+                    {
+                        Min = (int)Math.Clamp((long)previous.Min + amount.Min, 0, int.MaxValue),
+                        Max = (int)Math.Clamp((long)previous.Max + amount.Max, 0, int.MaxValue)
+                    };
+                else
+                    forced[source] = amount;
             }
             prepared.ForcedLoot = forced;
         }
@@ -59,38 +69,54 @@ internal sealed class AirdropLegendaryRolls
 
     internal IEnumerable<List<Item>> Roll(IEnumerable<List<Item>> loot, RarityConfiguration config, Func<double> randomUnit)
     {
-        if (!config.Enabled) return loot;
+        if (!config.Enabled)
+            return loot;
         var groups = loot as List<Item>[] ?? loot.ToArray();
         var fraction = config.AirdropFraction;
         // Keep the existing once-only evaluation of a deferred native source.
         // With conversion off there are no item markers to look up or allocate.
-        if (fraction <= 0d) return groups;
+        if (fraction <= 0d)
+            return groups;
         var timing = ServerPerformanceTrace.Measure("airdrop conversion");
         var converted = 0;
         foreach (var group in groups)
         {
-            if (group.Count == 0) continue;
+            if (group.Count == 0)
+                continue;
             var attempt = Attempts.GetValue(group, _ => new Attempt());
             lock (attempt)
             {
-                if (attempt.Done) continue;
+                if (attempt.Done)
+                    continue;
                 attempt.Done = true;
                 var root = group[0];
                 // Native supported gear is individual. Retain unusual modded
                 // stacks rather than creating an invalid max-stack-1 clone.
                 if ((root.Upd?.StackObjectsCount ?? 1d) != 1d ||
-                    !Variants.TryGetValue(root.Template.ToString(), out var variants)) continue;
-                if (fraction < 1d && randomUnit() >= fraction) continue;
+                    !Variants.TryGetValue(root.Template.ToString(), out var variants))
+                    continue;
+                if (fraction < 1d && randomUnit() >= fraction)
+                    continue;
                 var (selected, id) = variants.Pick(Math.Clamp(randomUnit(), 0d, 1d));
-                if (selected.IsHeadwear) HeadwearTemplates.Convert(root, id, group); else root.Template = id;
+                if (selected.IsHeadwear)
+                    HeadwearTemplates.Convert(root, id, group);
+                else
+                    root.Template = id;
                 converted++;
                 if (selected.FireModes.Count > 0 && root.Upd is { FireMode: { } mode } state &&
                     !selected.FireModes.Contains(mode.FireMode ?? "", StringComparer.OrdinalIgnoreCase))
-                    root.Upd = state with { FireMode = mode with { FireMode = selected.FireModes[0] } };
+                    root.Upd = state with
+                    {
+                        FireMode = mode with
+                        {
+                            FireMode = selected.FireModes[0]
+                        }
+                    };
             }
         }
         if (converted > 0)
-            foreach (var group in groups) HeadwearTemplates.Complete(group);
+            foreach (var group in groups)
+                HeadwearTemplates.Complete(group);
         timing.Complete(groups.Length, converted);
         return groups;
     }
@@ -104,13 +130,17 @@ internal static class AirdropLegendarySpawning
 
     internal static void Configure(IEnumerable<VariantDefinition> definitions, IEnumerable<LegacyAliasDefinition> aliases,
         RarityConfiguration config, IReadOnlySet<string>? excludedSources = null)
-    { Rolls = new AirdropLegendaryRolls(definitions, aliases, excludedSources); Config = config; }
+    {
+        Rolls = new AirdropLegendaryRolls(definitions, aliases, excludedSources);
+        Config = config;
+    }
 
     internal static void Install(IEnumerable<VariantDefinition> definitions, IEnumerable<LegacyAliasDefinition> aliases,
         RarityConfiguration config, IReadOnlySet<string>? excludedSources = null)
     {
         Configure(definitions, aliases, config, excludedSources);
-        if (Installed) return;
+        if (Installed)
+            return;
         var harmony = new Harmony("com.tkw.escapefromborderlands.server.airdrops");
         harmony.Patch(AccessTools.Method(typeof(AirdropService), "GetAirdropLootConfigByType"),
             postfix: new HarmonyMethod(typeof(AirdropConfigPatch), nameof(AirdropConfigPatch.Postfix)));

@@ -24,18 +24,21 @@ internal static class LegendaryMeleeDamagePatch
 {
     private static void Prefix(GameWorld __instance, ref DamageInfo damageInfo)
     {
-        if (damageInfo.DamageType != EDamageType.Melee || damageInfo.Weapon is null) return;
+        if (damageInfo.DamageType != EDamageType.Melee || damageInfo.Weapon is null)
+            return;
         var attacker = MeleeRuntime.OwnerOfDamage(damageInfo);
         damageInfo.Damage *= Headwear.Factor(attacker, HatStat.MeleeDamage);
         var held = MeleeRuntime.Held(attacker);
-        if (held is null || held.Item.Id != damageInfo.Weapon.Id) return;
+        if (held is null || held.Item.Id != damageInfo.Weapon.Id)
+            return;
         var body = damageInfo.HittedBallisticCollider as BodyPartCollider;
         var target = body?.PlayerProfileID is { } id ? __instance.GetAlivePlayerByProfileID(id) : null;
         var part = body?.BodyPartType ?? EBodyPart.Common;
         AdvancedMeleeRuntime.Connect(held, target);
         damageInfo.Damage *= MeleeRuntime.DamageMultiplier(held, held.Controller.LastKickType == Player.EKickType.Stab, target, part);
         damageInfo.PenetrationPower *= held.Roll.PenetrationMultiplier;
-        if (MeleeRuntime.Enabled(held.Player, held.Effect)) damageInfo.PenetrationPower += held.Effect.PenetrationBonus + AdvancedMeleeRuntime.Penetration(held, held.Controller.LastKickType == Player.EKickType.Stab, part);
+        if (MeleeRuntime.Enabled(held.Player, held.Effect))
+            damageInfo.PenetrationPower += held.Effect.PenetrationBonus + AdvancedMeleeRuntime.Penetration(held, held.Controller.LastKickType == Player.EKickType.Stab, part);
     }
 }
 
@@ -45,12 +48,14 @@ internal static class LegendaryMeleeArmorBlockPatch
     private static void Prefix(ArmorComponent __instance, ref DamageInfo damageInfo)
     {
         if (damageInfo.DamageType != EDamageType.Melee || damageInfo.Weapon is null ||
-            damageInfo.BlockedBy.HasValue || damageInfo.DeflectedBy.HasValue || __instance.Repairable.Durability <= 0f) return;
+            damageInfo.BlockedBy.HasValue || damageInfo.DeflectedBy.HasValue || __instance.Repairable.Durability <= 0f)
+            return;
         var attacker = MeleeRuntime.OwnerOfDamage(damageInfo);
         damageInfo.Damage *= Headwear.Factor(attacker, HatStat.MeleeDamage);
         var held = MeleeRuntime.Held(attacker);
         if (held?.Item.Id != damageInfo.Weapon.Id || held.Effect.BlockedHitDamage <= 0f ||
-            !MeleeRuntime.Enabled(held.Player, held.Effect)) return;
+            !MeleeRuntime.Enabled(held.Player, held.Effect))
+            return;
         // Native knife hits omit the penetration-status pass used by bullets. For this one ability,
         // use that same armor-resistance/chance formula before the normal armor damage calculation.
         var resistance = ShotSharedMethods.RealResistance(__instance.Repairable.Durability,
@@ -70,7 +75,8 @@ internal static class LegendaryMeleeHealthPatch
     private static void Prefix(ActiveHealthController __instance, ref float damage, ref DamageInfo damageInfo, out bool __state)
     {
         __state = __instance.IsAlive;
-        if (!__state) return;
+        if (!__state)
+            return;
         var attacker = MeleeRuntime.OwnerOfDamage(damageInfo);
         var heldAttacker = MeleeRuntime.Held(attacker);
         if (damageInfo.DamageType == EDamageType.Melee && damageInfo.Weapon != null && heldAttacker?.Item.Id == damageInfo.Weapon.Id &&
@@ -82,8 +88,10 @@ internal static class LegendaryMeleeHealthPatch
             damageInfo.BleedBlock = true;
         }
         var defenderEffect = MeleeRuntime.Effect(__instance.Player);
-        if (damageInfo.DamageType == EDamageType.Fall && defenderEffect?.FallImmunity == true) damage = 0f;
-        else damage *= AdvancedMeleeRuntime.Incoming(__instance.Player, attacker, damageInfo.DamageType);
+        if (damageInfo.DamageType == EDamageType.Fall && defenderEffect?.FallImmunity == true)
+            damage = 0f;
+        else
+            damage *= AdvancedMeleeRuntime.Incoming(__instance.Player, attacker, damageInfo.DamageType);
         damageInfo.Damage = damage;
     }
 
@@ -92,7 +100,8 @@ internal static class LegendaryMeleeHealthPatch
 
     private static void OnDamage(ActiveHealthController health, EBodyPart part, DamageInfo info, float actual, bool wasAlive)
     {
-        if (wasAlive) AdvancedMeleeRuntime.IncomingHit(health.Player, info, actual);
+        if (wasAlive)
+            AdvancedMeleeRuntime.IncomingHit(health.Player, info, actual);
         MeleeRuntime.OnDamage(health.Player, part, info, actual, wasAlive);
     }
 }
@@ -102,10 +111,12 @@ internal static class LegendaryMeleeSpeedPatch
 {
     private static void Prefix(Player.BaseKnifeController __instance, ref float speed)
     {
-        if (__instance.CurrentKnifeOperation is not Player.KnifeController.Kick) return;
+        if (__instance.CurrentKnifeOperation is not Player.KnifeController.Kick)
+            return;
         speed *= EarpieceRuntime.MeleeSpeed(MeleeRuntime.Owner(__instance)) * Headwear.Factor(MeleeRuntime.Owner(__instance), HatStat.MeleeSwing);
         var held = MeleeRuntime.Held(MeleeRuntime.Owner(__instance));
-        if (held?.Controller != __instance) return;
+        if (held?.Controller != __instance)
+            return;
         speed *= held.Roll.MeleeAttackSpeedMultiplier * (MeleeRuntime.Enabled(held.Player, held.Effect) ? AdvancedMeleeRuntime.Speed(held) * (Headwear.Amplifies(held) && held.Item.StringTemplateId == "3ef13605279d6076cc9d9433" ? 1.66f / 1.33f : 1f) : 1f);
     }
 }
@@ -115,11 +126,14 @@ internal static class LegendaryMeleeReachPatch
 {
     private static void Prefix(KnifeCollider __instance, Player.BaseKnifeController ___Knife)
     {
-        if (___Knife is null) return;
+        if (___Knife is null)
+            return;
         var player = MeleeRuntime.Owner(___Knife);
-        if (BackpackRuntime.Get(player) is { Key: "BP35-3" } bag && bag.Record.Active("meleeReach")) __instance.MaxDistance *= 1.4f;
+        if (BackpackRuntime.Get(player) is { Key: "BP35-3" } bag && bag.Record.Active("meleeReach"))
+            __instance.MaxDistance *= 1.4f;
         var held = MeleeRuntime.Held(player);
-        if (held?.Controller != ___Knife) return;
+        if (held?.Controller != ___Knife)
+            return;
         __instance.MaxDistance *= held.Roll.MeleeReachMultiplier * (MeleeRuntime.Enabled(held.Player, held.Effect) ? AdvancedMeleeRuntime.Reach(held) : 1f);
     }
 }
@@ -137,7 +151,8 @@ internal static class LegendaryMeleeDrawPatch
     private static void Prefix(Player.KnifeController __instance, ref float animationSpeed)
     {
         MeleeRuntime.Forget(MeleeRuntime.Owner(__instance));
-        if (RarityResolver.Resolve(__instance.Item)?.Definition.MeleeEffect is null) return;
+        if (RarityResolver.Resolve(__instance.Item)?.Definition.MeleeEffect is null)
+            return;
         MeleeAnimation.Baselines[__instance] = animationSpeed;
         animationSpeed *= MeleeRuntime.SwapSpeed(__instance);
     }
@@ -159,7 +174,8 @@ internal static class LegendaryMeleeHolsterPatch
     private static void Postfix(Player.KnifeController.Remove __instance)
     {
         var controller = __instance.Controller;
-        if (!MeleeAnimation.Baselines.TryGetValue(controller, out var baseline)) return;
+        if (!MeleeAnimation.Baselines.TryGetValue(controller, out var baseline))
+            return;
         controller.FirearmsAnimator.SetAnimationSpeed(baseline * MeleeRuntime.SwapSpeed(controller));
     }
 }
@@ -180,7 +196,10 @@ internal static class LegendaryMeleeDropPatch
 internal static class LegendaryMeleeDestroyPatch
 {
     private static void Prefix(Player.BaseKnifeController __instance)
-    { MeleeAnimation.Baselines.Remove(__instance); MeleeRuntime.Forget(MeleeRuntime.Owner(__instance)); }
+    {
+        MeleeAnimation.Baselines.Remove(__instance);
+        MeleeRuntime.Forget(MeleeRuntime.Owner(__instance));
+    }
 }
 
 [HarmonyPatch(typeof(MovementContext), nameof(MovementContext.DirectApplyMotion))]
@@ -198,22 +217,27 @@ internal static class LegendaryMeleeMovementPatch
         __state = new Snapshot { Depth = _depth };
         _depth++;
         var player = ____player;
-        if (__state.Depth != 0 || player is null || player.InputDirection.sqrMagnitude <= 0.0001f && !__instance.IsSprintEnabled) return;
+        if (__state.Depth != 0 || player is null || player.InputDirection.sqrMagnitude <= 0.0001f && !__instance.IsSprintEnabled)
+            return;
         var factor = LegendaryMovementFactors.Read(player);
-        if (factor == 1f) return;
+        if (factor == 1f)
+            return;
         // One scope composes melee and backpack movement. Scale the resolved
         // motion, including sprint's +1 term, instead of patching an inlined getter.
-        motion.x *= factor; motion.z *= factor;
+        motion.x *= factor;
+        motion.z *= factor;
         if (__instance.CharacterController != null)
         {
             __state.Limit = __instance.CharacterController.SpeedLimit;
             __state.Changed = true;
-            if (__state.Limit > 0f) __instance.CharacterController.SpeedLimit *= factor;
+            if (__state.Limit > 0f)
+                __instance.CharacterController.SpeedLimit *= factor;
         }
     }
     private static Exception? Finalizer(MovementContext __instance, Snapshot __state, Exception? __exception)
     {
-        if (__state.Changed) __instance.CharacterController.SpeedLimit = __state.Limit;
+        if (__state.Changed)
+            __instance.CharacterController.SpeedLimit = __state.Limit;
         _depth = __state.Depth;
         return __exception;
     }
@@ -232,9 +256,11 @@ internal static class LegendaryMeleeSprintCostPatch
     {
         __state = null;
         var factor = MeleeRuntime.Effect(MeleeRuntime.Owner(__instance))?.SprintStaminaMultiplier ?? 1f;
-        if (factor == 1f) return;
+        if (factor == 1f)
+            return;
         var sprint = __instance.Consumptions.FirstOrDefault(value => value.ConsumptionType == Physical.EConsumptionType.Sprint);
-        if (sprint is null) return;
+        if (sprint is null)
+            return;
         var original = sprint.Delta;
         __state = new Snapshot { Consumption = sprint, Original = original };
         // Change only sprint consumption in this Leg Stamina update. Hands, oxygen, restoration, and other consumption types retain native values.
@@ -244,7 +270,11 @@ internal static class LegendaryMeleeSprintCostPatch
     private static Compute<float> Scale(Compute<float> original, float factor) => new(() => original.Value * factor);
     private static Exception? Finalizer(Snapshot? __state, Exception? __exception) => End(__state, __exception);
     internal static Exception? End(Snapshot? __state, Exception? __exception)
-    { if (__state != null) __state.Consumption.Delta = __state.Original; return __exception; }
+    {
+        if (__state != null)
+            __state.Consumption.Delta = __state.Original;
+        return __exception;
+    }
 }
 
 [HarmonyPatch(typeof(JumpPlayerState), nameof(JumpPlayerState.Enter))]
@@ -253,7 +283,8 @@ internal static class LegendaryMeleeJumpHeightPatch
     private static void Postfix(JumpPlayerState __instance)
     {
         var effect = MeleeRuntime.Effect(MeleeRuntime.Owner(__instance.MovementContext));
-        if (effect != null) __instance._skilledBoost *= MeleeRules.JumpVelocityMultiplier(effect.JumpHeightMultiplier);
+        if (effect != null)
+            __instance._skilledBoost *= MeleeRules.JumpVelocityMultiplier(effect.JumpHeightMultiplier);
         AdvancedMeleeRuntime.JumpEntered(__instance);
     }
 }
@@ -263,8 +294,10 @@ internal static class LegendaryMeleeFallPatch
 {
     private static bool Prefix(ActiveHealthController __instance, ref float __result)
     {
-        if (MeleeRuntime.Effect(__instance.Player)?.FallImmunity != true) return true;
-        __result = 0f; return false;
+        if (MeleeRuntime.Effect(__instance.Player)?.FallImmunity != true)
+            return true;
+        __result = 0f;
+        return false;
     }
 }
 
@@ -280,9 +313,11 @@ internal static class LegendaryMeleeAiMovementNoisePatch
 {
     private static void Prefix(IPlayer person, ref float power, AISoundType type)
     {
-        if (type != AISoundType.step) return;
+        if (type != AISoundType.step)
+            return;
         var player = MeleeRuntime.Actor(person);
-        if (ActorCapabilities.IsHuman(player)) power *= MeleeRuntime.Effect(player)?.NoiseMultiplier ?? 1f;
+        if (ActorCapabilities.IsHuman(player))
+            power *= MeleeRuntime.Effect(player)?.NoiseMultiplier ?? 1f;
     }
 }
 
@@ -293,7 +328,8 @@ internal static class LegendaryMeleeAttributePatch
     private static void Postfix(KnifeComponent __instance)
     {
         var roll = RarityResolver.Resolve(__instance.Item);
-        if (roll?.Definition.MeleeEffect is null) return;
+        if (roll?.Definition.MeleeEffect is null)
+            return;
         foreach (var attribute in __instance.Item.Attributes)
         {
             if (attribute.Id.Equals(EItemAttributeId.KnifeHitSlashDam))
@@ -321,7 +357,8 @@ internal static class LegendaryRedRebelExtractionPatch
     private const string RedRebel = "5c0126f40db834002a125382";
     private static void Postfix(HasItemRequirement __instance, Player player, ref bool __result)
     {
-        if (__result || __instance.Id != RedRebel || player?.InventoryController?.Inventory is null) return;
+        if (__result || __instance.Id != RedRebel || player?.InventoryController?.Inventory is null)
+            return;
         __result = player.InventoryController.Inventory.GetPlayerItems(EPlayerItems.Equipment).Any(item =>
             RarityResolver.TryGetDefinition(item, out var definition) && definition.SourceTemplateId == RedRebel);
     }

@@ -25,17 +25,35 @@ public sealed class RarityConfiguration
     public bool AddToNonScavFactions { get; set; } = true;
     public double BossLegendaryChancePercent { get; set; } = 10d;
     public bool AutoDetectApbs { get; set; } = true;
-    public Dictionary<string, CategorySpawnChances>? SpawnChances { get; set; }
-    public CategorySpawnChances? LootContainerSpawnChances { get; set; }
+    public Dictionary<string, CategorySpawnChances>? SpawnChances
+    {
+        get; set;
+    }
+    public CategorySpawnChances? LootContainerSpawnChances
+    {
+        get; set;
+    }
     // The shared wrapper is an internal representation; config.json has a flat
     // factionSpawnChances object. Old backend wrappers remain readable until
     // the final detection stage has chosen which saved rates to migrate.
-    public Dictionary<string, Dictionary<string, CategorySpawnChances>>? FactionSpawnChances { get; set; }
-    internal bool LegacySpawnSettingsPending { get; private set; }
-    internal bool MigratedLegacySpawnSettings { get; private set; }
+    public Dictionary<string, Dictionary<string, CategorySpawnChances>>? FactionSpawnChances
+    {
+        get; set;
+    }
+    internal bool LegacySpawnSettingsPending
+    {
+        get; private set;
+    }
+    internal bool MigratedLegacySpawnSettings
+    {
+        get; private set;
+    }
 
     [JsonPropertyName("pmcLegendaryWeaponChancePercent")]
-    public double? LegacyPmcLegendaryWeaponChancePercent { get; set; }
+    public double? LegacyPmcLegendaryWeaponChancePercent
+    {
+        get; set;
+    }
     public double EffectiveStandalonePmcChancePercent => LegacyPmcLegendaryWeaponChancePercent ?? StandalonePmcLegendaryChancePercent;
 
     internal static readonly string[] Categories = ["guns", "melee", "backpacks", "chestRigs", "grenades", "earpieces", "armoredHeadwear", "unarmoredHeadwear", "eyewear"];
@@ -54,7 +72,8 @@ public sealed class RarityConfiguration
         var fallback = category is "backpacks" or "chestRigs" or "grenades" or "earpieces" or "armoredHeadwear" or "unarmoredHeadwear" or "eyewear" ? (boss ? 10d : 1d)
             : boss ? BossLegendaryChancePercent : method.Equals("apbs", StringComparison.OrdinalIgnoreCase) ? ApbsPmcLegendaryChancePercent : EffectiveStandalonePmcChancePercent;
         var configured = Value(Find(SpawnChances, boss ? "bosses" : "pmcs"), category);
-        if (!boss) configured ??= Value(Find(SpawnChances, method), category);
+        if (!boss)
+            configured ??= Value(Find(SpawnChances, method), category);
         return Valid(configured, fallback);
     }
 
@@ -71,17 +90,22 @@ public sealed class RarityConfiguration
 
     internal double BotFractionForGroup(string method, string? group, string category)
     {
-        if (!Enabled || group is null) return 0d;
-        if (group == "scavs") return Fraction("scavs", category);
-        if (group == "bosses") return AddToBossWeapons ? Fraction("bosses", category) : 0d;
-        if (group is "pmcUsec" or "pmcBear") return AddToPmcWeapons ? FactionChance(method, group, category) / 100d : 0d;
+        if (!Enabled || group is null)
+            return 0d;
+        if (group == "scavs")
+            return Fraction("scavs", category);
+        if (group == "bosses")
+            return AddToBossWeapons ? Fraction("bosses", category) : 0d;
+        if (group is "pmcUsec" or "pmcBear")
+            return AddToPmcWeapons ? FactionChance(method, group, category) / 100d : 0d;
         return AddToNonScavFactions ? FactionChance(method, group, category) / 100d : 0d;
     }
 
     public double Fraction(string method, string category) => Chance(method, category) / 100d;
     public double LootContainerChance(string category)
     {
-        if (!Categories.Contains(category, StringComparer.Ordinal)) return 0d;
+        if (!Categories.Contains(category, StringComparer.Ordinal))
+            return 0d;
         var value = Value(LootContainerSpawnChances, category);
         return Math.Clamp(value is { } configured && double.IsFinite(configured) ? configured : 1d, 0d, 100d);
     }
@@ -97,8 +121,10 @@ public sealed class RarityConfiguration
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
             var defaults = Path.Combine(directory, "config", "config.default.json");
-            if (File.Exists(defaults)) File.Copy(defaults, path, false);
-            else File.WriteAllText(path, DefaultJson());
+            if (File.Exists(defaults))
+                File.Copy(defaults, path, false);
+            else
+                File.WriteAllText(path, DefaultJson());
         }
         var original = File.ReadAllText(path);
         var config = Parse(original, out var migrated, legacyMethod);
@@ -107,7 +133,8 @@ public sealed class RarityConfiguration
             if (config.MigratedLegacySpawnSettings)
             {
                 var backup = path + ".before-shared-spawns.bak";
-                for (var index = 1; File.Exists(backup); index++) backup = path + ".before-shared-spawns.bak." + index;
+                for (var index = 1; File.Exists(backup); index++)
+                    backup = path + ".before-shared-spawns.bak." + index;
                 File.Copy(path, backup, false);
             }
             var temporary = path + ".efb-migration.tmp";
@@ -130,7 +157,10 @@ public sealed class RarityConfiguration
         {
             var shared = new JsonObject();
             foreach (var pair in factions.Where(p => !Backend(p.Key)).ToArray())
-            { shared[pair.Key] = pair.Value?.DeepClone(); factions.Remove(pair.Key); }
+            {
+                shared[pair.Key] = pair.Value?.DeepClone();
+                factions.Remove(pair.Key);
+            }
             factions["shared"] = shared;
         }
         var config = JsonSerializer.Deserialize<RarityConfiguration>(copy.ToJsonString(), ReadOptions) ?? new();
@@ -152,48 +182,65 @@ public sealed class RarityConfiguration
         var method = legacyMethod?.Equals("apbs", StringComparison.OrdinalIgnoreCase) == true ? "apbs" : "standalone";
         var before = node.ToJsonString();
         var groups = node["spawnChances"] as JsonObject ?? new JsonObject();
-        if (node["spawnChances"] is null) node["spawnChances"] = groups;
+        if (node["spawnChances"] is null)
+            node["spawnChances"] = groups;
         foreach (var name in new[] { "pmcs", "bosses", "scavs" })
         {
             var rates = groups[name] as JsonObject ?? new JsonObject();
-            if (groups[name] is null) groups[name] = rates;
+            if (groups[name] is null)
+                groups[name] = rates;
             foreach (var category in Categories)
-                if (rates[category] is null) rates[category] = config.Chance(name == "pmcs" ? method : name, category);
+                if (rates[category] is null)
+                    rates[category] = config.Chance(name == "pmcs" ? method : name, category);
         }
-        groups.Remove("standalone"); groups.Remove("apbs");
+        groups.Remove("standalone");
+        groups.Remove("apbs");
         var lootRates = node["lootContainerSpawnChances"] as JsonObject ?? new JsonObject();
-        if (node["lootContainerSpawnChances"] is null) node["lootContainerSpawnChances"] = lootRates;
+        if (node["lootContainerSpawnChances"] is null)
+            node["lootContainerSpawnChances"] = lootRates;
         foreach (var category in Categories)
-            if (lootRates[category] is null) lootRates[category] = config.LootContainerChance(category);
+            if (lootRates[category] is null)
+                lootRates[category] = config.LootContainerChance(category);
         var factions = node["factionSpawnChances"] as JsonObject ?? new JsonObject();
-        if (node["factionSpawnChances"] is null) node["factionSpawnChances"] = factions;
+        if (node["factionSpawnChances"] is null)
+            node["factionSpawnChances"] = factions;
         if (factions[method] is JsonObject selected)
             foreach (var pair in selected)
-                if (factions[pair.Key] is null) factions[pair.Key] = pair.Value?.DeepClone();
-        factions.Remove("standalone"); factions.Remove("apbs");
+                if (factions[pair.Key] is null)
+                    factions[pair.Key] = pair.Value?.DeepClone();
+        factions.Remove("standalone");
+        factions.Remove("apbs");
         foreach (var group in BotSpawnGroups.Expanded)
-            if (factions[group] is null) factions[group] = new JsonObject();
+            if (factions[group] is null)
+                factions[group] = new JsonObject();
         foreach (var name in BotSpawnGroups.Expanded)
             if (factions[name] is JsonObject rates)
                 foreach (var category in Categories)
-                    if (rates[category] is null) rates[category] = config.FactionChance(method, name, category);
-        if (node["addToNonScavFactions"] is null) node["addToNonScavFactions"] = config.AddToNonScavFactions;
-        if (node["enableMeleeLooting"] is null) node.Insert(Math.Min(1, node.Count), "enableMeleeLooting", JsonValue.Create(config.EnableMeleeLooting));
-        if (node["allowFenceToSellEfbItems"] is null) node["allowFenceToSellEfbItems"] = config.AllowFenceToSellEfbItems;
+                    if (rates[category] is null)
+                        rates[category] = config.FactionChance(method, name, category);
+        if (node["addToNonScavFactions"] is null)
+            node["addToNonScavFactions"] = config.AddToNonScavFactions;
+        if (node["enableMeleeLooting"] is null)
+            node.Insert(Math.Min(1, node.Count), "enableMeleeLooting", JsonValue.Create(config.EnableMeleeLooting));
+        if (node["allowFenceToSellEfbItems"] is null)
+            node["allowFenceToSellEfbItems"] = config.AllowFenceToSellEfbItems;
         node["airdropLegendaryChancePercent"] = config.AirdropFraction * 100d;
         node["statRewardsLegendaryChancePercent"] = config.StatRewardsFraction * 100d;
-        foreach (var key in LegacyScalars) node.Remove(key);
+        foreach (var key in LegacyScalars)
+            node.Remove(key);
         node.Remove("enableReusableGrenadeTestOffer");
         config = Read(node);
         config.MigratedLegacySpawnSettings = legacy;
-        if (node.ToJsonString() != before) migrated = node.ToJsonString(WriteOptions);
+        if (node.ToJsonString() != before)
+            migrated = node.ToJsonString(WriteOptions);
         return config;
     }
 
     internal static string DefaultJson()
     {
         var node = JsonSerializer.SerializeToNode(new RarityConfiguration(), WriteOptions)!.AsObject();
-        foreach (var key in LegacyScalars) node.Remove(key);
+        foreach (var key in LegacyScalars)
+            node.Remove(key);
         Parse(node.ToJsonString(), out var canonical, "standalone");
         return canonical ?? node.ToJsonString(WriteOptions);
     }
@@ -207,13 +254,40 @@ public sealed class RarityConfiguration
 
 public sealed class CategorySpawnChances
 {
-    public double? Guns { get; set; }
-    public double? Melee { get; set; }
-    public double? Backpacks { get; set; }
-    public double? ChestRigs { get; set; }
-    public double? Grenades { get; set; }
-    public double? Earpieces { get; set; }
-    public double? ArmoredHeadwear { get; set; }
-    public double? UnarmoredHeadwear { get; set; }
-    public double? Eyewear { get; set; }
+    public double? Guns
+    {
+        get; set;
+    }
+    public double? Melee
+    {
+        get; set;
+    }
+    public double? Backpacks
+    {
+        get; set;
+    }
+    public double? ChestRigs
+    {
+        get; set;
+    }
+    public double? Grenades
+    {
+        get; set;
+    }
+    public double? Earpieces
+    {
+        get; set;
+    }
+    public double? ArmoredHeadwear
+    {
+        get; set;
+    }
+    public double? UnarmoredHeadwear
+    {
+        get; set;
+    }
+    public double? Eyewear
+    {
+        get; set;
+    }
 }

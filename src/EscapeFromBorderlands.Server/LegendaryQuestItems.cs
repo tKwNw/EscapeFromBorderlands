@@ -22,7 +22,8 @@ internal static class LegendaryQuestItems
     {
         Identity = new(variants.Select(v => new KeyValuePair<string, string>(v.TemplateId, v.SourceTemplateId))
             .Concat(aliases.Select(v => new KeyValuePair<string, string>(v.TemplateId, v.SourceTemplateId))));
-        if (Installed) return;
+        if (Installed)
+            return;
         var harmony = new Harmony("com.tkw.escapefromborderlands.server.quests");
         foreach (var type in new[] { typeof(LegendaryQuestHandoverPatch), typeof(LegendaryQuestSoldPatch), typeof(LegendaryQuestFindPatch) })
             harmony.CreateClassProcessor(type).Patch();
@@ -31,7 +32,8 @@ internal static class LegendaryQuestItems
     internal static bool Contains(List<string> required, string actual) => Identity.Contains(required, actual);
     internal static bool ProtectsHandover(PmcData profile, HandoverQuestRequestData request)
     {
-        if (profile.Inventory?.Items is not { } items || request.Items is not { Count: > 0 }) return false;
+        if (profile.Inventory?.Items is not { } items || request.Items is not { Count: > 0 })
+            return false;
         var selected = request.Items.Select(i => i.Id.ToString()).ToHashSet(StringComparer.Ordinal);
         var parents = items.ToDictionary(i => i.Id.ToString(), i => i.ParentId, StringComparer.Ordinal);
         foreach (var item in items.Where(i => Identity.IsVariant(i.Template.ToString())))
@@ -40,8 +42,10 @@ internal static class LegendaryQuestItems
             var seen = new HashSet<string>(StringComparer.Ordinal);
             while (!string.IsNullOrEmpty(id) && seen.Add(id))
             {
-                if (selected.Contains(id)) return true;
-                if (!parents.TryGetValue(id, out var parent)) break;
+                if (selected.Contains(id))
+                    return true;
+                if (!parents.TryGetValue(id, out var parent))
+                    break;
                 id = parent;
             }
         }
@@ -54,10 +58,15 @@ internal static class LegendaryQuestItems
         foreach (var code in instructions)
         {
             if (Equals(code.operand, contains))
-            { code.opcode = OpCodes.Call; code.operand = AccessTools.Method(typeof(LegendaryQuestItems), nameof(Contains)); found++; }
+            {
+                code.opcode = OpCodes.Call;
+                code.operand = AccessTools.Method(typeof(LegendaryQuestItems), nameof(Contains));
+                found++;
+            }
             yield return code;
         }
-        if (found != 1) throw new InvalidOperationException("Expected 1 native quest item comparison; found " + found);
+        if (found != 1)
+            throw new InvalidOperationException("Expected 1 native quest item comparison; found " + found);
     }
 }
 
@@ -68,7 +77,8 @@ internal static class LegendaryQuestHandoverPatch
     private static readonly FieldInfo ResponseField = AccessTools.Field(typeof(QuestController), "<httpResponseUtil>P");
     private static bool Prefix(QuestController __instance, PmcData pmcData, HandoverQuestRequestData request, MongoId sessionID, ref ItemEventRouterResponse __result)
     {
-        if (!LegendaryQuestItems.ProtectsHandover(pmcData, request)) return true;
+        if (!LegendaryQuestItems.ProtectsHandover(pmcData, request))
+            return true;
         var output = ((EventOutputHolder)OutputField.GetValue(__instance)!).GetOutput(sessionID);
         __result = ((HttpResponseUtil)ResponseField.GetValue(__instance)!).AppendErrorToOutput(output,
             "Legendary items cannot be handed in for quests, including items inside containers.");

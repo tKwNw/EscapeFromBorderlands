@@ -23,3 +23,14 @@ For an installation package, use the SPT-specific paths described in [README.md]
 **Important:** Always build against the correct SPT version. Never reuse binary outputs after switching branches; stale DLLs from another SPT version are not compatible.
 
 The public source contains the release gameplay code and inert compatibility interfaces. Private recorders, capture tools and test evidence are excluded. Upgrade packages omit the default config so existing settings can be retained.
+
+## Source formatting
+
+Keep methods, control-flow blocks and switch cases expanded and readable. The repository's `.editorconfig` defines the C# formatting settings. From the repository root:
+
+```powershell
+dotnet format whitespace src --folder
+dotnet format whitespace src --folder --verify-no-changes
+```
+
+Review the diff before building. Formatting must preserve identifiers, comments, string literals and behavior. The build uses standard .NET compilation with no minification, obfuscation, packing or identifier-renaming step. Names such as `GClass...` used by compatibility hooks refer to types in the installed game assemblies.

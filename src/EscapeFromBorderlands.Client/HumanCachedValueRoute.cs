@@ -17,7 +17,11 @@ internal static class HumanCachedValueRoute
         internal readonly MethodInfo Target, Postfix, Guard;
         internal bool Installed;
         internal Route(Type type, Type patch, string callback, string guard)
-        { Target = AccessTools.PropertyGetter(type, "Value"); Postfix = AccessTools.Method(patch, callback); Guard = AccessTools.Method(typeof(HumanCachedValueRoute), guard); }
+        {
+            Target = AccessTools.PropertyGetter(type, "Value");
+            Postfix = AccessTools.Method(patch, callback);
+            Guard = AccessTools.Method(typeof(HumanCachedValueRoute), guard);
+        }
     }
     private static readonly Route[] Routes = {
         new(typeof(Compute<float>), typeof(BackpackCachedValuePatch), "Postfix", nameof(Registered)),
@@ -30,12 +34,14 @@ internal static class HumanCachedValueRoute
     internal static bool Registered(Compute<float> value) => BackpackRuntime.Values.Count != 0 && BackpackRuntime.Values.ContainsKey(value);
     internal static bool Eligible(Deferred<float> value)
     {
-        if (Registered(value)) return true;
+        if (Registered(value))
+            return true;
         var player = BackpackWeightScope.Player;
         if (player is not null)
         {
             var inventory = player.InventoryController.Inventory;
-            if (ReferenceEquals(value, inventory.TotalWeight) || ReferenceEquals(value, inventory.TotalWeightEliteSkill)) return true;
+            if (ReferenceEquals(value, inventory.TotalWeight) || ReferenceEquals(value, inventory.TotalWeightEliteSkill))
+                return true;
         }
         var melee = MeleeWeightScope.Inventory;
         return melee is not null && (ReferenceEquals(value, melee.TotalWeight) || ReferenceEquals(value, melee.TotalWeightEliteSkill));
@@ -46,12 +52,15 @@ internal static class HumanCachedValueRoute
         {
             var target = route.Target;
             if (route.Installed || target is null || target.IsStatic || target.ReturnType != typeof(float) ||
-                target.GetMethodBody() is not { } body || body.ExceptionHandlingClauses.Count != 0) continue;
+                target.GetMethodBody() is not { } body || body.ExceptionHandlingClauses.Count != 0)
+                continue;
             var info = Harmony.GetPatchInfo(target);
             if (info is null || info.Owners.Any(o => o != Plugin.PluginGuid) || info.Prefixes.Count != 0 ||
-                info.Transpilers.Count != 0 || info.Finalizers.Count != 0 || info.Postfixes.Count != 1) continue;
+                info.Transpilers.Count != 0 || info.Finalizers.Count != 0 || info.Postfixes.Count != 1)
+                continue;
             var patch = info.Postfixes[0];
-            if (patch.PatchMethod != route.Postfix || patch.priority != Priority.Normal || patch.before.Length != 0 || patch.after.Length != 0) continue;
+            if (patch.PatchMethod != route.Postfix || patch.priority != Priority.Normal || patch.before.Length != 0 || patch.after.Length != 0)
+                continue;
             try
             {
                 harmony.Unpatch(target, route.Postfix);
@@ -61,7 +70,8 @@ internal static class HumanCachedValueRoute
             }
             catch (Exception error)
             {
-                harmony.Unpatch(target, Rewrite); Restore(harmony, route);
+                harmony.Unpatch(target, Rewrite);
+                Restore(harmony, route);
                 Plugin.LogSource?.LogWarning($"EFB retained cached-value callback: {error.Message}");
             }
         }
@@ -70,11 +80,15 @@ internal static class HumanCachedValueRoute
     {
         foreach (var route in Routes)
         {
-            if (!route.Installed) continue;
+            if (!route.Installed)
+                continue;
             var info = Harmony.GetPatchInfo(route.Target);
             if (info is not null && info.Owners.All(o => o == Plugin.PluginGuid) && info.Prefixes.Count == 0 &&
-                info.Postfixes.Count == 0 && info.Finalizers.Count == 0 && info.Transpilers.Count == 1 && info.Transpilers[0].PatchMethod == Rewrite) continue;
-            harmony.Unpatch(route.Target, Rewrite); Restore(harmony, route); route.Installed = false;
+                info.Postfixes.Count == 0 && info.Finalizers.Count == 0 && info.Transpilers.Count == 1 && info.Transpilers[0].PatchMethod == Rewrite)
+                continue;
+            harmony.Unpatch(route.Target, Rewrite);
+            Restore(harmony, route);
+            route.Installed = false;
             Plugin.LogSource?.LogInfo("EFB restored cached-value callback for a changed patch stack.");
         }
     }
@@ -95,26 +109,37 @@ internal static class HumanCachedValueRoute
         {
             if (code.opcode != OpCodes.Ret)
             {
-                if (code.opcode.OperandType == OperandType.ShortInlineBrTarget) code.opcode = LongBranch(code.opcode);
-                output.Add(code); continue;
+                if (code.opcode.OperandType == OperandType.ShortInlineBrTarget)
+                    code.opcode = LongBranch(code.opcode);
+                output.Add(code);
+                continue;
             }
             // Retain labels on every native return, including early returns.
-            code.opcode = OpCodes.Stloc; code.operand = result; output.Add(code);
+            code.opcode = OpCodes.Stloc;
+            code.operand = result;
+            output.Add(code);
             var done = generator.DefineLabel();
-            output.Add(new CodeInstruction(OpCodes.Ldarg_0)); output.Add(new CodeInstruction(OpCodes.Call, route.Guard));
-            output.Add(new CodeInstruction(OpCodes.Brfalse, done)); output.Add(new CodeInstruction(OpCodes.Ldarg_0));
-            output.Add(new CodeInstruction(OpCodes.Ldloca, result)); output.Add(new CodeInstruction(OpCodes.Call, route.Postfix));
-            var load = new CodeInstruction(OpCodes.Ldloc, result); ((System.Collections.IList)Labels.GetValue(load)!).Add(done);
-            output.Add(load); output.Add(new CodeInstruction(OpCodes.Ret));
+            output.Add(new CodeInstruction(OpCodes.Ldarg_0));
+            output.Add(new CodeInstruction(OpCodes.Call, route.Guard));
+            output.Add(new CodeInstruction(OpCodes.Brfalse, done));
+            output.Add(new CodeInstruction(OpCodes.Ldarg_0));
+            output.Add(new CodeInstruction(OpCodes.Ldloca, result));
+            output.Add(new CodeInstruction(OpCodes.Call, route.Postfix));
+            var load = new CodeInstruction(OpCodes.Ldloc, result);
+            ((System.Collections.IList)Labels.GetValue(load)!).Add(done);
+            output.Add(load);
+            output.Add(new CodeInstruction(OpCodes.Ret));
         }
         return output;
     }
     private static OpCode LongBranch(OpCode code)
     {
         // Resolve the matching long form once while Harmony emits the getter.
-        if (code == OpCodes.Leave_S) return OpCodes.Leave;
+        if (code == OpCodes.Leave_S)
+            return OpCodes.Leave;
         foreach (var field in typeof(OpCodes).GetFields(BindingFlags.Public | BindingFlags.Static))
-            if (field.GetValue(null) is OpCode candidate && candidate.OperandType == OperandType.InlineBrTarget && candidate.Name == code.Name?.Replace(".s", "")) return candidate;
+            if (field.GetValue(null) is OpCode candidate && candidate.OperandType == OperandType.InlineBrTarget && candidate.Name == code.Name?.Replace(".s", ""))
+                return candidate;
         throw new InvalidOperationException("Unsupported cached-value short branch.");
     }
 }

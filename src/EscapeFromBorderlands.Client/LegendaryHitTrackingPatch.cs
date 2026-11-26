@@ -26,38 +26,44 @@ internal static class LegendaryHitTrackingPatch
         var eyewearSource = EyewearDamageSources.BeginImpact(__instance);
         try
         {
-        DiagnosticPathTrace trace = default;
-        DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.HitImpact);
-        if (LegendaryRuntime.TryGetApplication(__instance, out var application))
-        {
-            if (__instance.Parent is null)
+            DiagnosticPathTrace trace = default;
+            DiagnosticPathTrace.Start(ref trace, DiagnosticPathTrace.Path.HitImpact);
+            if (LegendaryRuntime.TryGetApplication(__instance, out var application))
             {
-                ApplyLocationDamage(__instance, application);
-                ApplyPenetrationRetention(__instance, application);
-                trace.Phase(0);
-                TriggerExplosion(__instance, application);
-                trace.Phase(1);
+                if (__instance.Parent is null)
+                {
+                    ApplyLocationDamage(__instance, application);
+                    ApplyPenetrationRetention(__instance, application);
+                    trace.Phase(0);
+                    TriggerExplosion(__instance, application);
+                    trace.Phase(1);
+                }
+                foreach (var fragment in __instance.Fragments)
+                    if (!LegendaryRuntime.TryGetApplication(fragment, out _))
+                        LegendaryRuntime.Associate(fragment, application, bonusProjectile: true);
             }
-            foreach (var fragment in __instance.Fragments)
-                if (!LegendaryRuntime.TryGetApplication(fragment, out _)) LegendaryRuntime.Associate(fragment, application, bonusProjectile: true);
+            trace.Phase(2);
+            ChestRigBallistics.Impact(__instance);
+            Eyewear.Impact(__instance);
+            trace.Phase(3);
+            LegendaryRuntime.RecordImpact(__instance);
+            trace.Phase(4);
+            LegendaryRuntime.Release(__instance);
+            trace.Phase(5);
         }
-        trace.Phase(2);
-        ChestRigBallistics.Impact(__instance);
-        Eyewear.Impact(__instance);
-        trace.Phase(3);
-        LegendaryRuntime.RecordImpact(__instance);
-        trace.Phase(4);
-        LegendaryRuntime.Release(__instance);
-        trace.Phase(5);
+        finally
+        {
+            EyewearDamageSources.EndNative(eyewearSource);
         }
-        finally { EyewearDamageSources.EndNative(eyewearSource); }
     }
 
     private static void ApplyLocationDamage(Shot shot, EffectApplication application)
     {
         if (application.HeadDamageMultiplier == 1f && application.BodyDamageMultiplier == 1f &&
-            application.ConditionalDamageMultiplier == 1f && application.LimbDamageMultiplier == 1f) return;
-        if (shot.HittedBallisticCollider is not BodyPartCollider body) return;
+            application.ConditionalDamageMultiplier == 1f && application.LimbDamageMultiplier == 1f)
+            return;
+        if (shot.HittedBallisticCollider is not BodyPartCollider body)
+            return;
 
         var bodyPart = BodyPartText.Of(body.BodyPartType);
         shot.Damage *= bodyPart.IndexOf("Head", StringComparison.OrdinalIgnoreCase) >= 0
@@ -110,7 +116,7 @@ internal static class LegendaryHitTrackingPatch
         }
 
         using var timing = GrenadeSpikeTrace.MeasureWeapon(application.Definition, "impact explosion");
-        ProjectileImpactExplosion.Trigger(shot,application.ExplosionDamageFactor,application.ExplosionRadius);
+        ProjectileImpactExplosion.Trigger(shot, application.ExplosionDamageFactor, application.ExplosionRadius);
     }
 }
 
@@ -140,8 +146,10 @@ internal static class LegendaryProjectilePoolCleanupPatch
     private static void Prefix(Shot shot)
     {
         ChestRigRuntime.BulletFinished(shot);
-        if (!LegendaryRuntime.TryGetApplication(shot, out _)) return;
-        if (!shot.HasAchievedTarget) LegendaryRuntime.RecordMiss(shot);
+        if (!LegendaryRuntime.TryGetApplication(shot, out _))
+            return;
+        if (!shot.HasAchievedTarget)
+            LegendaryRuntime.RecordMiss(shot);
         LegendaryRuntime.Release(shot);
     }
 }
@@ -254,7 +262,8 @@ internal static class LegendaryUtilityCompletionPatch
 {
     private static void Prefix(Player.FirearmController.UtilityOperation __instance)
     {
-        if (!string.Equals(__instance.State.ToString(), "Ready", StringComparison.Ordinal)) return;
+        if (!string.Equals(__instance.State.ToString(), "Ready", StringComparison.Ordinal))
+            return;
 
         var actor = BackpackNative.WeaponOwner(__instance.Weapon);
         if (actor != null)
@@ -262,8 +271,18 @@ internal static class LegendaryUtilityCompletionPatch
             var bit = __instance._utilityOperationType == Player.FirearmController.UtilityOperation.EUtilityType.ExamineWeapon ? 4 :
                 __instance._utilityOperationType == Player.FirearmController.UtilityOperation.EUtilityType.CheckChamber ? 1 :
                 __instance._utilityOperationType == Player.FirearmController.UtilityOperation.EUtilityType.CheckMagazine ? 2 : 0;
-            if (bit != 0) { BackpackRuntime.Check(actor, __instance.Weapon.Id, bit); ChestRigRuntime.Check(actor,__instance.Weapon,bit); EarpieceRuntime.Get(actor)?.Effect.Check(bit); Headwear.Checked(actor, bit); }
-            if (ChestRigUtilitySpeedPatch.Speeds.TryGetValue(__instance,out var oldSpeed)) { __instance.FirearmsAnimator.SetAnimationSpeed(oldSpeed); ChestRigUtilitySpeedPatch.Speeds.Remove(__instance); }
+            if (bit != 0)
+            {
+                BackpackRuntime.Check(actor, __instance.Weapon.Id, bit);
+                ChestRigRuntime.Check(actor, __instance.Weapon, bit);
+                EarpieceRuntime.Get(actor)?.Effect.Check(bit);
+                Headwear.Checked(actor, bit);
+            }
+            if (ChestRigUtilitySpeedPatch.Speeds.TryGetValue(__instance, out var oldSpeed))
+            {
+                __instance.FirearmsAnimator.SetAnimationSpeed(oldSpeed);
+                ChestRigUtilitySpeedPatch.Speeds.Remove(__instance);
+            }
         }
         switch (__instance._utilityOperationType)
         {
@@ -304,19 +323,35 @@ internal static class LegendaryReloadCompletionPatch
         var original = callback;
         var actor = BackpackRuntime.Actor(__instance);
         var rig = ChestRigRuntime.Get(actor);
-        if (rig is not null) { rig.Reloading=true; rig.ReloadWeapon=__instance.Item.Id;
-            if (__args.OfType<Magazine>().FirstOrDefault() is { } incoming) ChestRigInventory.ReloadMagazines[rig.Player.ProfileId]=incoming; }
+        if (rig is not null)
+        {
+            rig.Reloading = true;
+            rig.ReloadWeapon = __instance.Item.Id;
+            if (__args.OfType<Magazine>().FirstOrDefault() is { } incoming)
+                ChestRigInventory.ReloadMagazines[rig.Player.ProfileId] = incoming;
+        }
         var weapon = __instance.Item;
         var emergency = string.Equals(__originalMethod.Name, nameof(Player.FirearmController.QuickReloadMag), StringComparison.Ordinal);
-        if(rig is not null)rig.EmergencyReloading=emergency;
+        if (rig is not null)
+            rig.EmergencyReloading = emergency;
         // Reapply the native base speed even when all bonuses have expired.
         // Skipping the 1x case leaves an earlier boost cached on the animator
         // and incorrectly accelerates subsequent reloads.
         __instance.SetAnimatorAndProceduralValues();
         callback = result =>
         {
-            if (result.Succeed) { LegendaryRuntime.NotifyReloadCompleted(weapon, emergency); if(actor is not null&&rig is not null&&ReferenceEquals(ChestRigRuntime.Get(actor),rig))ChestRigRuntime.ReloadCompleted(actor,weapon,emergency); }
-            if(rig is not null){rig.Reloading=false;rig.EmergencyReloading=false;ChestRigInventory.ReloadMagazines.Remove(rig.Player.ProfileId);}
+            if (result.Succeed)
+            {
+                LegendaryRuntime.NotifyReloadCompleted(weapon, emergency);
+                if (actor is not null && rig is not null && ReferenceEquals(ChestRigRuntime.Get(actor), rig))
+                    ChestRigRuntime.ReloadCompleted(actor, weapon, emergency);
+            }
+            if (rig is not null)
+            {
+                rig.Reloading = false;
+                rig.EmergencyReloading = false;
+                ChestRigInventory.ReloadMagazines.Remove(rig.Player.ProfileId);
+            }
             original?.Invoke(result);
         };
     }

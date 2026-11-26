@@ -28,7 +28,8 @@ internal static class BackpackRaidRewards
         _experienceTable = globals.Configuration.Exp.Level.ExperienceTable;
         _bags = catalog.Variants.Where(v => v.BackpackEffect is not null)
             .ToDictionary(v => v.TemplateId, v => v.BackpackEffect!.Key, StringComparer.Ordinal);
-        if (_installed) return;
+        if (_installed)
+            return;
         _installed = true;
         // 4.1.6 uses async raid/save methods and no longer exposes the legacy
         // callback. Keep the raid scope alive through its awaited save.
@@ -58,24 +59,35 @@ internal static class BackpackRaidRewards
         // Normalize a successful run-through before SPT calculates survival,
         // found-in-raid retention and post-raid rewards. Deaths and transfers
         // keep their original result.
-        if (request.Results?.Result is not (ExitStatus.SURVIVED or ExitStatus.RUNNER)) return;
+        if (request.Results?.Result is not (ExitStatus.SURVIVED or ExitStatus.RUNNER))
+            return;
         using var timing = ServerPerformanceTrace.Measure("raid end gear rewards");
-        if (Bag(request) is not { } bag || !_bags.TryGetValue(bag, out var key)) return;
+        if (Bag(request) is not { } bag || !_bags.TryGetValue(bag, out var key))
+            return;
         if (request.Results.Result == ExitStatus.RUNNER && key == "BP25-2")
             request.Results.Result = ExitStatus.SURVIVED;
-        if (key == "BP36-2") PendingHealing[sessionId] = IsPmc(request);
+        if (key == "BP36-2")
+            PendingHealing[sessionId] = IsPmc(request);
         if (request.Results.Result != ExitStatus.SURVIVED || key != "BP26-1" ||
-            request.ExtensionData?.TryGetValue("efbBackpack", out var raw) != true || raw is null) return;
+            request.ExtensionData?.TryGetValue("efbBackpack", out var raw) != true || raw is null)
+            return;
         var report = raw is JsonElement element ? element : JsonSerializer.SerializeToElement(raw);
         if (!report.TryGetProperty("templateId", out var template) || template.GetString() != bag ||
             !report.TryGetProperty("distinctLootCount", out var count) || !count.TryGetInt32(out var n) || n < 21 ||
-            !report.TryGetProperty("raidToken", out var token) || token.GetString() is not { Length: > 0 } raidToken) return;
+            !report.TryGetProperty("raidToken", out var token) || token.GetString() is not { Length: > 0 } raidToken)
+            return;
         var profile = request.Results.Profile;
         var oldExperience = Saved(sessionId, request)?.Info?.Experience;
-        if (profile?.Info?.Experience is not { } experience || oldExperience is null) return;
+        if (profile?.Info?.Experience is not { } experience || oldExperience is null)
+            return;
         var earned = Math.Max(0, experience - oldExperience.Value);
-        if (earned == 0 || !Awarded.Add(sessionId + ":" + raidToken)) return;
-        if (Awarded.Count > 4096) { Awarded.Clear(); Awarded.Add(sessionId + ":" + raidToken); }
+        if (earned == 0 || !Awarded.Add(sessionId + ":" + raidToken))
+            return;
+        if (Awarded.Count > 4096)
+        {
+            Awarded.Clear();
+            Awarded.Add(sessionId + ":" + raidToken);
+        }
         profile.Info.Experience = (int)Math.Min(int.MaxValue, experience + Math.Floor(earned * .5d));
         profile.Info.Level = profile.CalculateLevel(_experienceTable);
     }
@@ -85,7 +97,8 @@ internal static class BackpackRaidRewards
 
     private static Exception? Finished(MongoId sessionId, Exception? __exception)
     {
-        if (__exception is not null) PendingHealing.TryRemove(sessionId, out _);
+        if (__exception is not null)
+            PendingHealing.TryRemove(sessionId, out _);
         return __exception;
     }
 
@@ -94,8 +107,14 @@ internal static class BackpackRaidRewards
 
     private static async Task CompleteRaid(MongoId sessionId, Task raid)
     {
-        try { await raid.ConfigureAwait(false); }
-        finally { PendingHealing.TryRemove(sessionId, out _); }
+        try
+        {
+            await raid.ConfigureAwait(false);
+        }
+        finally
+        {
+            PendingHealing.TryRemove(sessionId, out _);
+        }
     }
 
     private static void BeforeProfileSave(SaveServer __instance, MongoId sessionID)
@@ -106,21 +125,28 @@ internal static class BackpackRaidRewards
 
     internal static SptProfile BeforeSave(SptProfile profile)
     {
-        if (profile.ProfileInfo?.ProfileId is not { } id || !PendingHealing.TryGetValue(id, out var pmc)) return profile;
+        if (profile.ProfileInfo?.ProfileId is not { } id || !PendingHealing.TryGetValue(id, out var pmc))
+            return profile;
         Heal(pmc ? profile.CharacterData?.PmcData : profile.CharacterData?.ScavData);
         return profile;
     }
 
     private static void Heal(PmcData? profile)
     {
-        if (profile?.Health is not { } health) return;
-        if (health.Energy is { } energy) energy.Current = energy.Maximum;
-        if (health.Hydration is { } hydration) hydration.Current = hydration.Maximum;
+        if (profile?.Health is not { } health)
+            return;
+        if (health.Energy is { } energy)
+            energy.Current = energy.Maximum;
+        if (health.Hydration is { } hydration)
+            hydration.Current = hydration.Maximum;
         foreach (var part in health.BodyParts?.Values.AsEnumerable() ?? [])
         {
-            if (part.Health is { } hp) hp.Current = hp.Maximum;
-            if (part.Effects is not { } effects) continue;
-            foreach (var effect in effects.Keys.Where(e => e is "LightBleeding" or "HeavyBleeding" or "Fracture" or "DestroyedPart").ToArray()) effects.Remove(effect);
+            if (part.Health is { } hp)
+                hp.Current = hp.Maximum;
+            if (part.Effects is not { } effects)
+                continue;
+            foreach (var effect in effects.Keys.Where(e => e is "LightBleeding" or "HeavyBleeding" or "Fracture" or "DestroyedPart").ToArray())
+                effects.Remove(effect);
         }
     }
 }

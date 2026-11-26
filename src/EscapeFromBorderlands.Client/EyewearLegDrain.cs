@@ -22,17 +22,30 @@ internal static class EyewearLegDrain
     private static void LabelOn(CodeInstruction code, Label label) => ((IList)Labels.GetValue(code)!).Add(label);
     internal static void Activate(Eyewear.State s)
     {
-        if (!s.Human || s.Key != "EW030" || s.Player.Physical?.Stamina is not { } leg) return;
-        Active[leg] = s; Count = Active.Count;
+        if (!s.Human || s.Key != "EW030" || s.Player.Physical?.Stamina is not { } leg)
+            return;
+        Active[leg] = s;
+        Count = Active.Count;
     }
     internal static void Forget(Eyewear.State s)
-    { if (s.Player.Physical?.Stamina is { } leg) Active.Remove(leg); Count = Active.Count; }
-    internal static void Reset() { Active.Clear(); Count = 0; }
+    {
+        if (s.Player.Physical?.Stamina is { } leg)
+            Active.Remove(leg);
+        Count = Active.Count;
+    }
+    internal static void Reset()
+    {
+        Active.Clear();
+        Count = 0;
+    }
     private static bool Enabled(Stamina stamina)
     {
-        if (!Active.TryGetValue(stamina, out var s)) return false;
-        if (Time.time < s.Second && Eyewear.Get(s.Player) == s) return true;
-        Active.Remove(stamina); Count = Active.Count;
+        if (!Active.TryGetValue(stamina, out var s))
+            return false;
+        if (Time.time < s.Second && Eyewear.Get(s.Player) == s)
+            return true;
+        Active.Remove(stamina);
+        Count = Active.Count;
         return false;
     }
     private static IEnumerable<MethodBase> TargetMethods() => new[]
@@ -52,12 +65,15 @@ internal static class EyewearLegDrain
         yield return new CodeInstruction(OpCodes.Ldarg_0);
         yield return new CodeInstruction(OpCodes.Call, AccessTools.Method(typeof(EyewearLegDrain), nameof(Enabled)));
         yield return new CodeInstruction(OpCodes.Stloc, active);
-        if (body.Count == 0) throw new InvalidOperationException("Empty native stamina method.");
+        if (body.Count == 0)
+            throw new InvalidOperationException("Empty native stamina method.");
         LabelOn(body[0], native);
-        var delta = false; var replaced = 0;
+        var delta = false;
+        var replaced = 0;
         foreach (var code in body)
         {
-            if (code.opcode.OperandType == OperandType.ShortInlineBrTarget) code.opcode = LongBranch(code.opcode);
+            if (code.opcode.OperandType == OperandType.ShortInlineBrTarget)
+                code.opcode = LongBranch(code.opcode);
             yield return code;
             if (delta && code.operand is MethodInfo method && method.DeclaringType == typeof(Compute<float>) && method.Name is "get_Value" or "op_Implicit")
             {
@@ -71,30 +87,47 @@ internal static class EyewearLegDrain
                 yield return new CodeInstruction(OpCodes.Ble_Un, keep);
                 yield return new CodeInstruction(OpCodes.Pop);
                 yield return new CodeInstruction(OpCodes.Ldc_R4, 0f);
-                var end = new CodeInstruction(OpCodes.Nop); LabelOn(end, keep); yield return end;
+                var end = new CodeInstruction(OpCodes.Nop);
+                LabelOn(end, keep);
+                yield return end;
                 replaced++;
             }
             delta = code.opcode == OpCodes.Ldfld && code.operand is FieldInfo field && field.DeclaringType == typeof(Physical.Consumption) && field.Name == "Delta";
         }
         var expected = original.Name == "Process" ? 2 : 1;
-        if (replaced != expected) throw new InvalidOperationException($"Expected {expected} stamina cost reads in {original.Name}, found {replaced}.");
+        if (replaced != expected)
+            throw new InvalidOperationException($"Expected {expected} stamina cost reads in {original.Name}, found {replaced}.");
     }
     private static OpCode LongBranch(OpCode code)
     {
-        if (code == OpCodes.Br_S) return OpCodes.Br;
-        if (code == OpCodes.Brfalse_S) return OpCodes.Brfalse;
-        if (code == OpCodes.Brtrue_S) return OpCodes.Brtrue;
-        if (code == OpCodes.Beq_S) return OpCodes.Beq;
-        if (code == OpCodes.Bge_S) return OpCodes.Bge;
-        if (code == OpCodes.Bge_Un_S) return OpCodes.Bge_Un;
-        if (code == OpCodes.Bgt_S) return OpCodes.Bgt;
-        if (code == OpCodes.Bgt_Un_S) return OpCodes.Bgt_Un;
-        if (code == OpCodes.Ble_S) return OpCodes.Ble;
-        if (code == OpCodes.Ble_Un_S) return OpCodes.Ble_Un;
-        if (code == OpCodes.Blt_S) return OpCodes.Blt;
-        if (code == OpCodes.Blt_Un_S) return OpCodes.Blt_Un;
-        if (code == OpCodes.Bne_Un_S) return OpCodes.Bne_Un;
-        if (code == OpCodes.Leave_S) return OpCodes.Leave;
+        if (code == OpCodes.Br_S)
+            return OpCodes.Br;
+        if (code == OpCodes.Brfalse_S)
+            return OpCodes.Brfalse;
+        if (code == OpCodes.Brtrue_S)
+            return OpCodes.Brtrue;
+        if (code == OpCodes.Beq_S)
+            return OpCodes.Beq;
+        if (code == OpCodes.Bge_S)
+            return OpCodes.Bge;
+        if (code == OpCodes.Bge_Un_S)
+            return OpCodes.Bge_Un;
+        if (code == OpCodes.Bgt_S)
+            return OpCodes.Bgt;
+        if (code == OpCodes.Bgt_Un_S)
+            return OpCodes.Bgt_Un;
+        if (code == OpCodes.Ble_S)
+            return OpCodes.Ble;
+        if (code == OpCodes.Ble_Un_S)
+            return OpCodes.Ble_Un;
+        if (code == OpCodes.Blt_S)
+            return OpCodes.Blt;
+        if (code == OpCodes.Blt_Un_S)
+            return OpCodes.Blt_Un;
+        if (code == OpCodes.Bne_Un_S)
+            return OpCodes.Bne_Un;
+        if (code == OpCodes.Leave_S)
+            return OpCodes.Leave;
         throw new InvalidOperationException("Unsupported short stamina branch.");
     }
 }

@@ -33,26 +33,38 @@ internal sealed class StatRewardsLegendaryRolls
     internal void Convert(List<Item> items, int before, RarityConfiguration config, Func<double> randomUnit)
     {
         var fraction = config.StatRewardsFraction;
-        if (!config.Enabled || fraction <= 0 || before < 0 || before >= items.Count) return;
+        if (!config.Enabled || fraction <= 0 || before < 0 || before >= items.Count)
+            return;
         var ids = new HashSet<string>(StringComparer.Ordinal);
-        for (var i = before; i < items.Count; i++) ids.Add(items[i].Id.ToString());
+        for (var i = before; i < items.Count; i++)
+            ids.Add(items[i].Id.ToString());
         Item? root = null;
         for (var i = before; i < items.Count; i++)
         {
             var item = items[i];
-            if (item.ParentId is { } parent && ids.Contains(parent)) continue;
-            if (root is not null) return;
+            if (item.ParentId is { } parent && ids.Contains(parent))
+                continue;
+            if (root is not null)
+                return;
             root = item;
         }
-        if (root is null || (root.Upd?.StackObjectsCount ?? 1d) != 1d || !Variants.TryGetValue(root.Template, out var variants)) return;
-        if (fraction < 1d && randomUnit() >= fraction) return;
+        if (root is null || (root.Upd?.StackObjectsCount ?? 1d) != 1d || !Variants.TryGetValue(root.Template, out var variants))
+            return;
+        if (fraction < 1d && randomUnit() >= fraction)
+            return;
         var (selected, id) = variants.Pick(Math.Clamp(randomUnit(), 0d, 1d));
         // Change only the root template and an incompatible saved fire mode.
         // Native IDs, attachments, armor inserts, durability and FIR stay intact.
         var state = root.Upd;
         if (selected.FireModes.Count > 0 && state is { FireMode: { } mode } &&
             !selected.FireModes.Contains(mode.FireMode ?? "", StringComparer.OrdinalIgnoreCase))
-            state = state with { FireMode = mode with { FireMode = selected.FireModes[0] } };
+            state = state with
+            {
+                FireMode = mode with
+                {
+                    FireMode = selected.FireModes[0]
+                }
+            };
         root.Template = id;
         root.Upd = state;
     }
@@ -67,9 +79,11 @@ public sealed class StatRewardsCompatibility(ISptLogger<StatRewardsCompatibility
     {
         cancellationToken.ThrowIfCancellationRequested();
         var config = RarityConfiguration.Load();
-        if (!config.Enabled) return Task.CompletedTask;
+        if (!config.Enabled)
+            return Task.CompletedTask;
         var type = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("StatRewards.Services.RewardGenerator", false)).FirstOrDefault(t => t is not null);
-        if (type is null) return Task.CompletedTask;
+        if (type is null)
+            return Task.CompletedTask;
         var catalog = LegendaryCatalog.Load();
         var registered = templates.Items.Keys.Select(id => id.ToString()).ToHashSet(StringComparer.Ordinal);
         StatRewardsIntegration.Configure(catalog, registered, config, message => releaseLog.Warning(message));
@@ -87,15 +101,24 @@ internal static class StatRewardsIntegration
     private static Action<string>? Warning;
     private static bool Installed, ReportedFailure;
     internal static void Configure(LegendaryCatalog catalog, IReadOnlySet<string> registered, RarityConfiguration config, Action<string> warning)
-    { Rolls = new(catalog.Variants, catalog.LegacyAliases, registered); Config = config; Warning = warning; ReportedFailure = false; }
+    {
+        Rolls = new(catalog.Variants, catalog.LegacyAliases, registered);
+        Config = config;
+        Warning = warning;
+        ReportedFailure = false;
+    }
     internal static bool Install(Type generator)
     {
-        if (Installed) return true;
+        if (Installed)
+            return true;
         var pool = AccessTools.DeclaredMethod(generator, "GetCategoryPool", [typeof(string)]);
         var weapon = AccessTools.DeclaredMethod(generator, "GenerateWeaponPresetReward", [typeof(List<Item>)]);
         var gear = AccessTools.DeclaredMethod(generator, "GenerateGearReward", [typeof(List<Item>)]);
         if (pool?.ReturnType != typeof(List<MongoId>) || weapon?.ReturnType != typeof(void) || gear?.ReturnType != typeof(void))
-        { Report(new MissingMethodException("Unsupported Stat Rewards random equipment methods; no compatibility hooks installed.")); return false; }
+        {
+            Report(new MissingMethodException("Unsupported Stat Rewards random equipment methods; no compatibility hooks installed."));
+            return false;
+        }
         var harmony = new Harmony(HarmonyId);
         try
         {
@@ -109,20 +132,31 @@ internal static class StatRewardsIntegration
         catch (Exception e)
         {
             harmony.UnpatchSelf();
-            Report(e); return false;
+            Report(e);
+            return false;
         }
     }
     private static void Filter(string __0, ref List<MongoId> __result)
-    { if (Config.Enabled && Rolls is not null) __result = Rolls.Filter(__0, __result); }
+    {
+        if (Config.Enabled && Rolls is not null)
+            __result = Rolls.Filter(__0, __result);
+    }
     private static void Before(List<Item> __0, out int __state) => __state = __0.Count;
     private static void After(List<Item> __0, int __state)
     {
-        try { Rolls?.Convert(__0, __state, Config, Random.Shared.NextDouble); }
-        catch (Exception e) { Report(e); }
+        try
+        {
+            Rolls?.Convert(__0, __state, Config, Random.Shared.NextDouble);
+        }
+        catch (Exception e)
+        {
+            Report(e);
+        }
     }
     private static void Report(Exception e)
     {
-        if (ReportedFailure) return;
+        if (ReportedFailure)
+            return;
         ReportedFailure = true;
         Warning?.Invoke("[Escape From Borderlands] Stat Rewards compatibility unavailable: " + (e.InnerException ?? e).Message);
     }

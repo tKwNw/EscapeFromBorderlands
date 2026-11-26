@@ -9,12 +9,24 @@ namespace EscapeFromBorderlands.Client;
 
 internal sealed class LegendaryCatalog
 {
-    public int SchemaVersion { get; set; }
-    public int CatalogRevision { get; set; }
-    public int VanillaWeaponCount { get; set; }
+    public int SchemaVersion
+    {
+        get; set;
+    }
+    public int CatalogRevision
+    {
+        get; set;
+    }
+    public int VanillaWeaponCount
+    {
+        get; set;
+    }
     public List<string> VanillaMeleeTemplateIds { get; set; } = new();
     public List<string> UnlootableMeleeTemplateIds { get; set; } = new();
-    public int LegendaryCount { get; set; }
+    public int LegendaryCount
+    {
+        get; set;
+    }
     public List<VariantDefinition> Variants { get; set; } = new();
     public List<VariantDefinition> LegacyAliases { get; set; } = new();
 
@@ -42,15 +54,34 @@ internal sealed class LegendaryCatalog
 internal sealed class VariantDefinition
 {
     public bool IsEyewear => WeaponClass == "eyewear";
-    public bool IsEarpiece { get; set; } public bool IsHeadwear => WeaponClass is "armoredHeadwear" or "unarmoredHeadwear";
+    public bool IsEarpiece
+    {
+        get; set;
+    }
+    public bool IsHeadwear => WeaponClass is "armoredHeadwear" or "unarmoredHeadwear";
     public bool SpawnEnabled { get; set; } = true;
-    public bool IsMysteryFleaOffer { get; set; }
+    public bool IsMysteryFleaOffer
+    {
+        get; set;
+    }
     public string FleaRevealTemplateId { get; set; } = string.Empty;
     public double SpawnWeight { get; set; } = 1d;
-    public int StorageRollVersion { get; set; }
-    public int StorageRows { get; set; }
-    public int StorageColumns { get; set; }
-    public int BackpackBaseColumns { get; set; }
+    public int StorageRollVersion
+    {
+        get; set;
+    }
+    public int StorageRows
+    {
+        get; set;
+    }
+    public int StorageColumns
+    {
+        get; set;
+    }
+    public int BackpackBaseColumns
+    {
+        get; set;
+    }
     public string StorageFamilyId { get; set; } = string.Empty;
     internal VariantDefinition Copy() => (VariantDefinition)MemberwiseClone();
     private const uint FnvOffset = 2166136261, FnvPrime = 16777619;
@@ -70,18 +101,33 @@ internal sealed class VariantDefinition
     public string SourceShortName { get; set; } = string.Empty;
     public string SourceFullName { get; set; } = string.Empty;
     public string WeaponClass { get; set; } = string.Empty;
-    public bool Automatic { get; set; }
+    public bool Automatic
+    {
+        get; set;
+    }
     public string CaliberKey { get; set; } = string.Empty;
-    public int CaliberAverageVelocity { get; set; }
+    public int CaliberAverageVelocity
+    {
+        get; set;
+    }
     public string TemplateId { get; set; } = string.Empty;
     public string PresetId { get; set; } = string.Empty;
     public string Tier { get; set; } = string.Empty;
-    public int AffixCount { get; set; }
-    public int GrenadeChargesPerRaid { get; set; }
+    public int AffixCount
+    {
+        get; set;
+    }
+    public int GrenadeChargesPerRaid
+    {
+        get; set;
+    }
     public int GrenadeRechargeSeconds { get; set; } = 180;
     public string GrenadeCategory { get; set; } = "fragmentation";
     public string BackgroundColor { get; set; } = string.Empty;
-    public double PriceMultiplier { get; set; }
+    public double PriceMultiplier
+    {
+        get; set;
+    }
     public string DisplayName { get; set; } = string.Empty;
     public string ShortName { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
@@ -90,22 +136,50 @@ internal sealed class VariantDefinition
     public string RuntimeKey
     {
         get => _runtimeKey;
-        set { _runtimeKey = value; _runtimeHash = Hash(value, _sourceHash); }
+        set
+        {
+            _runtimeKey = value;
+            _runtimeHash = Hash(value, _sourceHash);
+        }
     }
     public int TriggerIndex { get; set; } = -1;
     public int PayoffIndex { get; set; } = -1;
     public int SecondaryPayoffIndex { get; set; } = -1;
     public string SpecialId { get; set; } = string.Empty;
-    public MeleeEffectDefinition? MeleeEffect { get; set; }
-    public BackpackEffectDefinition? BackpackEffect { get; set; }
-    public ChestRigEffectDefinition? ChestRigEffect { get; set; }
-    public CustomEffectDefinition? CustomEffect { get; set; }
+    public MeleeEffectDefinition? MeleeEffect
+    {
+        get; set;
+    }
+    public BackpackEffectDefinition? BackpackEffect
+    {
+        get; set;
+    }
+    public ChestRigEffectDefinition? ChestRigEffect
+    {
+        get; set;
+    }
+    public CustomEffectDefinition? CustomEffect
+    {
+        get; set;
+    }
     public List<string> FireModes { get; set; } = new();
-    public int? BurstShotsCount { get; set; }
-    public int? BaseFireRate { get; set; }
-    public int? SingleFireRate { get; set; }
+    public int? BurstShotsCount
+    {
+        get; set;
+    }
+    public int? BaseFireRate
+    {
+        get; set;
+    }
+    public int? SingleFireRate
+    {
+        get; set;
+    }
     public string Tone { get; set; } = string.Empty;
-    public bool IsMeme { get; set; }
+    public bool IsMeme
+    {
+        get; set;
+    }
 
     public int Number(string key, int minimum, int maximum)
     {
@@ -140,8 +214,10 @@ internal sealed class VariantDefinition
 
     private static uint Hash(string? value, uint hash)
     {
-        if (value is null) return hash; // String concatenation treated null as empty.
-        foreach (var character in value) hash = unchecked((hash ^ character) * FnvPrime);
+        if (value is null)
+            return hash; // String concatenation treated null as empty.
+        foreach (var character in value)
+            hash = unchecked((hash ^ character) * FnvPrime);
         return hash;
     }
 }
@@ -149,34 +225,91 @@ internal sealed class VariantDefinition
 internal sealed class CustomEffectDefinition
 {
     public string Trigger { get; set; } = "always";
-    public int Count { get; set; }
-    public float Seconds { get; set; }
-    public float Threshold { get; set; }
-    public bool RequireTriggerHeld { get; set; }
-    public bool RampUsesTriggerHeldShots { get; set; }
+    public int Count
+    {
+        get; set;
+    }
+    public float Seconds
+    {
+        get; set;
+    }
+    public float Threshold
+    {
+        get; set;
+    }
+    public bool RequireTriggerHeld
+    {
+        get; set;
+    }
+    public bool RampUsesTriggerHeldShots
+    {
+        get; set;
+    }
     public float DamageMultiplier { get; set; } = 1f;
     public float HeadDamageMultiplier { get; set; } = 1f;
     public float BodyDamageMultiplier { get; set; } = 1f;
     public float VelocityMultiplier { get; set; } = 1f;
     public float PenetrationMultiplier { get; set; } = 1f;
     public float ArmorDamageMultiplier { get; set; } = 1f;
-    public float RicochetChanceBonus { get; set; }
-    public float FragmentationChanceBonus { get; set; }
-    public float RicochetRetention { get; set; }
-    public float RecoilDelta { get; set; }
-    public float ErgonomicsDelta { get; set; }
-    public float AccuracyDelta { get; set; }
+    public float RicochetChanceBonus
+    {
+        get; set;
+    }
+    public float FragmentationChanceBonus
+    {
+        get; set;
+    }
+    public float RicochetRetention
+    {
+        get; set;
+    }
+    public float RecoilDelta
+    {
+        get; set;
+    }
+    public float ErgonomicsDelta
+    {
+        get; set;
+    }
+    public float AccuracyDelta
+    {
+        get; set;
+    }
     public float FireRateMultiplier { get; set; } = 1f;
     public float ReloadSpeedMultiplier { get; set; } = 1f;
-    public float AlwaysRecoilDelta { get; set; }
-    public float FireRatePerShot { get; set; }
-    public float FireRateMaxBonus { get; set; }
-    public float RecoilReductionPerShot { get; set; }
-    public float RecoilReductionMax { get; set; }
+    public float AlwaysRecoilDelta
+    {
+        get; set;
+    }
+    public float FireRatePerShot
+    {
+        get; set;
+    }
+    public float FireRateMaxBonus
+    {
+        get; set;
+    }
+    public float RecoilReductionPerShot
+    {
+        get; set;
+    }
+    public float RecoilReductionMax
+    {
+        get; set;
+    }
     public int ProjectileCount { get; set; } = 1;
     public float ProjectileDamageMultiplier { get; set; } = 1f;
-    public float ProjectileSpreadDegrees { get; set; }
+    public float ProjectileSpreadDegrees
+    {
+        get; set;
+    }
     public string ProjectilePattern { get; set; } = "horizontal";
-    public float ExplosionDamageFactor { get; set; }
-    public float ExplosionRadius { get; set; }
+    public float ExplosionDamageFactor
+    {
+        get; set;
+    }
+    public float ExplosionRadius
+    {
+        get; set;
+    }
 }

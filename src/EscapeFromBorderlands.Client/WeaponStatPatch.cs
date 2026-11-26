@@ -22,7 +22,8 @@ internal static class WeaponRecoilDeltaPatch
     internal static void Apply(Weapon __instance, ref float __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
-        if (roll is null) return;
+        if (roll is null)
+            return;
         __result = WeaponStatMath.Compose(__result, roll.RecoilDeltaModifier, LegendaryRuntime.GetStatModifiers(__instance).RecoilDelta);
     }
 }
@@ -34,7 +35,8 @@ internal static class WeaponErgonomicsDeltaPatch
     internal static void Apply(Weapon __instance, ref float __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
-        if (roll is null) return;
+        if (roll is null)
+            return;
         __result = WeaponStatMath.Compose(__result, roll.ErgonomicsDeltaModifier, LegendaryRuntime.GetStatModifiers(__instance).ErgonomicsDelta);
     }
 }
@@ -46,7 +48,8 @@ internal static class WeaponAccuracyDeltaPatch
     internal static void Apply(Weapon __instance, ref float __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
-        if (roll is null) return;
+        if (roll is null)
+            return;
         __result = WeaponStatMath.Compose(__result, roll.CenterOfImpactDeltaModifier, LegendaryRuntime.GetStatModifiers(__instance).AccuracyDelta, 0.01f);
     }
 }
@@ -58,7 +61,8 @@ internal static class WeaponVelocityDeltaPatch
     internal static void Apply(Weapon __instance, ref float __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
-        if (roll is null) return;
+        if (roll is null)
+            return;
         var runtimeVelocity = LegendaryRuntime.GetVelocityMultiplier(__instance);
         __result = Math.Max(0.05f, (1f + __result) * roll.VelocityMultiplier * runtimeVelocity) - 1f;
     }
@@ -71,7 +75,8 @@ internal static class WeaponFireRatePatch
     internal static void Apply(Weapon __instance, ref int __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
-        if (roll is null) return;
+        if (roll is null)
+            return;
         __result = Math.Max(1, (int)Math.Round(
             __result * roll.FireRateMultiplier * LegendaryRuntime.GetStatModifiers(__instance).EffectiveFireRateMultiplier));
     }
@@ -84,10 +89,12 @@ internal static class WeaponSingleFireRatePatch
     internal static void Apply(Weapon __instance, ref int __result)
     {
         var roll = WeaponStatReadBatch.ResolveRoll(__instance);
-        if (roll is null) return;
+        if (roll is null)
+            return;
         // EFT clamps this getter to 240 RPM; explicit EFB values bypass that
         // floor without modifying any other weapon's native limit.
-        if (roll.Definition.SingleFireRate is > 0) __result = roll.Definition.SingleFireRate.Value;
+        if (roll.Definition.SingleFireRate is > 0)
+            __result = roll.Definition.SingleFireRate.Value;
         __result = Math.Max(1, (int)Math.Round(
             __result * roll.FireRateMultiplier * LegendaryRuntime.GetStatModifiers(__instance).EffectiveFireRateMultiplier));
     }
@@ -101,9 +108,11 @@ internal static class WeaponFireRateAttributePatch
 
     private static void Postfix(Weapon __instance)
     {
-        if (RarityResolver.Resolve(__instance) is null) return;
+        if (RarityResolver.Resolve(__instance) is null)
+            return;
         var attribute = __instance.Attributes.FirstOrDefault(value => value.Id.Equals(EItemAttributeId.FireRate));
-        if (attribute is null) return;
+        if (attribute is null)
+            return;
         attribute.Base = () => __instance.FireRate;
         attribute.StringValue = () => $"{__instance.FireRate} {LocalizationExtensions.Localized("rpm")}";
     }

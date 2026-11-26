@@ -33,7 +33,16 @@ internal static class StatusHudSettings
     {
         internal readonly bool Guns, Melee, Backpacks, Rigs, Grenades, Earpieces, Headwear, Eyewear;
         internal Visibility(bool guns, bool melee, bool backpacks, bool rigs, bool grenades, bool earpieces, bool headwear = true, bool eyewear = true)
-        { Guns = guns; Melee = melee; Backpacks = backpacks; Rigs = rigs; Grenades = grenades; Earpieces = earpieces; Headwear = headwear; Eyewear = eyewear; }
+        {
+            Guns = guns;
+            Melee = melee;
+            Backpacks = backpacks;
+            Rigs = rigs;
+            Grenades = grenades;
+            Earpieces = earpieces;
+            Headwear = headwear;
+            Eyewear = eyewear;
+        }
         internal bool Allows(string key) => StatusVisibility.Allows(key, Guns, Melee, Backpacks, Rigs, Grenades, Earpieces, Headwear, Eyewear);
     }
     internal static Visibility ReadVisibility() => new(Guns?.Value != false, Melee?.Value != false,

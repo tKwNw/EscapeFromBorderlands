@@ -20,11 +20,13 @@ internal static class BackpackInventoryAccess
     {
         // This adapter is called only inside the native grenade-key handler,
         // after its hand-input/interaction restrictions have already passed.
-        if (WornKey(inventory) == "BP07-1" && BackpackRuntime.Actor(inventory) is { } player && BackpackGrenadeAction.TryThrow(player)) return;
+        if (WornKey(inventory) == "BP07-1" && BackpackRuntime.Actor(inventory) is { } player && BackpackGrenadeAction.TryThrow(player))
+            return;
         // Keep Use Items Anywhere's configured grenade slots instead of replacing
         // its inventory query with the vanilla pocket/rig search.
         UseItemsAnywhereCompatibility.CollectGrenades(inventory, destination, predicate);
-        if (WornKey(inventory) == "BP35-1") Add(inventory, destination, predicate);
+        if (WornKey(inventory) == "BP35-1")
+            Add(inventory, destination, predicate);
         ReusableGrenadeRuntime.Select(inventory, destination);
     }
     internal static void Magazines(InventoryController inventory, IList<Magazine> destination, Predicate<Magazine>? predicate) =>
@@ -35,15 +37,18 @@ internal static class BackpackInventoryAccess
     {
         // Preserve Uia's separate player/bot reload search behavior.
         UseItemsAnywhereCompatibility.CollectMagazines(inventory, destination, predicate, bot);
-        if (WornKey(inventory) != "BP02-2") return;
+        if (WornKey(inventory) != "BP02-2")
+            return;
         Add(inventory, destination, predicate);
     }
     private static void Add<T>(InventoryController inventory, IList<T> destination, Predicate<T>? predicate) where T : Item
     {
         var bag = inventory.Inventory.Equipment.GetSlot(EquipmentSlot.Backpack).ContainedItem;
-        if (bag is null) return;
+        if (bag is null)
+            return;
         foreach (var item in bag.GetAllItems().OfType<T>())
-            if ((predicate is null || predicate(item)) && !destination.Any(existing => existing.Id == item.Id)) destination.Add(item);
+            if ((predicate is null || predicate(item)) && !destination.Any(existing => existing.Id == item.Id))
+                destination.Add(item);
     }
     internal static float MagazineTime(InventoryController inventory, float seconds) => WornKey(inventory) == "BP38-2" ? seconds * .5f : seconds;
 }
@@ -85,6 +90,7 @@ internal static class BackpackConcreteInventorySearchPatch
             }
             yield return instruction;
         }
-        if (replacements != 1) throw new InvalidOperationException($"Expected one typed inventory search in {original.DeclaringType?.Name}.{original.Name}, found {replacements}.");
+        if (replacements != 1)
+            throw new InvalidOperationException($"Expected one typed inventory search in {original.DeclaringType?.Name}.{original.Name}, found {replacements}.");
     }
 }

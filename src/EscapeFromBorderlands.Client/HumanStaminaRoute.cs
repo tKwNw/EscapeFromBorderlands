@@ -32,13 +32,17 @@ internal static class HumanStaminaRoute
     internal static void Install(Harmony harmony)
     {
         if (Installed || Target is null || Target.ReturnType != typeof(void) || Target.IsStatic ||
-            Target.GetMethodBody() is not { } body || body.ExceptionHandlingClauses.Count != 0) return;
+            Target.GetMethodBody() is not { } body || body.ExceptionHandlingClauses.Count != 0)
+            return;
         var info = Harmony.GetPatchInfo(Target);
         if (info is null || info.Owners.Any(owner => owner != Plugin.PluginGuid) || info.Transpilers.Count > 1 || info.Transpilers.Any(p => p.PatchMethod != EyewearRewrite) ||
-            !Only(info.Prefixes.ToArray(), Begin) || !Only(info.Postfixes.ToArray(), End) || !Only(info.Finalizers.ToArray(), Finally)) return;
+            !Only(info.Prefixes.ToArray(), Begin) || !Only(info.Postfixes.ToArray(), End) || !Only(info.Finalizers.ToArray(), Finally))
+            return;
         try
         {
-            harmony.Unpatch(Target, Begin); harmony.Unpatch(Target, End); harmony.Unpatch(Target, Finally);
+            harmony.Unpatch(Target, Begin);
+            harmony.Unpatch(Target, End);
+            harmony.Unpatch(Target, Finally);
             harmony.Patch(Target, transpiler: new HarmonyMethod(Rewrite));
             Installed = true;
             Plugin.LogSource?.LogInfo("EFB human leg-stamina route enabled; bot and arm/oxygen processing bypass legendary sprint callbacks.");
@@ -52,12 +56,14 @@ internal static class HumanStaminaRoute
     }
     internal static void Reconcile(Harmony harmony)
     {
-        if (!Installed) return;
+        if (!Installed)
+            return;
         var info = Harmony.GetPatchInfo(Target);
         if (info is not null && info.Owners.All(owner => owner == Plugin.PluginGuid) &&
             info.Transpilers.Count is 1 or 2 && info.Transpilers.Count(p => p.PatchMethod == Rewrite) == 1 &&
             info.Transpilers.All(p => p.PatchMethod == Rewrite || p.PatchMethod == EyewearRewrite) &&
-            info.Prefixes.Count == 0 && info.Postfixes.Count == 0 && info.Finalizers.Count == 0) return;
+            info.Prefixes.Count == 0 && info.Postfixes.Count == 0 && info.Finalizers.Count == 0)
+            return;
         harmony.Unpatch(Target, Rewrite);
         Restore(harmony);
         Installed = false;
@@ -91,49 +97,81 @@ internal static class HumanStaminaRoute
         start.blocks.Add(new ExceptionBlock(ExceptionBlockType.BeginExceptionBlock));
         output.Add(start);
         output.Add(new CodeInstruction(OpCodes.Brfalse, native));
-        output.Add(new CodeInstruction(OpCodes.Ldarg_0)); output.Add(new CodeInstruction(OpCodes.Ldloca, state));
+        output.Add(new CodeInstruction(OpCodes.Ldarg_0));
+        output.Add(new CodeInstruction(OpCodes.Ldloca, state));
         output.Add(new CodeInstruction(OpCodes.Call, Begin));
         LabelOn(body[0], native);
         foreach (var code in body)
         {
-            if (code.opcode == OpCodes.Ret) { code.opcode = OpCodes.Br; code.operand = observe; }
+            if (code.opcode == OpCodes.Ret)
+            {
+                code.opcode = OpCodes.Br;
+                code.operand = observe;
+            }
             // Replacing ret can lengthen a native short branch's span.
             else if (code.opcode.OperandType == OperandType.ShortInlineBrTarget)
                 code.opcode = LongBranch(code.opcode);
             output.Add(code);
         }
         // Returns stay inside this try until the ordinary postfix has run.
-        var postfix = new CodeInstruction(OpCodes.Ldloc, run); LabelOn(postfix, observe); output.Add(postfix);
+        var postfix = new CodeInstruction(OpCodes.Ldloc, run);
+        LabelOn(postfix, observe);
+        output.Add(postfix);
         output.Add(new CodeInstruction(OpCodes.Brfalse, done));
-        output.Add(new CodeInstruction(OpCodes.Ldarg_0)); output.Add(new CodeInstruction(OpCodes.Ldarg_1));
-        output.Add(new CodeInstruction(OpCodes.Ldloc, state)); output.Add(new CodeInstruction(OpCodes.Call, End));
-        var leave = new CodeInstruction(OpCodes.Leave, finish); LabelOn(leave, done); output.Add(leave);
+        output.Add(new CodeInstruction(OpCodes.Ldarg_0));
+        output.Add(new CodeInstruction(OpCodes.Ldarg_1));
+        output.Add(new CodeInstruction(OpCodes.Ldloc, state));
+        output.Add(new CodeInstruction(OpCodes.Call, End));
+        var leave = new CodeInstruction(OpCodes.Leave, finish);
+        LabelOn(leave, done);
+        output.Add(leave);
         var cleanup = new CodeInstruction(OpCodes.Ldloc, run);
-        cleanup.blocks.Add(new ExceptionBlock(ExceptionBlockType.BeginFinallyBlock)); output.Add(cleanup);
+        cleanup.blocks.Add(new ExceptionBlock(ExceptionBlockType.BeginFinallyBlock));
+        output.Add(cleanup);
         output.Add(new CodeInstruction(OpCodes.Brfalse, afterRestore));
-        output.Add(new CodeInstruction(OpCodes.Ldloc, state)); output.Add(new CodeInstruction(OpCodes.Ldnull));
-        output.Add(new CodeInstruction(OpCodes.Call, Finally)); output.Add(new CodeInstruction(OpCodes.Pop));
-        var endFinally = new CodeInstruction(OpCodes.Nop); LabelOn(endFinally, afterRestore);
-        endFinally.blocks.Add(new ExceptionBlock(ExceptionBlockType.EndExceptionBlock)); output.Add(endFinally);
-        var ret = new CodeInstruction(OpCodes.Ret); LabelOn(ret, finish); output.Add(ret);
+        output.Add(new CodeInstruction(OpCodes.Ldloc, state));
+        output.Add(new CodeInstruction(OpCodes.Ldnull));
+        output.Add(new CodeInstruction(OpCodes.Call, Finally));
+        output.Add(new CodeInstruction(OpCodes.Pop));
+        var endFinally = new CodeInstruction(OpCodes.Nop);
+        LabelOn(endFinally, afterRestore);
+        endFinally.blocks.Add(new ExceptionBlock(ExceptionBlockType.EndExceptionBlock));
+        output.Add(endFinally);
+        var ret = new CodeInstruction(OpCodes.Ret);
+        LabelOn(ret, finish);
+        output.Add(ret);
         return output;
     }
     private static OpCode LongBranch(OpCode code)
     {
-        if (code == OpCodes.Br_S) return OpCodes.Br;
-        if (code == OpCodes.Brfalse_S) return OpCodes.Brfalse;
-        if (code == OpCodes.Brtrue_S) return OpCodes.Brtrue;
-        if (code == OpCodes.Beq_S) return OpCodes.Beq;
-        if (code == OpCodes.Bge_S) return OpCodes.Bge;
-        if (code == OpCodes.Bge_Un_S) return OpCodes.Bge_Un;
-        if (code == OpCodes.Bgt_S) return OpCodes.Bgt;
-        if (code == OpCodes.Bgt_Un_S) return OpCodes.Bgt_Un;
-        if (code == OpCodes.Ble_S) return OpCodes.Ble;
-        if (code == OpCodes.Ble_Un_S) return OpCodes.Ble_Un;
-        if (code == OpCodes.Blt_S) return OpCodes.Blt;
-        if (code == OpCodes.Blt_Un_S) return OpCodes.Blt_Un;
-        if (code == OpCodes.Bne_Un_S) return OpCodes.Bne_Un;
-        if (code == OpCodes.Leave_S) return OpCodes.Leave;
+        if (code == OpCodes.Br_S)
+            return OpCodes.Br;
+        if (code == OpCodes.Brfalse_S)
+            return OpCodes.Brfalse;
+        if (code == OpCodes.Brtrue_S)
+            return OpCodes.Brtrue;
+        if (code == OpCodes.Beq_S)
+            return OpCodes.Beq;
+        if (code == OpCodes.Bge_S)
+            return OpCodes.Bge;
+        if (code == OpCodes.Bge_Un_S)
+            return OpCodes.Bge_Un;
+        if (code == OpCodes.Bgt_S)
+            return OpCodes.Bgt;
+        if (code == OpCodes.Bgt_Un_S)
+            return OpCodes.Bgt_Un;
+        if (code == OpCodes.Ble_S)
+            return OpCodes.Ble;
+        if (code == OpCodes.Ble_Un_S)
+            return OpCodes.Ble_Un;
+        if (code == OpCodes.Blt_S)
+            return OpCodes.Blt;
+        if (code == OpCodes.Blt_Un_S)
+            return OpCodes.Blt_Un;
+        if (code == OpCodes.Bne_Un_S)
+            return OpCodes.Bne_Un;
+        if (code == OpCodes.Leave_S)
+            return OpCodes.Leave;
         throw new InvalidOperationException("Unsupported short branch in stamina processing.");
     }
 }

@@ -20,8 +20,11 @@ internal static class CarriedGrenadeDisplay
         internal string Detail(int remaining, bool held, bool show, double seconds)
         {
             var displayed = (int)Math.Ceiling(seconds);
-            if (_detail is not null && remaining == _lastRemaining && displayed == _lastSeconds && show == _lastShow) return _detail;
-            _lastRemaining = remaining; _lastSeconds = displayed; _lastShow = show;
+            if (_detail is not null && remaining == _lastRemaining && displayed == _lastSeconds && show == _lastShow)
+                return _detail;
+            _lastRemaining = remaining;
+            _lastSeconds = displayed;
+            _lastShow = show;
             var detail = GrenadeEffectRules.ChargeText(remaining, Definition.GrenadeChargesPerRaid, held, seconds);
             return _detail = show ? detail : "· " + detail;
         }
@@ -38,15 +41,26 @@ internal static class CarriedGrenadeDisplay
 
     internal static void InventoryChanged(Player player, Item? item = null)
     {
-        if (!ReferenceEquals(Owner, player)) return;
+        if (!ReferenceEquals(Owner, player))
+            return;
         // An ordinary stack move cannot alter the grenade set. A container
         // can contain a reusable grenade even if the event reports only its root.
         if (item is null || item is CompoundItem || item is ThrowWeap &&
-            RarityResolver.TryGetDefinition(item, out var d) && d.GrenadeChargesPerRaid > 0) Dirty = true;
+            RarityResolver.TryGetDefinition(item, out var d) && d.GrenadeChargesPerRaid > 0)
+            Dirty = true;
     }
 
     internal static void Reset()
-    { Entries.Clear(); Seen.Clear(); Queries.Clear(); Display.Clear(); Owner = null; Equipment = null; Dirty = false; ReconcileAt = 0f; }
+    {
+        Entries.Clear();
+        Seen.Clear();
+        Queries.Clear();
+        Display.Clear();
+        Owner = null;
+        Equipment = null;
+        Dirty = false;
+        ReconcileAt = 0f;
+    }
 
     internal static void Append(Player player, List<EffectStatusModel.Status> statuses, ref RaidUpdateTrace trace)
     {
@@ -55,7 +69,8 @@ internal static class CarriedGrenadeDisplay
         if (Dirty || !ReferenceEquals(Owner, player) || !ReferenceEquals(Equipment, equipment) || now >= ReconcileAt)
             Rebuild(player, equipment, now);
         trace.Phase("HUD carried grenade index");
-        if (Entries.Count == 0) return;
+        if (Entries.Count == 0)
+            return;
         Queries.Clear();
         foreach (var entry in Entries)
             Queries.Add(new GrenadeChargeLedger.DisplayQuery(entry.Id, entry.Definition.GrenadeChargesPerRaid,
@@ -70,7 +85,8 @@ internal static class CarriedGrenadeDisplay
             var (remaining, seconds) = Display[i];
             var held = entry.Id == heldId && remaining > 0;
             var show = GrenadeEffectRules.ShowCharges(remaining, capacity, held);
-            if (!show && seconds <= 0) continue;
+            if (!show && seconds <= 0)
+                continue;
             var detail = entry.Detail(remaining, held, show, seconds);
             Entries[i] = entry;
             statuses.Add(new EffectStatusModel.Status(entry.Key, definition.ShortName, true, detail: detail));
@@ -79,7 +95,9 @@ internal static class CarriedGrenadeDisplay
     }
     private static void Rebuild(Player player, InventoryEquipment equipment, float now)
     {
-        Owner = player; Equipment = equipment; Dirty = false;
+        Owner = player;
+        Equipment = equipment;
+        Dirty = false;
         ReconcileAt = now + 1f; // Catch inventory mutations that bypass native events.
         try
         {
@@ -88,18 +106,28 @@ internal static class CarriedGrenadeDisplay
                 if (item is ThrowWeap && RarityResolver.TryGetDefinition(item, out var definition) &&
                     definition.GrenadeChargesPerRaid > 0 && Seen.Add(item.Id))
                 {
-                    if (count == Entries.Count) Entries.Add(new Entry { Id = item.Id, Key = "grenade:" + item.Id, Definition = definition });
+                    if (count == Entries.Count)
+                        Entries.Add(new Entry { Id = item.Id, Key = "grenade:" + item.Id, Definition = definition });
                     else if (Entries[count].Id != item.Id || !ReferenceEquals(Entries[count].Definition, definition))
                         Entries[count] = new Entry { Id = item.Id, Key = "grenade:" + item.Id, Definition = definition };
                     count++;
                 }
-            if (count < Entries.Count) Entries.RemoveRange(count, Entries.Count - count);
+            if (count < Entries.Count)
+                Entries.RemoveRange(count, Entries.Count - count);
             // Native container/grenade events still invalidate immediately.
             // An empty display needs only a slow safety check for mods which
             // mutate inventory silently. Positive charge displays retain 1 Hz.
-            if (count == 0) ReconcileAt = now + 5f;
+            if (count == 0)
+                ReconcileAt = now + 5f;
         }
-        catch { Dirty = true; throw; }
-        finally { Seen.Clear(); }
+        catch
+        {
+            Dirty = true;
+            throw;
+        }
+        finally
+        {
+            Seen.Clear();
+        }
     }
 }

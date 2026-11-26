@@ -15,7 +15,8 @@ internal static class LegendaryFleaVariants
             v.BackpackEffect is null && v.ChestRigEffect is null).ToArray())
         {
             var id = BackpackStorageVariants.MysteryId(original.TemplateId);
-            if (!ids.Add(id)) continue;
+            if (!ids.Add(id))
+                continue;
             var preview = original.Copy();
             preview.TemplateId = id;
             preview.PresetId = BackpackStorageVariants.Id(id, 0, 0);

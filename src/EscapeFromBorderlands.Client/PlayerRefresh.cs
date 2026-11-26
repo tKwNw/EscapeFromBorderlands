@@ -15,7 +15,10 @@ namespace EscapeFromBorderlands.Client;
 internal static class PlayerRefresh
 {
     [Flags]
-    private enum Work { None = 0, Weight = 1, Equipment = 2, Firearm = 4 }
+    private enum Work
+    {
+        None = 0, Weight = 1, Equipment = 2, Firearm = 4
+    }
     private sealed class Pending
     {
         internal Work Work;
@@ -76,10 +79,14 @@ internal static class PlayerRefresh
     internal static void Firearm(Player player, string site) => Request(player, Work.Firearm, site);
     private static void Request(Player player, Work work, string site)
     {
-        if (!ActorCapabilities.IsHuman(player)) work &= ~Work.Weight;
-        if (work == Work.None) return;
-        if (!CanObserve(player)) return;
-        if (!Requests.TryGetValue(player, out var pending)) Requests[player] = pending = new Pending();
+        if (!ActorCapabilities.IsHuman(player))
+            work &= ~Work.Weight;
+        if (work == Work.None)
+            return;
+        if (!CanObserve(player))
+            return;
+        if (!Requests.TryGetValue(player, out var pending))
+            Requests[player] = pending = new Pending();
         pending.Work |= work;
         pending.Site = site;
         NextCheck = Math.Min(NextCheck, pending.NextAttempt);
@@ -95,18 +102,22 @@ internal static class PlayerRefresh
         if (bridge is null || Native.Get(bridge, "Skills") is null ||
             inventory.TotalWeight is null || inventory.TotalWeightEliteSkill is null ||
             physical.Stamina?.TotalCapacity is null || physical.HandsStamina?.TotalCapacity is null ||
-            physical.Oxygen?.TotalCapacity is null) return false;
+            physical.Oxygen?.TotalCapacity is null)
+            return false;
         if (physical is Physical full &&
-            (!ReferenceEquals(PhysicalOwner.GetValue(full), player) || full.Consumptions is null)) return false;
+            (!ReferenceEquals(PhysicalOwner.GetValue(full), player) || full.Consumptions is null))
+            return false;
         return player.HandsController is not Player.FirearmController || player.ProceduralWeaponAnimation is not null;
     }
 
     internal static bool IsRegistered(GameWorld world, Player player)
     {
         var id = player.ProfileId;
-        if (!string.IsNullOrEmpty(id) && ReferenceEquals(world.GetAlivePlayerByProfileID(id), player)) return true;
+        if (!string.IsNullOrEmpty(id) && ReferenceEquals(world.GetAlivePlayerByProfileID(id), player))
+            return true;
         foreach (var candidate in world.RegisteredPlayers)
-            if (ReferenceEquals(candidate, player)) return true;
+            if (ReferenceEquals(candidate, player))
+                return true;
         return false;
     }
 
@@ -114,14 +125,19 @@ internal static class PlayerRefresh
     private static float NextCheck;
     internal static void Maintain(GameWorld? world)
     {
-        if (Resetting || ActiveWorld(world) == null || Requests.Count == 0 || Time.unscaledTime < NextCheck) return;
+        if (Resetting || ActiveWorld(world) == null || Requests.Count == 0 || Time.unscaledTime < NextCheck)
+            return;
         WorkSnapshot.AddRange(Requests);
-        try { ApplyRequests(world!); }
+        try
+        {
+            ApplyRequests(world!);
+        }
         finally
         {
             WorkSnapshot.Clear();
             NextCheck = float.PositiveInfinity;
-            foreach (var pending in Requests.Values) NextCheck = Math.Min(NextCheck, pending.NextAttempt);
+            foreach (var pending in Requests.Values)
+                NextCheck = Math.Min(NextCheck, pending.NextAttempt);
         }
     }
 
@@ -132,12 +148,20 @@ internal static class PlayerRefresh
             var player = pair.Key;
             var pending = pair.Value;
             if (!CanObserve(player) || !IsRegistered(world, player))
-            { Requests.Remove(player); continue; }
-            if (Time.unscaledTime < pending.NextAttempt) continue;
+            {
+                Requests.Remove(player);
+                continue;
+            }
+            if (Time.unscaledTime < pending.NextAttempt)
+                continue;
             var work = pending.Work;
             try
             {
-                if (!Ready(player)) { pending.NextAttempt = Time.unscaledTime + .25f; continue; }
+                if (!Ready(player))
+                {
+                    pending.NextAttempt = Time.unscaledTime + .25f;
+                    continue;
+                }
                 pending.Work = Work.None;
                 if ((work & Work.Equipment) != 0)
                 {
@@ -151,7 +175,8 @@ internal static class PlayerRefresh
                         firearm.UpdateHipInaccuracy();
                     }
                 }
-                if ((work & Work.Weight) != 0) player.Physical.OnWeightUpdated();
+                if ((work & Work.Weight) != 0)
+                    player.Physical.OnWeightUpdated();
                 if ((work & Work.Firearm) != 0 && player.HandsController is Player.FirearmController current)
                 {
                     EarpieceAimWalkingPatch.Refresh(player);
@@ -160,10 +185,12 @@ internal static class PlayerRefresh
                     current.UpdateHipInaccuracy();
                     WeaponCombatState.Refresh(current);
                 }
-                if (pending.Failures > 0) Plugin.LogSource?.LogInfo("EFB deferred player refresh recovered after " + pending.Failures + " failure(s).");
+                if (pending.Failures > 0)
+                    Plugin.LogSource?.LogInfo("EFB deferred player refresh recovered after " + pending.Failures + " failure(s).");
                 pending.Failures = 0;
                 pending.NextAttempt = 0f;
-                if (pending.Work == Work.None) Requests.Remove(player);
+                if (pending.Work == Work.None)
+                    Requests.Remove(player);
             }
             catch (Exception error)
             {
@@ -188,7 +215,10 @@ internal static class PlayerRefresh
             var rig = ChestRigRuntime.Worn(player)?.StringTemplateId ?? "none";
             return $"player={(player.IsYourPlayer ? "local" : player.IsAI ? "AI" : "other")}, rig={rig}";
         }
-        catch { return "player state became unavailable while reporting the failure"; }
+        catch
+        {
+            return "player state became unavailable while reporting the failure";
+        }
     }
 }
 

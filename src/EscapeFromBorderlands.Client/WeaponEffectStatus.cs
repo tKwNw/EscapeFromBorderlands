@@ -10,8 +10,10 @@ internal static partial class LegendaryRuntime
     internal static EffectStatusModel.Status? CurrentStatus(Player player, Weapon weapon)
     {
         if (player.HandsController?.Item != weapon || player.HealthController?.IsAlive != true ||
-            !RarityResolver.TryGetDefinition(weapon, out var definition) || definition.MeleeEffect is not null || definition.BackpackEffect is not null) return null;
-        if (PermanentStatus(definition)) return null;
+            !RarityResolver.TryGetDefinition(weapon, out var definition) || definition.MeleeEffect is not null || definition.BackpackEffect is not null)
+            return null;
+        if (PermanentStatus(definition))
+            return null;
         UpdateLiveState(player, weapon, definition);
         lock (Sync)
         {
@@ -28,25 +30,53 @@ internal static partial class LegendaryRuntime
             var detail = string.Empty;
             switch (definition.SpecialId)
             {
-                case "zantetsuken": active = state.DrawEffectArmed; detail = "Next shot ready"; break;
-                case "full_send": active &= LegendaryFireModePatch.IsHeld((Player.FirearmController)player.HandsController); break;
-                case "compound_interest": active = state.CompoundInterestStacks > 0; break;
-                case "wave015_binary_hunter": case "wave015_two_in_one": case "wave015_balance":
-                    active = LegendaryFireModePatch.LogicalMode(weapon) == "burst"; detail = "Binary Trigger active"; break;
-                case "wave015_dont_stop": active = false; break; // Confirmed transfers produce a short trigger receipt.
-                case "kabans_kabab": active = application.ExplosionDamageFactor > 0f; detail = "Next explosive shot ready"; break;
-                case "requiem": active = RemainingAmmo(weapon) == 1; detail = "Final round ready"; break;
-                case "wave015_like_a_ghost": active = false; break; // Real deployed smoke has its own lifetime.
-                case "wave015_one_and_done": detail = "Next shot ready"; break;
-                case "wave015_sight_picture": case "wave015_held_breath": detail = "Next shot ready"; break;
+                case "zantetsuken":
+                    active = state.DrawEffectArmed;
+                    detail = "Next shot ready";
+                    break;
+                case "full_send":
+                    active &= LegendaryFireModePatch.IsHeld((Player.FirearmController)player.HandsController);
+                    break;
+                case "compound_interest":
+                    active = state.CompoundInterestStacks > 0;
+                    break;
+                case "wave015_binary_hunter":
+                case "wave015_two_in_one":
+                case "wave015_balance":
+                    active = LegendaryFireModePatch.LogicalMode(weapon) == "burst";
+                    detail = "Binary Trigger active";
+                    break;
+                case "wave015_dont_stop":
+                    active = false;
+                    break; // Confirmed transfers produce a short trigger receipt.
+                case "kabans_kabab":
+                    active = application.ExplosionDamageFactor > 0f;
+                    detail = "Next explosive shot ready";
+                    break;
+                case "requiem":
+                    active = RemainingAmmo(weapon) == 1;
+                    detail = "Final round ready";
+                    break;
+                case "wave015_like_a_ghost":
+                    active = false;
+                    break; // Real deployed smoke has its own lifetime.
+                case "wave015_one_and_done":
+                    detail = "Next shot ready";
+                    break;
+                case "wave015_sight_picture":
+                case "wave015_held_breath":
+                    detail = "Next shot ready";
+                    break;
             }
             if (definition.CustomEffect?.Trigger is "draw_next_shot" or "stationary_next_shot" or "ads_seconds_next_shot" or "chamber_next_shot" ||
                 definition.CustomEffect?.Trigger.StartsWith("every_n", StringComparison.Ordinal) == true ||
                 definition.EffectKind == "ordinary" && definition.TriggerIndex is 6 or 12 or 24 or 25 ||
                 definition.EffectKind == "meme" && definition.TriggerIndex is 2 or 4 or 10)
                 detail = "Next shot ready";
-            if (!string.IsNullOrEmpty(application.ConditionalTargetProfileId)) detail = "Same target ready";
-            if (active) return new EffectStatusModel.Status("gun:" + weapon.Id, definition.ShortName, true, detail: detail);
+            if (!string.IsNullOrEmpty(application.ConditionalTargetProfileId))
+                detail = "Same target ready";
+            if (active)
+                return new EffectStatusModel.Status("gun:" + weapon.Id, definition.ShortName, true, detail: detail);
             var delay = StatusDelay(definition, state, player);
             return delay.Seconds > 0f ? new EffectStatusModel.Status("gun:" + weapon.Id, definition.ShortName, false, ready: delay.Seconds, detail: delay.Label) : null;
         }
@@ -55,7 +85,8 @@ internal static partial class LegendaryRuntime
     {
         // The HUD reports changing readiness, not an always-on weapon trait.
         // Keep this presentation-only: shot and live-stat evaluation still run.
-        if (definition.CustomEffect is { } custom) return custom.Trigger == "always";
+        if (definition.CustomEffect is { } custom)
+            return custom.Trigger == "always";
         if (!string.IsNullOrEmpty(definition.SpecialId))
             return definition.SpecialId is "bunker_buster" or "split_decision" or "mp7a2_volks_tribute" or
                 "ak545_wall_pass" or "wave015_core_and_jacket" or "wave015_echo" or

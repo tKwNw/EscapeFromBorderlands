@@ -64,8 +64,10 @@ internal static class CombatCodeWarmup
     };
     internal static void Maintain()
     {
-        if (_next >= Methods.Length) return;
-        if (_next == 0) GrenadeControllerAccess.Prepare();
+        if (_next >= Methods.Length)
+            return;
+        if (_next == 0)
+            GrenadeControllerAccess.Prepare();
         var entry = Methods[_next++];
         try
         {

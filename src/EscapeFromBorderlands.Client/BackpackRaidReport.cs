@@ -13,7 +13,12 @@ internal static class BackpackRaidReport
     private static string Token = Guid.NewGuid().ToString("N");
     private static string Template = "";
     private static int Loot;
-    internal static void BeginRaid() { Token = Guid.NewGuid().ToString("N"); Template = ""; Loot = 0; }
+    internal static void BeginRaid()
+    {
+        Token = Guid.NewGuid().ToString("N");
+        Template = "";
+        Loot = 0;
+    }
     internal static void Capture(BackpackRuntime.State? s)
     {
         Template = s?.Bag.StringTemplateId ?? "";
@@ -21,14 +26,18 @@ internal static class BackpackRaidReport
     }
     internal static void Attach(string path, ref string json)
     {
-        if (!path.EndsWith("/client/match/local/end", StringComparison.Ordinal) || Template == "") return;
+        if (!path.EndsWith("/client/match/local/end", StringComparison.Ordinal) || Template == "")
+            return;
         try
         {
             var data = JObject.Parse(json);
             data["efbBackpack"] = new JObject { ["templateId"] = Template, ["distinctLootCount"] = Loot, ["raidToken"] = Token };
             json = data.ToString(Newtonsoft.Json.Formatting.None);
         }
-        catch (Exception e) { Plugin.LogSource.LogError($"Backpack raid report could not be attached: {e.Message}"); }
+        catch (Exception e)
+        {
+            Plugin.LogSource.LogError($"Backpack raid report could not be attached: {e.Message}");
+        }
     }
 }
 
